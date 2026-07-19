@@ -33,5 +33,6 @@ export interface SubmitGamePayload {
   creator_id?: string;
   custom_title?: string;
   custom_description?: string;
+  custom_thumbnail_url?: string;
   custom_tags?: string[];
 }

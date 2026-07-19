@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   GraduationCap,
   User,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 interface SubmitGameModalProps {
@@ -36,6 +37,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
   // Editable Form Fields
   const [customTitle, setCustomTitle] = useState('');
   const [customDescription, setCustomDescription] = useState('');
+  const [customThumbnail, setCustomThumbnail] = useState('');
   const [tagsInput, setTagsInput] = useState('');
 
   if (!isOpen) return null;
@@ -51,6 +53,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setScrapedData(res);
       setCustomTitle(res.title);
       setCustomDescription(res.description);
+      setCustomThumbnail(res.thumbnail_url);
       setTagsInput(['cs67', ...res.tags].join(', '));
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'ไม่สามารถดึงข้อมูลพรีวิวจาก URL นี้ได้';
@@ -76,6 +79,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
         url: urlInput,
         custom_title: customTitle,
         custom_description: customDescription,
+        custom_thumbnail_url: customThumbnail.trim() || scrapedData.thumbnail_url,
         custom_tags: parsedTags,
         creator_id: creatorName.trim() || 'นิสิต CS 67',
       });
@@ -85,6 +89,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       // Reset
       setUrlInput('');
       setCreatorName('');
+      setCustomThumbnail('');
       setScrapedData(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการบันทึกผลงานเกม';
@@ -106,7 +111,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
             </div>
             <div>
               <h2 className="font-extrabold text-base text-white">ส่งผลงานเกม CS 67 (Submit CS67 Project)</h2>
-              <p className="text-[11px] text-slate-300">ระบุชื่อผู้ทำและ URL ผลงานเกมเพื่อขึ้นระบบ More Then 66</p>
+              <p className="text-[11px] text-slate-300">ใส่ชื่อผู้ทำ, รูปปกเกม และ URL ผลงานเพื่อขึ้นระบบ More Then 66</p>
             </div>
           </div>
 
@@ -227,6 +232,21 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
                   />
                 </div>
 
+                {/* Editable Thumbnail URL Input */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                    <ImageIcon className="w-3 h-3 text-sky-400" />
+                    URL รูปปกเกม (Game Cover / Thumbnail Image URL):
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="ใส่ URL รูปปกเกม (https://...)"
+                    value={customThumbnail}
+                    onChange={(e) => setCustomThumbnail(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white focus:outline-none focus:border-sky-400"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-300 mb-1 flex items-center gap-1">
                     <Tag className="w-3 h-3 text-sky-400" />
@@ -241,16 +261,20 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
                   />
                 </div>
 
-                {/* Thumbnail Preview */}
+                {/* Thumbnail Live Preview */}
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                    ตัวอย่างรูป Thumbnail:
+                    ตัวอย่างรูปปกเกมที่เลือก (Live Preview):
                   </label>
-                  <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden bg-black/50 border border-white/10">
+                  <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden bg-black/60 border border-sky-500/30 shadow-inner">
                     <img
-                      src={scrapedData.thumbnail_url}
+                      src={customThumbnail || scrapedData.thumbnail_url}
                       alt="Thumbnail Preview"
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80';
+                      }}
                     />
                   </div>
                 </div>
