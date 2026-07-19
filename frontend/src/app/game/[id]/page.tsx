@@ -7,7 +7,7 @@ import { Header } from '@/components/Header';
 import { EmbedPlayer } from '@/components/EmbedPlayer';
 import { GameCard } from '@/components/GameCard';
 import { SubmitGameModal } from '@/components/SubmitGameModal';
-import { AdminLoginModal, ADMIN_PASS_KEY } from '@/components/AdminLoginModal';
+import { AdminLoginModal, ADMIN_PASS_HASH } from '@/components/AdminLoginModal';
 import { deleteGameApi, getGameById, getGames, incrementGameLike, incrementGameView } from '@/lib/api';
 import { GameDocument } from '@/types/game';
 import {
@@ -46,7 +46,7 @@ export default function GameDetailPage() {
     if (!gameId) return;
 
     const storedAuth = sessionStorage.getItem('cs67_admin_auth');
-    if (storedAuth === ADMIN_PASS_KEY) {
+    if (storedAuth === ADMIN_PASS_HASH) {
       setIsAdmin(true);
       setAdminPass(storedAuth);
     }
@@ -80,9 +80,9 @@ export default function GameDetailPage() {
     loadGameDetails();
   }, [gameId]);
 
-  const handleAdminSuccess = (pass: string) => {
+  const handleAdminSuccess = (hashOrPass: string) => {
     setIsAdmin(true);
-    setAdminPass(pass);
+    setAdminPass(hashOrPass);
   };
 
   const handleAdminLogout = () => {
