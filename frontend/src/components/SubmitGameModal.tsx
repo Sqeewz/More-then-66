@@ -36,6 +36,12 @@ export function parseUrlOrEmbed(input: string): { url: string; embedCode?: strin
       };
     }
   }
+  if (trimmed.startsWith('http') && trimmed.includes('embed-upload')) {
+    return {
+      url: trimmed,
+      embedCode: `<iframe src="${trimmed}"></iframe>`,
+    };
+  }
   return { url: trimmed };
 }
 
@@ -98,9 +104,11 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
         .map((t) => t.trim().toLowerCase())
         .filter((t) => t.length > 0);
 
+      const finalEmbedCode = parsed.embedCode || detectedEmbedCode;
+
       const res = await submitGame({
         url: parsed.url,
-        embed_code: parsed.embedCode || detectedEmbedCode,
+        embed_code: finalEmbedCode,
         custom_title: customTitle,
         custom_description: customDescription,
         custom_thumbnail_url: customThumbnail.trim() || scrapedData.thumbnail_url,
@@ -112,8 +120,12 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       try {
         const existing = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
         const localList: GameDocument[] = existing ? JSON.parse(existing) : [];
-        if (!localList.some((g) => g.id === res.game.id)) {
-          localList.unshift(res.game);
+        const newGameToStore: GameDocument = {
+          ...res.game,
+          embed_code: finalEmbedCode || res.game.embed_code,
+        };
+        if (!localList.some((g) => g.id === newGameToStore.id)) {
+          localList.unshift(newGameToStore);
           localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(localList));
         }
       } catch (e) {
@@ -148,7 +160,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
             </div>
             <div>
               <h2 className="font-extrabold text-base text-white">ส่งผลงานเกม CS 67 (URL / HTML Embed Code)</h2>
-              <p className="text-[11px] text-slate-300">ใส่ URL เกม หรือวางโค้ด HTML Embed (`&lt;iframe src="..."&gt;`) จาก itch.io</p>
+              <p className="text-[11px] text-slate-300">วาง URL เกม หรือวางโค้ด HTML Embed (`&lt;iframe src="..."&gt;`) จาก itch.io</p>
             </div>
           </div>
 

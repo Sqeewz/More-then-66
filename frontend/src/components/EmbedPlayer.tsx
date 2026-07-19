@@ -16,23 +16,41 @@ interface EmbedPlayerProps {
   game: GameDocument;
 }
 
+export function extractEmbedUrl(game: GameDocument): string {
+  // 1. If embed_code contains <iframe src="...">, extract the src URL
+  if (game.embed_code) {
+    const srcMatch = game.embed_code.match(/src=["']([^"']+)["']/i);
+    if (srcMatch?.[1]) {
+      return srcMatch[1];
+    }
+    if (game.embed_code.startsWith('http://') || game.embed_code.startsWith('https://')) {
+      return game.embed_code;
+    }
+  }
+
+  // 2. Original URL fallback
+  const orig = game.original_url || (game as any).url || '';
+  return orig;
+}
+
 export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [iframeKey, setIframeKey] = useState(0);
   const [forceEmbedded, setForceEmbedded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const targetUrl = game.original_url || (game as any).url || 'https://itch.io';
+  const targetUrl = extractEmbedUrl(game);
+  const externalLinkUrl = game.original_url || (game as any).url || targetUrl;
   const isPopupMode = game.display_mode === 'POPUP' && !forceEmbedded;
 
-  // Auto hide loading spinner after 2.5s timeout so game is never stuck loading
+  // Auto hide loading spinner after 2s timeout
   useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2500);
+    }, 2000);
     return () => clearTimeout(timer);
-  }, [iframeKey, forceEmbedded, game]);
+  }, [iframeKey, forceEmbedded, game, targetUrl]);
 
   const handleReload = () => {
     setIsLoading(true);
@@ -53,8 +71,8 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
   };
 
   const handleOpenExternal = () => {
-    if (targetUrl) {
-      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    if (externalLinkUrl) {
+      window.open(externalLinkUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
