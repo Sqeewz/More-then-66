@@ -19,6 +19,12 @@ pub struct ScrapedInfo {
     pub tags: Vec<String>,
 }
 
+const BLOCKED_KEYWORDS: &[&str] = &[
+    "casino", "slot", "baccarat", "pgslot", "pg-slot", "bet", "gambling", "poker", "hilo",
+    "ufabet", "777", "888", "vipbet", "bk8", "w88", "fun88", "m88", "sa gaming",
+    "porn", "xxx", "adult", "hentai", "nsfw", "sex", "erotic", "xvideos", "pornhub", "xnxx",
+];
+
 impl ScraperService {
     pub fn new() -> Self {
         let client = Client::builder()
@@ -32,12 +38,22 @@ impl ScraperService {
 
     pub fn validate_url(&self, raw_url: &str) -> Result<Url, AppError> {
         let parsed = Url::parse(raw_url)
-            .map_err(|e| AppError::InvalidUrl(format!("Invalid URL structure: {}", e)))?;
+            .map_err(|e| AppError::InvalidUrl(format!("รูปแบบ URL ไม่ถูกต้อง: {}", e)))?;
 
         if parsed.scheme() != "http" && parsed.scheme() != "https" {
             return Err(AppError::InvalidUrl(
-                "Only HTTP and HTTPS protocols are allowed.".to_string(),
+                "รองรับเฉพาะโปรโตคอล HTTP และ HTTPS เท่านั้น".to_string(),
             ));
+        }
+
+        let lower_url = raw_url.to_lowercase();
+        for kw in BLOCKED_KEYWORDS {
+            if lower_url.contains(kw) {
+                return Err(AppError::InvalidUrl(format!(
+                    "⚠️ ระบบปฏิเสธ URL นี้: ตรวจพบคำต้องห้าม '{}' (ไม่อนุญาตเว็บพนันหรือสื่อไม่เหมาะสม)",
+                    kw
+                )));
+            }
         }
 
         Ok(parsed)
@@ -75,7 +91,7 @@ impl ScraperService {
             .get(parsed_url.as_str())
             .send()
             .await
-            .map_err(|e| AppError::NetworkError(format!("Failed to reach target URL: {}", e)))?;
+            .map_err(|e| AppError::NetworkError(format!("ไม่สามารถเชื่อมต่อ URL ได้: {}", e)))?;
 
         let display_mode = self.check_embeddability(response.headers());
 
@@ -83,7 +99,18 @@ impl ScraperService {
         let body_text = response
             .text()
             .await
-            .map_err(|e| AppError::ScrapeError(format!("Failed to read response body: {}", e)))?;
+            .map_err(|e| AppError::ScrapeError(format!("ไม่สามารถอ่านเนื้อหาเว็บได้: {}", e)))?;
+
+        // Content safety check on HTML body
+        let lower_body = body_text.to_lowercase();
+        for kw in BLOCKED_KEYWORDS {
+            if lower_body.contains(&format!(" {} ", kw)) || lower_body.contains(&format!("\"{}\"", kw)) {
+                return Err(AppError::ScrapeError(format!(
+                    "⚠️ ตรวจพบเนื้อหาเว็บพนันหรือสื่อไม่เหมาะสมในเว็บไซต์ ('{}')",
+                    kw
+                )));
+            }
+        }
 
         let document = Html::parse_document(&body_text);
 
@@ -96,14 +123,14 @@ impl ScraperService {
                     .and_then(|mut segs| segs.next_back())
                     .filter(|s| !s.is_empty())
                     .map(|s| s.replace(['-', '_'], " "))
-                    .unwrap_or_else(|| "Untitled Web Game".to_string())
+                    .unwrap_or_else(|| "ผลงานเกม CS67".to_string())
             });
 
         // 2. Description Extraction
         let description = self.extract_og_meta(&document, "og:description")
             .or_else(|| self.extract_meta_name(&document, "description"))
             .unwrap_or_else(|| {
-                "Play this exciting interactive web game directly on our platform!".to_string()
+                "เล่นผลงานเกมนี้ผ่านแพลตฟอร์ม More Then 66 (CS 67)".to_string()
             });
 
         // 3. Thumbnail URL Extraction
@@ -116,6 +143,7 @@ impl ScraperService {
 
         // 4. Extract or Generate Tags
         let mut tags = Vec::new();
+        tags.push("cs67".to_string());
         let host = final_url.host_str().unwrap_or_default();
 
         if host.contains("itch.io") {
@@ -126,10 +154,10 @@ impl ScraperService {
             tags.push("open-source".to_string());
         }
 
-        if body_text.to_lowercase().contains("webgl") {
+        if lower_body.contains("webgl") {
             tags.push("webgl".to_string());
         }
-        if body_text.to_lowercase().contains("canvas") || body_text.to_lowercase().contains("html5") {
+        if lower_body.contains("canvas") || lower_body.contains("html5") {
             tags.push("html5".to_string());
         }
         tags.push("arcade".to_string());

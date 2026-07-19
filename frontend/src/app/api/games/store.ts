@@ -1,5 +1,44 @@
 import { GameDocument, DisplayMode } from '@/types/game';
 
+const BLOCKED_KEYWORDS = [
+  // Gambling / Casino keywords
+  'casino', 'slot', 'baccarat', 'pgslot', 'pg-slot', 'bet', 'gambling', 'poker', 'hilo',
+  'แทงบอล', 'สล็อต', 'คาสิโน', 'บาคาร่า', 'หวย', 'ufabet', '777', '888', 'vipbet', 'bk8',
+  'w88', 'fun88', 'm88', 'sa gaming', 'sexy baccarat', 'เว็บพนัน', 'แทงหวย', 'พนัน',
+  // Adult / NSFW keywords
+  'porn', 'xxx', 'adult', 'hentai', 'nsfw', 'sex', 'erotic', 'xvideos', 'pornhub', 'xnxx', '18+'
+];
+
+export function checkUrlSafety(url: string, htmlContent?: string): { safe: boolean; reason?: string } {
+  const lowerUrl = url.toLowerCase();
+
+  // Check URL string
+  for (const kw of BLOCKED_KEYWORDS) {
+    if (lowerUrl.includes(kw)) {
+      return {
+        safe: false,
+        reason: `⚠️ ระบบปฏิเสธ URL นี้: ตรวจพบคำต้องห้าม "${kw}" (ไม่อนุญาตเว็บพนัน สล็อต หรือสื่อไม่เหมาะสม)`,
+      };
+    }
+  }
+
+  // Check Page HTML Content if scraped
+  if (htmlContent) {
+    const lowerHtml = htmlContent.toLowerCase();
+    for (const kw of BLOCKED_KEYWORDS) {
+      // Look for whole keyword or meta tag matches
+      if (lowerHtml.includes(` ${kw} `) || lowerHtml.includes(`"${kw}"`) || lowerHtml.includes(`>${kw}<`)) {
+        return {
+          safe: false,
+          reason: `⚠️ ระบบปฏิเสธ URL นี้: ตรวจพบเนื้อหาเว็บพนันหรือสื่อไม่เหมาะสมในเว็บไซต์ ("${kw}")`,
+        };
+      }
+    }
+  }
+
+  return { safe: true };
+}
+
 let gamesStore: GameDocument[] = [
   {
     id: 'seed-2048',
@@ -57,6 +96,12 @@ export function updateGameMetrics(id: string, viewInc = 0, likeInc = 0): GameDoc
 }
 
 export async function scrapeUrl(targetUrl: string) {
+  // 1. Initial Safety check on URL
+  const urlCheck = checkUrlSafety(targetUrl);
+  if (!urlCheck.safe) {
+    throw new Error(urlCheck.reason || 'URL ไม่อนุญาต');
+  }
+
   try {
     const res = await fetch(targetUrl, {
       headers: {
@@ -82,6 +127,12 @@ export async function scrapeUrl(targetUrl: string) {
     }
 
     const html = await res.text();
+
+    // 2. Secondary Safety check on HTML content
+    const htmlCheck = checkUrlSafety(targetUrl, html);
+    if (!htmlCheck.safe) {
+      throw new Error(htmlCheck.reason || 'เนื้อหาเว็บไซต์ไม่ผ่านเกณฑ์ความปลอดภัย');
+    }
 
     // og:title or title
     const ogTitleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i);
@@ -116,7 +167,10 @@ export async function scrapeUrl(targetUrl: string) {
       tags: Array.from(new Set(tags)),
       original_url: targetUrl,
     };
-  } catch (err) {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message.startsWith('⚠️')) {
+      throw err;
+    }
     return {
       title: 'ผลงานเว็บเกม CS 67',
       description: 'เล่นผลงานเว็บเกมสดผ่านระบบ Sandboxed Player 16:9',
