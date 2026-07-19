@@ -44,7 +44,7 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-8 space-y-8">
-        
+
         {/* Hero Banner Section */}
         <div className="relative rounded-3xl overflow-hidden p-8 md:p-12 bg-gradient-to-br from-[#161a2e] via-[#1f1938] to-[#120d24] border border-white/10 shadow-2xl">
           <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -142,7 +142,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="mt-auto border-t border-white/10 bg-[#0a0c12] py-6 px-4 text-center text-xs text-gray-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 ArcadeHub Aggregator Platform. Y8-Style Sandboxed Frame Runtime.</p>
+          <p>© 2026 More then 66 gameshub for Cs 67</p>
           <div className="flex items-center gap-4 text-gray-400 font-medium">
             <span>Next.js App Router</span>
             <span>•</span>

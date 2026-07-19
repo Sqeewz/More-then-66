@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Tag,
   CheckCircle2,
+  GraduationCap,
 } from 'lucide-react';
 
 interface SubmitGameModalProps {
@@ -49,9 +50,9 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setScrapedData(res);
       setCustomTitle(res.title);
       setCustomDescription(res.description);
-      setTagsInput(res.tags.join(', '));
+      setTagsInput(['cs67', ...res.tags].join(', '));
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to scrape game link metadata.';
+      const msg = err instanceof Error ? err.message : 'ไม่สามารถดึงข้อมูลพรีวิวจาก URL นี้ได้';
       setError(msg);
     } finally {
       setIsScraping(false);
@@ -75,7 +76,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
         custom_title: customTitle,
         custom_description: customDescription,
         custom_tags: parsedTags,
-        creator_id: 'community_member',
+        creator_id: 'CS67 Student Developer',
       });
 
       onSuccess();
@@ -84,7 +85,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setUrlInput('');
       setScrapedData(null);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to submit game to platform.';
+      const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการบันทึกผลงานเกม';
       setError(msg);
     } finally {
       setIsSubmitting(false);
@@ -92,24 +93,24 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-xl rounded-2xl bg-[#141724] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+      <div className="relative w-full max-w-xl rounded-2xl bg-[#0e152e] border border-sky-500/30 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#181c2e]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-sky-500/20 bg-[#111a36]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
-              <Sparkles className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-blue-600/30 border border-sky-400/40 flex items-center justify-center text-sky-300">
+              <GraduationCap className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h2 className="font-extrabold text-base text-white">Submit External Web Game</h2>
-              <p className="text-[11px] text-gray-400">Provide an itch.io, Game Jolt, or web link to frame</p>
+              <h2 className="font-extrabold text-base text-white">ส่งผลงานเกม CS 67 (Submit CS67 Project)</h2>
+              <p className="text-[11px] text-slate-300">ใส่ URL ผลงานเกมจาก itch.io, Game Jolt หรือเว็บ HTML5 ขึ้นระบบ More Then 66</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -127,32 +128,32 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
 
           {/* URL Input Box */}
           <form onSubmit={handleInspectUrl} className="space-y-2">
-            <label className="block text-xs font-semibold text-gray-300">
-              Game URL (itch.io, Game Jolt, HTML5, WebGL):
+            <label className="block text-xs font-semibold text-slate-200">
+              URL ผลงานเกม (itch.io, Game Jolt, HTML5, WebGL):
             </label>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <LinkIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <LinkIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sky-400" />
                 <input
                   type="url"
                   required
-                  placeholder="https://itch.io/game-title or https://gamejolt.com/..."
+                  placeholder="https://itch.io/game-title หรือ https://gamejolt.com/..."
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#181c2e] border border-gray-700/80 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isScraping || !urlInput}
-                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-indigo-600/20"
+                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/30 border border-sky-300/30"
               >
                 {isScraping ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <Search className="w-4 h-4" />
                 )}
-                <span>Inspect URL</span>
+                <span>ตรวจสอบ URL</span>
               </button>
             </div>
           </form>
@@ -162,8 +163,8 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
             <div className="space-y-4 pt-4 border-t border-white/10">
               
               {/* Status Banner */}
-              <div className="p-3 rounded-xl bg-[#1c2138] border border-white/10 flex items-center justify-between text-xs">
-                <span className="font-semibold text-gray-300">Embeddability Status:</span>
+              <div className="p-3 rounded-xl bg-[#162248] border border-sky-500/20 flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-200">สถานะการฝังเฟรม (Embeddability):</span>
                 {scrapedData.display_mode === 'EMBEDDED' ? (
                   <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
                     <ShieldCheck className="w-3.5 h-3.5" />
@@ -180,47 +181,47 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
               {/* Editable Fields */}
               <div className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-400 mb-1">
-                    Game Title (Extracted from OpenGraph):
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    ชื่อผลงานเกม (Extracted Title):
                   </label>
                   <input
                     type="text"
                     value={customTitle}
                     onChange={(e) => setCustomTitle(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#181c2e] border border-gray-700/80 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white focus:outline-none focus:border-sky-400"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-400 mb-1">
-                    Description:
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    คำอธิบายผลงาน:
                   </label>
                   <textarea
                     rows={3}
                     value={customDescription}
                     onChange={(e) => setCustomDescription(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#181c2e] border border-gray-700/80 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white focus:outline-none focus:border-sky-400"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-400 mb-1 flex items-center gap-1">
-                    <Tag className="w-3 h-3 text-indigo-400" />
-                    Tags (comma separated):
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                    <Tag className="w-3 h-3 text-sky-400" />
+                    แท็กหมวดหมู่ (คั่นด้วยจุลภาค):
                   </label>
                   <input
                     type="text"
                     value={tagsInput}
                     onChange={(e) => setTagsInput(e.target.value)}
-                    placeholder="webgl, arcade, puzzle"
-                    className="w-full px-3 py-2 rounded-xl bg-[#181c2e] border border-gray-700/80 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    placeholder="cs67, webgl, arcade, puzzle"
+                    className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white focus:outline-none focus:border-sky-400"
                   />
                 </div>
 
                 {/* Thumbnail Preview */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-gray-400 mb-1">
-                    Extracted Thumbnail Preview:
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                    ตัวอย่างรูป Thumbnail:
                   </label>
                   <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden bg-black/50 border border-white/10">
                     <img
@@ -238,25 +239,25 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10 bg-[#181c2e]">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10 bg-[#111a36]">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 font-semibold text-xs"
+            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs"
           >
-            Cancel
+            ยกเลิก
           </button>
           
           <button
             onClick={handleSubmit}
             disabled={!scrapedData || isSubmitting}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg shadow-indigo-600/30"
+            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:from-blue-500 hover:to-sky-400 disabled:opacity-50 text-white font-bold text-xs shadow-lg shadow-blue-600/30 border border-white/20"
           >
             {isSubmitting ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <CheckCircle2 className="w-4 h-4" />
             )}
-            <span>Save & Publish Game</span>
+            <span>เผยแพร่ผลงานเกม CS67</span>
           </button>
         </div>
 

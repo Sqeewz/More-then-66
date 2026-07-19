@@ -18,6 +18,7 @@ import {
   ExternalLink,
   Tag,
   Gamepad2,
+  GraduationCap,
 } from 'lucide-react';
 
 export default function GameDetailPage() {
@@ -77,12 +78,12 @@ export default function GameDetailPage() {
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('Game link copied to clipboard!');
+      alert('คัดลอกลิงก์ผลงานเกมเรียบร้อยแล้ว!');
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0b0d14] text-white">
+    <div className="min-h-screen flex flex-col bg-[#050814] text-white">
       <Header
         onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
         searchQuery={searchQuery}
@@ -96,27 +97,27 @@ export default function GameDetailPage() {
         {/* Back Link */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-sky-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to All Games</span>
+          <span>กลับสู่คลังผลงาน CS 67 (Back to Showcase)</span>
         </Link>
 
         {loading ? (
           <div className="space-y-6 animate-pulse">
-            <div className="h-8 w-2/3 bg-[#141724] rounded-lg" />
-            <div className="aspect-video w-full bg-[#141724] rounded-2xl" />
+            <div className="h-8 w-2/3 bg-[#0e152e] rounded-lg" />
+            <div className="aspect-video w-full bg-[#0e152e] rounded-2xl" />
           </div>
         ) : !game ? (
-          <div className="p-12 text-center rounded-2xl bg-[#141724] space-y-4">
-            <Gamepad2 className="w-12 h-12 text-gray-500 mx-auto" />
-            <h2 className="text-xl font-bold">Game Not Found</h2>
-            <p className="text-sm text-gray-400">The requested game ID does not exist.</p>
+          <div className="p-12 text-center rounded-2xl bg-[#0e152e] space-y-4 border border-sky-500/20">
+            <Gamepad2 className="w-12 h-12 text-slate-500 mx-auto" />
+            <h2 className="text-xl font-bold">ไม่พบผลงานเกมที่ระบุ</h2>
+            <p className="text-sm text-slate-400">ไม่พบ ID ผลงานเกมนี้ในระบบ More Then 66</p>
             <Link
               href="/"
-              className="inline-block px-4 py-2 bg-indigo-600 rounded-xl text-xs font-bold text-white"
+              className="inline-block px-4 py-2 bg-blue-600 rounded-xl text-xs font-bold text-white"
             >
-              Return Home
+              กลับหน้าหลัก
             </Link>
           </div>
         ) : (
@@ -128,10 +129,13 @@ export default function GameDetailPage() {
                 <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
                   {game.title}
                 </h1>
-                <p className="text-xs text-gray-400 mt-1 flex items-center gap-2">
-                  <span>Submitted by <strong className="text-indigo-400">{game.creator_id}</strong></span>
+                <p className="text-xs text-slate-300 mt-1 flex items-center gap-2">
+                  <span className="flex items-center gap-1 font-semibold text-sky-300">
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    สร้างสรรค์โดย {game.creator_id} (CS67)
+                  </span>
                   <span>•</span>
-                  <span>{new Date(game.created_at).toLocaleDateString()}</span>
+                  <span>{new Date(game.created_at).toLocaleDateString('th-TH')}</span>
                 </p>
               </div>
 
@@ -142,28 +146,28 @@ export default function GameDetailPage() {
                   disabled={hasLiked}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     hasLiked
-                      ? 'bg-pink-600/30 text-pink-300 border border-pink-500/40 cursor-default'
-                      : 'bg-pink-600 hover:bg-pink-500 text-white shadow-lg shadow-pink-600/20 active:scale-95'
+                      ? 'bg-blue-600/30 text-sky-300 border border-sky-400/40 cursor-default'
+                      : 'bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white shadow-lg shadow-blue-600/30 active:scale-95 border border-white/20'
                   }`}
                 >
                   <ThumbsUp className={`w-4 h-4 ${hasLiked ? 'fill-current' : ''}`} />
-                  <span>{game.metrics.likes.toLocaleString()} Likes</span>
+                  <span>{game.metrics.likes.toLocaleString()} ชื่นชอบ (Likes)</span>
                 </button>
 
-                <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#141724] border border-white/10 text-xs font-semibold text-gray-300">
-                  <Eye className="w-4 h-4 text-indigo-400" />
-                  <span>{game.metrics.views.toLocaleString()} Views</span>
+                <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0e152e] border border-sky-500/30 text-xs font-semibold text-slate-200">
+                  <Eye className="w-4 h-4 text-sky-400" />
+                  <span>{game.metrics.views.toLocaleString()} ผู้เข้าชม</span>
                 </div>
 
-                <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#141724] border border-white/10 text-xs font-bold text-yellow-400">
+                <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0e152e] border border-sky-500/30 text-xs font-bold text-yellow-400">
                   <Star className="w-4 h-4 fill-current" />
                   <span>{game.metrics.rating.toFixed(1)}</span>
                 </div>
 
                 <button
                   onClick={handleShare}
-                  className="p-2 rounded-xl bg-[#141724] hover:bg-[#1f2438] border border-white/10 text-gray-300 hover:text-white transition-colors"
-                  title="Share Game"
+                  className="p-2 rounded-xl bg-[#0e152e] hover:bg-[#162248] border border-sky-500/30 text-slate-200 hover:text-white transition-colors"
+                  title="แชร์ผลงานเกม"
                 >
                   <Share2 className="w-4 h-4" />
                 </button>
@@ -177,22 +181,22 @@ export default function GameDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* Left Column: Description & Tags */}
-              <div className="lg:col-span-2 p-6 rounded-2xl bg-[#141724] border border-white/10 space-y-4">
-                <h3 className="font-extrabold text-base text-white">About the Game</h3>
-                <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
+              <div className="lg:col-span-2 p-6 rounded-2xl bg-[#0e152e] border border-sky-500/20 space-y-4 shadow-xl">
+                <h3 className="font-extrabold text-base text-white">รายละเอียดผลงาน</h3>
+                <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-line">
                   {game.description}
                 </p>
 
-                <div className="pt-4 border-t border-white/5 space-y-2">
-                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                    <Tag className="w-3.5 h-3.5 text-indigo-400" />
-                    Categories & Tags
+                <div className="pt-4 border-t border-white/10 space-y-2">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <Tag className="w-3.5 h-3.5 text-sky-400" />
+                    หมวดหมู่ & แท็ก
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {game.tags.map((t, idx) => (
                       <span
                         key={idx}
-                        className="px-3 py-1 rounded-lg bg-[#1c2138] text-xs font-semibold text-indigo-300 border border-indigo-500/20"
+                        className="px-3 py-1 rounded-lg bg-[#162248] text-xs font-semibold text-sky-300 border border-sky-500/30"
                       >
                         #{t}
                       </span>
@@ -202,34 +206,39 @@ export default function GameDetailPage() {
               </div>
 
               {/* Right Column: Information Specs */}
-              <div className="p-6 rounded-2xl bg-[#141724] border border-white/10 space-y-4">
-                <h3 className="font-extrabold text-base text-white">Platform Specs</h3>
+              <div className="p-6 rounded-2xl bg-[#0e152e] border border-sky-500/20 space-y-4 shadow-xl">
+                <h3 className="font-extrabold text-base text-white">ข้อมูลเชิงเทคนิค (Specs)</h3>
                 
                 <div className="space-y-3 text-xs">
-                  <div className="flex justify-between py-2 border-b border-white/5">
-                    <span className="text-gray-400">Display Mode</span>
-                    <span className="font-bold text-indigo-400">{game.display_mode}</span>
+                  <div className="flex justify-between py-2 border-b border-white/10">
+                    <span className="text-slate-400">สังกัดโครงการ</span>
+                    <span className="font-bold text-sky-300">วิทยาการคอมพิวเตอร์ CS 67</span>
                   </div>
 
-                  <div className="flex justify-between py-2 border-b border-white/5">
-                    <span className="text-gray-400">Aspect Ratio</span>
-                    <span className="font-bold text-white">16:9 Standard</span>
+                  <div className="flex justify-between py-2 border-b border-white/10">
+                    <span className="text-slate-400">โหมดการแสดงผล</span>
+                    <span className="font-bold text-blue-400">{game.display_mode}</span>
                   </div>
 
-                  <div className="flex justify-between py-2 border-b border-white/5">
-                    <span className="text-gray-400">Sandbox Isolation</span>
-                    <span className="font-bold text-emerald-400">Enabled</span>
+                  <div className="flex justify-between py-2 border-b border-white/10">
+                    <span className="text-slate-400">อัตราส่วนเฟรม</span>
+                    <span className="font-bold text-white">16:9 Standard Ratio</span>
+                  </div>
+
+                  <div className="flex justify-between py-2 border-b border-white/10">
+                    <span className="text-slate-400">ความปลอดภัย Sandbox</span>
+                    <span className="font-bold text-emerald-400">เปิดใช้งาน (Enabled)</span>
                   </div>
 
                   <div className="flex justify-between py-2">
-                    <span className="text-gray-400">Original Host</span>
+                    <span className="text-slate-400">ลิงก์เว็บต้นทาง</span>
                     <a
                       href={game.original_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-semibold text-indigo-400 hover:underline flex items-center gap-1"
+                      className="font-semibold text-sky-300 hover:underline flex items-center gap-1"
                     >
-                      <span>Visit Site</span>
+                      <span>เยี่ยมชมเว็บไซต์</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
@@ -241,7 +250,7 @@ export default function GameDetailPage() {
             {/* Related Games */}
             {relatedGames.length > 0 && (
               <div className="space-y-4 pt-4">
-                <h3 className="font-extrabold text-lg text-white">More Games You Might Like</h3>
+                <h3 className="font-extrabold text-lg text-white">ผลงานเกมอื่นๆ ของ CS 67 ที่น่าสนใจ</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   {relatedGames.map((rg) => (
                     <GameCard key={rg.id} game={rg} />
