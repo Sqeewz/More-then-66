@@ -8,7 +8,8 @@ export async function GET(request: NextRequest) {
   const tag = searchParams.get('tag')?.toLowerCase();
   const search = searchParams.get('search')?.toLowerCase();
 
-  let games = [...getStore()];
+  const store = await getStore();
+  let games = [...store];
 
   if (tag) {
     games = games.filter((g) => g.tags.some((t) => t.toLowerCase() === tag));

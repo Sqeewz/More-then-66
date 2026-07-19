@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString(),
     };
 
-    addGame(newGame);
+    await addGame(newGame);
 
     return NextResponse.json({
       message: 'Game submitted successfully',

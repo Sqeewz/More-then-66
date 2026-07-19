@@ -4,7 +4,8 @@ import { deleteGame, getStore } from '../store';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const game = getStore().find((g) => g.id === params.id);
+  const store = await getStore();
+  const game = store.find((g) => g.id === params.id);
   if (!game) {
     return NextResponse.json({ error: `Game with id '${params.id}' not found` }, { status: 404 });
   }
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   const adminPass = request.headers.get('x-admin-pass') || new URL(request.url).searchParams.get('pass') || '';
-  const deleted = deleteGame(params.id, adminPass);
+  const deleted = await deleteGame(params.id, adminPass);
 
   if (!deleted) {
     return NextResponse.json({ error: 'รหัสผ่านแอดมินไม่ถูกต้อง หรือไม่พบเกมที่ต้องการลบ' }, { status: 401 });

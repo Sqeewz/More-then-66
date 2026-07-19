@@ -1,4 +1,5 @@
 import { GameDocument, DisplayMode } from '@/types/game';
+import { getCloudGames, addCloudGame, deleteCloudGame, saveCloudGames, SEED_GAMES } from '@/lib/db';
 import crypto from 'crypto';
 
 // SHA-256 Hash of "67morethen66"
@@ -47,70 +48,49 @@ export function checkUrlSafety(url: string, htmlContent?: string): { safe: boole
   return { safe: true };
 }
 
-let gamesStore: GameDocument[] = [
-  {
-    id: 'seed-2048',
-    title: '2048 Web Edition',
-    description: 'เกมพัซเซิลคณิตศาสตร์ผสมตัวเลขเพื่อพิชิตไทล์ 2048 ผลงานเกมเว็บแนวคลาสสิกสำหรับชาว CS 67',
-    original_url: 'https://play2048.co/',
-    thumbnail_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-    creator_id: 'นิสิต CS67 Team',
-    display_mode: 'EMBEDDED',
-    metrics: { views: 45, likes: 18, rating: 4.9 },
-    tags: ['cs67', 'puzzle', 'math', 'casual', 'html5'],
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'seed-hextris',
-    title: 'Hextris HTML5',
-    description: 'เกมพัซเซิลหมุนตารางหกเหลี่ยมความเร็วสูง ได้รับแรงบันดาลใจจาก Tetris สำหรับทดสอบ WebGL & Canvas',
-    original_url: 'https://hextris.io/',
-    thumbnail_url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80',
-    creator_id: 'ทีมพัฒนา CS67',
-    display_mode: 'EMBEDDED',
-    metrics: { views: 82, likes: 34, rating: 4.8 },
-    tags: ['cs67', 'arcade', 'action', 'webgl', 'puzzle'],
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'seed-itch-demo',
-    title: 'Cyber Samurai Arcade',
-    description: 'เกมวิ่งแอ็กชันสไตล์นีออนไซเบอร์พังก์ ตัวอย่างผลงานเกมภายนอกที่ทดสอบระบบกรอบ iframe',
-    original_url: 'https://itch.io/',
-    thumbnail_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
-    creator_id: 'นิสิต CS67 Dev',
-    display_mode: 'EMBEDDED',
-    metrics: { views: 29, likes: 12, rating: 4.7 },
-    tags: ['cs67', 'cyberpunk', 'itch-io', 'action'],
-    created_at: new Date().toISOString(),
-  },
-];
+let inMemoryGames: GameDocument[] = [...SEED_GAMES];
 
-export function getStore(): GameDocument[] {
-  return gamesStore;
+export async function getStore(): Promise<GameDocument[]> {
+  try {
+    const cloud = await getCloudGames();
+    if (cloud && cloud.length > 0) {
+      inMemoryGames = cloud;
+    }
+  } catch (e) {}
+  return inMemoryGames;
 }
 
-export function addGame(game: GameDocument): GameDocument {
+export async function addGame(game: GameDocument): Promise<GameDocument> {
   game.display_mode = 'EMBEDDED';
-  gamesStore.unshift(game);
+  inMemoryGames.unshift(game);
+  try {
+    await addCloudGame(game);
+  } catch (e) {}
   return game;
 }
 
-export function deleteGame(id: string, passOrHash: string): boolean {
+export async function deleteGame(id: string, passOrHash: string): Promise<boolean> {
   const inputHash = hashString(passOrHash);
   if (inputHash !== ADMIN_PASSWORD_HASH) {
     return false;
   }
-  const initialLen = gamesStore.length;
-  gamesStore = gamesStore.filter((g) => g.id !== id);
-  return gamesStore.length < initialLen;
+  const initialLen = inMemoryGames.length;
+  inMemoryGames = inMemoryGames.filter((g) => g.id !== id);
+  try {
+    await deleteCloudGame(id);
+  } catch (e) {}
+  return inMemoryGames.length < initialLen;
 }
 
-export function updateGameMetrics(id: string, viewInc = 0, likeInc = 0): GameDocument | null {
-  const g = gamesStore.find((item) => item.id === id);
+export async function updateGameMetrics(id: string, viewInc = 0, likeInc = 0): Promise<GameDocument | null> {
+  const games = await getStore();
+  const g = games.find((item) => item.id === id);
   if (!g) return null;
   g.metrics.views += viewInc;
   g.metrics.likes += likeInc;
+  try {
+    await saveCloudGames(games);
+  } catch (e) {}
   return g;
 }
 
