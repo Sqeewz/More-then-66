@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addGame, scrapeUrl } from './store';
+import { addGame, scrapeUrl } from '../store';
 import { GameDocument } from '@/types/game';
 
 export const dynamic = 'force-dynamic';
