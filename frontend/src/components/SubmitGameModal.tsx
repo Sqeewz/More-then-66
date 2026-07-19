@@ -7,12 +7,12 @@ import {
   X,
   Link as LinkIcon,
   Search,
-  Sparkles,
   ShieldCheck,
   AlertTriangle,
   Tag,
   CheckCircle2,
   GraduationCap,
+  User,
 } from 'lucide-react';
 
 interface SubmitGameModalProps {
@@ -27,6 +27,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
   onSuccess,
 }) => {
   const [urlInput, setUrlInput] = useState('');
+  const [creatorName, setCreatorName] = useState('');
   const [isScraping, setIsScraping] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,13 +77,14 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
         custom_title: customTitle,
         custom_description: customDescription,
         custom_tags: parsedTags,
-        creator_id: 'CS67 Student Developer',
+        creator_id: creatorName.trim() || 'นิสิต CS 67',
       });
 
       onSuccess();
       onClose();
       // Reset
       setUrlInput('');
+      setCreatorName('');
       setScrapedData(null);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการบันทึกผลงานเกม';
@@ -104,7 +106,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
             </div>
             <div>
               <h2 className="font-extrabold text-base text-white">ส่งผลงานเกม CS 67 (Submit CS67 Project)</h2>
-              <p className="text-[11px] text-slate-300">ใส่ URL ผลงานเกมจาก itch.io, Game Jolt หรือเว็บ HTML5 ขึ้นระบบ More Then 66</p>
+              <p className="text-[11px] text-slate-300">ระบุชื่อผู้ทำและ URL ผลงานเกมเพื่อขึ้นระบบ More Then 66</p>
             </div>
           </div>
 
@@ -126,36 +128,57 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
             </div>
           )}
 
-          {/* URL Input Box */}
-          <form onSubmit={handleInspectUrl} className="space-y-2">
-            <label className="block text-xs font-semibold text-slate-200">
-              URL ผลงานเกม (itch.io, Game Jolt, HTML5, WebGL):
-            </label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <LinkIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sky-400" />
-                <input
-                  type="url"
-                  required
-                  placeholder="https://itch.io/game-title หรือ https://gamejolt.com/..."
-                  value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isScraping || !urlInput}
-                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/30 border border-sky-300/30"
-              >
-                {isScraping ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <Search className="w-4 h-4" />
-                )}
-                <span>ตรวจสอบ URL</span>
-              </button>
+          {/* Form Inputs */}
+          <form onSubmit={handleInspectUrl} className="space-y-3">
+            
+            {/* Input: Creator Name */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-200 mb-1 flex items-center gap-1">
+                <User className="w-3.5 h-3.5 text-sky-400" />
+                ชื่อผู้สร้างสรรค์ผลงาน / ผู้พัฒนา (Creator / Developer Name):
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="เช่น นายวิทยา คอมพิวเตอร์ (CS67) หรือ ชื่อทีมผู้พัฒนา"
+                value={creatorName}
+                onChange={(e) => setCreatorName(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400"
+              />
             </div>
+
+            {/* Input: Game URL */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-200 mb-1">
+                URL ผลงานเกม (itch.io, Game Jolt, HTML5, WebGL):
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <LinkIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sky-400" />
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://itch.io/game-title หรือ https://gamejolt.com/..."
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isScraping || !urlInput}
+                  className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/30 border border-sky-300/30 whitespace-nowrap"
+                >
+                  {isScraping ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Search className="w-4 h-4" />
+                  )}
+                  <span>ตรวจสอบ URL</span>
+                </button>
+              </div>
+            </div>
+
           </form>
 
           {/* Scraped Metadata Preview Card */}

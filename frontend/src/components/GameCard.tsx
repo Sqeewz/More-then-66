@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { GameDocument } from '@/types/game';
-import { Play, Eye, ThumbsUp, Star, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Play, Eye, ThumbsUp, Star, ExternalLink, ShieldCheck, User } from 'lucide-react';
 
 interface GameCardProps {
   game: GameDocument;
@@ -96,8 +96,9 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
             </span>
           </div>
 
-          <span className="text-[10px] text-sky-300 font-semibold uppercase tracking-wide">
-            CS 67 DEV
+          <span className="flex items-center gap-1 text-[10px] text-sky-300 font-semibold tracking-wide truncate max-w-[120px]">
+            <User className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">{game.creator_id}</span>
           </span>
         </div>
       </div>
