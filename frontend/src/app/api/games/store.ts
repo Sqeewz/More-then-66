@@ -49,12 +49,12 @@ export function checkUrlSafety(url: string, htmlContent?: string): { safe: boole
   return { safe: true };
 }
 
-let inMemoryGames: GameDocument[] = [...SEED_GAMES];
+let inMemoryGames: GameDocument[] = [];
 
 export async function getStore(): Promise<GameDocument[]> {
   try {
     const cloud = await getCloudGames();
-    if (cloud && cloud.length > 0) {
+    if (cloud) {
       inMemoryGames = cloud;
     }
   } catch (e) {}
