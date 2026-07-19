@@ -40,11 +40,21 @@ export default function GameDetailPage() {
     const loadGameDetails = async () => {
       try {
         setLoading(true);
-        const res = await getGameById(gameId);
-        setGame(res.game);
 
-        // Increment View Counter
-        incrementGameView(gameId).catch(() => {});
+        // Check if user has liked this game previously in localStorage
+        const likedInStorage = localStorage.getItem(`liked_${gameId}`);
+        if (likedInStorage === 'true') {
+          setHasLiked(true);
+        }
+
+        // Increment Real View Counter on page visit
+        const updatedView = await incrementGameView(gameId).catch(() => null);
+        if (updatedView && updatedView.game) {
+          setGame(updatedView.game);
+        } else {
+          const res = await getGameById(gameId);
+          setGame(res.game);
+        }
 
         // Fetch Related Games
         const all = await getGames();
@@ -63,6 +73,7 @@ export default function GameDetailPage() {
     if (!game || hasLiked) return;
     try {
       setHasLiked(true);
+      localStorage.setItem(`liked_${game.id}`, 'true');
       const res = await incrementGameLike(game.id);
       setGame(res.game);
     } catch (err) {
@@ -132,7 +143,7 @@ export default function GameDetailPage() {
                 <p className="text-xs text-slate-300 mt-1 flex items-center gap-2">
                   <span className="flex items-center gap-1 font-semibold text-sky-300">
                     <GraduationCap className="w-3.5 h-3.5" />
-                    สร้างสรรค์โดย {game.creator_id} (CS67)
+                    สร้างสรรค์โดย {game.creator_id}
                   </span>
                   <span>•</span>
                   <span>{new Date(game.created_at).toLocaleDateString('th-TH')}</span>
@@ -146,17 +157,17 @@ export default function GameDetailPage() {
                   disabled={hasLiked}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                     hasLiked
-                      ? 'bg-blue-600/30 text-sky-300 border border-sky-400/40 cursor-default'
+                      ? 'bg-blue-600/30 text-sky-300 border border-sky-400/40 cursor-default shadow-inner'
                       : 'bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white shadow-lg shadow-blue-600/30 active:scale-95 border border-white/20'
                   }`}
                 >
-                  <ThumbsUp className={`w-4 h-4 ${hasLiked ? 'fill-current' : ''}`} />
-                  <span>{game.metrics.likes.toLocaleString()} ชื่นชอบ (Likes)</span>
+                  <ThumbsUp className={`w-4 h-4 ${hasLiked ? 'fill-current text-sky-300' : ''}`} />
+                  <span>{hasLiked ? `กดชื่นชอบแล้ว (${game.metrics.likes})` : `ชื่นชอบ (${game.metrics.likes})`}</span>
                 </button>
 
                 <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0e152e] border border-sky-500/30 text-xs font-semibold text-slate-200">
                   <Eye className="w-4 h-4 text-sky-400" />
-                  <span>{game.metrics.views.toLocaleString()} ผู้เข้าชม</span>
+                  <span>{game.metrics.views.toLocaleString()} ผู้เข้าชมจริง</span>
                 </div>
 
                 <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0e152e] border border-sky-500/30 text-xs font-bold text-yellow-400">
@@ -211,6 +222,11 @@ export default function GameDetailPage() {
                 
                 <div className="space-y-3 text-xs">
                   <div className="flex justify-between py-2 border-b border-white/10">
+                    <span className="text-slate-400">ผู้สร้างสรรค์</span>
+                    <span className="font-bold text-sky-300">{game.creator_id}</span>
+                  </div>
+
+                  <div className="flex justify-between py-2 border-b border-white/10">
                     <span className="text-slate-400">สังกัดโครงการ</span>
                     <span className="font-bold text-sky-300">วิทยาการคอมพิวเตอร์ CS 67</span>
                   </div>
@@ -223,11 +239,6 @@ export default function GameDetailPage() {
                   <div className="flex justify-between py-2 border-b border-white/10">
                     <span className="text-slate-400">อัตราส่วนเฟรม</span>
                     <span className="font-bold text-white">16:9 Standard Ratio</span>
-                  </div>
-
-                  <div className="flex justify-between py-2 border-b border-white/10">
-                    <span className="text-slate-400">ความปลอดภัย Sandbox</span>
-                    <span className="font-bold text-emerald-400">เปิดใช้งาน (Enabled)</span>
                   </div>
 
                   <div className="flex justify-between py-2">

@@ -4,37 +4,37 @@ let gamesStore: GameDocument[] = [
   {
     id: 'seed-2048',
     title: '2048 Web Edition',
-    description: 'Join the numbers and get to the 2048 tile! Addictive mathematical puzzle game.',
+    description: 'เกมพัซเซิลคณิตศาสตร์ผสมตัวเลขเพื่อพิชิตไทล์ 2048 ผลงานเกมเว็บแนวคลาสสิกสำหรับชาว CS 67',
     original_url: 'https://play2048.co/',
     thumbnail_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-    creator_id: 'system_admin',
+    creator_id: 'นิสิต CS67 Team',
     display_mode: 'EMBEDDED',
-    metrics: { views: 1420, likes: 312, rating: 4.8 },
-    tags: ['puzzle', 'math', 'casual', 'html5'],
+    metrics: { views: 45, likes: 18, rating: 4.9 },
+    tags: ['cs67', 'puzzle', 'math', 'casual', 'html5'],
     created_at: new Date().toISOString(),
   },
   {
     id: 'seed-hextris',
     title: 'Hextris HTML5',
-    description: 'Fast-paced puzzle game inspired by Tetris played on a rotating hexagon grid.',
+    description: 'เกมพัซเซิลหมุนตารางหกเหลี่ยมความเร็วสูง ได้รับแรงบันดาลใจจาก Tetris สำหรับทดสอบ WebGL & Canvas',
     original_url: 'https://hextris.io/',
     thumbnail_url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80',
-    creator_id: 'system_admin',
+    creator_id: 'ทีมพัฒนา CS67',
     display_mode: 'EMBEDDED',
-    metrics: { views: 2890, likes: 540, rating: 4.9 },
-    tags: ['arcade', 'action', 'webgl', 'puzzle'],
+    metrics: { views: 82, likes: 34, rating: 4.8 },
+    tags: ['cs67', 'arcade', 'action', 'webgl', 'puzzle'],
     created_at: new Date().toISOString(),
   },
   {
     id: 'seed-itch-demo',
     title: 'Cyber Samurai Arcade',
-    description: 'Futuristic neon slice-and-dice runner. Demo link showcasing external frame detection.',
+    description: 'เกมวิ่งแอ็กชันสไตล์นีออนไซเบอร์พังก์ ตัวอย่างผลงานเกมภายนอกที่ทดสอบระบบกรอบ iframe ป้องกันการฝัง',
     original_url: 'https://itch.io/',
     thumbnail_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
-    creator_id: 'community_user_42',
+    creator_id: 'นิสิต CS67 Dev',
     display_mode: 'POPUP',
-    metrics: { views: 850, likes: 198, rating: 4.5 },
-    tags: ['cyberpunk', 'itch-io', 'action'],
+    metrics: { views: 29, likes: 12, rating: 4.7 },
+    tags: ['cs67', 'cyberpunk', 'itch-io', 'action'],
     created_at: new Date().toISOString(),
   },
 ];
@@ -86,12 +86,12 @@ export async function scrapeUrl(targetUrl: string) {
     // og:title or title
     const ogTitleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i);
     const titleTagMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    const title = ogTitleMatch?.[1] || titleTagMatch?.[1] || 'User Submitted Web Game';
+    const title = ogTitleMatch?.[1] || titleTagMatch?.[1] || 'ผลงานเกม CS67';
 
     // og:description or meta description
     const ogDescMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
     const metaDescMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
-    const description = ogDescMatch?.[1] || metaDescMatch?.[1] || 'Play this web game on our aggregator platform!';
+    const description = ogDescMatch?.[1] || metaDescMatch?.[1] || 'เล่นผลงานเว็บเกมนี้บนแพลตฟอร์ม More Then 66 (CS67)';
 
     // og:image
     const ogImgMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
@@ -102,7 +102,7 @@ export async function scrapeUrl(targetUrl: string) {
       thumbnail_url = `${u.origin}${thumbnail_url}`;
     }
 
-    const tags: string[] = ['arcade'];
+    const tags: string[] = ['cs67', 'arcade'];
     if (targetUrl.includes('itch.io')) tags.push('itch-io');
     if (targetUrl.includes('gamejolt')) tags.push('game-jolt');
     if (html.toLowerCase().includes('webgl')) tags.push('webgl');
@@ -118,11 +118,11 @@ export async function scrapeUrl(targetUrl: string) {
     };
   } catch (err) {
     return {
-      title: 'Submitted Web Game',
-      description: 'Play this web game live inside our platform container.',
+      title: 'ผลงานเว็บเกม CS 67',
+      description: 'เล่นผลงานเว็บเกมสดผ่านระบบ Sandboxed Player 16:9',
       thumbnail_url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
       display_mode: 'EMBEDDED' as DisplayMode,
-      tags: ['arcade', 'webgl'],
+      tags: ['cs67', 'arcade', 'webgl'],
       original_url: targetUrl,
     };
   }
