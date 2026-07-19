@@ -11,6 +11,7 @@ export interface GameDocument {
   title: string;
   description: string;
   original_url: string;
+  embed_code?: string;
   thumbnail_url: string;
   creator_id: string;
   display_mode: DisplayMode;
@@ -24,15 +25,17 @@ export interface ScrapedMetadata {
   description: string;
   thumbnail_url: string;
   display_mode: DisplayMode;
-  original_url: string;
   tags: string[];
+  original_url: string;
+  embed_code?: string;
 }
 
 export interface SubmitGamePayload {
   url: string;
-  creator_id?: string;
+  embed_code?: string;
   custom_title?: string;
   custom_description?: string;
   custom_thumbnail_url?: string;
   custom_tags?: string[];
+  creator_id?: string;
 }

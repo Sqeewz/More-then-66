@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
       title: body.custom_title || scraped.title,
       description: body.custom_description || scraped.description,
       original_url: body.url,
+      embed_code: body.embed_code || scraped.embed_code,
       thumbnail_url: body.custom_thumbnail_url || scraped.thumbnail_url,
       creator_id: body.creator_id || 'นิสิต CS 67',
       display_mode: scraped.display_mode,

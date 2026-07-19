@@ -14,6 +14,7 @@ import {
   GraduationCap,
   User,
   Image as ImageIcon,
+  Code,
 } from 'lucide-react';
 
 interface SubmitGameModalProps {
@@ -23,6 +24,20 @@ interface SubmitGameModalProps {
 }
 
 const LOCAL_STORAGE_GAMES_KEY = 'cs67_user_submitted_games';
+
+export function parseUrlOrEmbed(input: string): { url: string; embedCode?: string } {
+  const trimmed = input.trim();
+  if (trimmed.includes('<iframe') && trimmed.includes('src=')) {
+    const srcMatch = trimmed.match(/src=["']([^"']+)["']/i);
+    if (srcMatch?.[1]) {
+      return {
+        url: srcMatch[1],
+        embedCode: trimmed,
+      };
+    }
+  }
+  return { url: trimmed };
+}
 
 export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
   isOpen,
@@ -35,6 +50,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scrapedData, setScrapedData] = useState<ScrapedMetadata | null>(null);
+  const [detectedEmbedCode, setDetectedEmbedCode] = useState<string | undefined>(undefined);
 
   // Editable Form Fields
   const [customTitle, setCustomTitle] = useState('');
@@ -51,7 +67,11 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
     try {
       setIsScraping(true);
       setError(null);
-      const res = await scrapeUrlPreview(urlInput);
+
+      const parsed = parseUrlOrEmbed(urlInput);
+      setDetectedEmbedCode(parsed.embedCode);
+
+      const res = await scrapeUrlPreview(parsed.url);
       setScrapedData(res);
       setCustomTitle(res.title);
       setCustomDescription(res.description);
@@ -72,13 +92,15 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setIsSubmitting(true);
       setError(null);
 
+      const parsed = parseUrlOrEmbed(urlInput);
       const parsedTags = tagsInput
         .split(',')
         .map((t) => t.trim().toLowerCase())
         .filter((t) => t.length > 0);
 
       const res = await submitGame({
-        url: urlInput,
+        url: parsed.url,
+        embed_code: parsed.embedCode || detectedEmbedCode,
         custom_title: customTitle,
         custom_description: customDescription,
         custom_thumbnail_url: customThumbnail.trim() || scrapedData.thumbnail_url,
@@ -86,7 +108,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
         creator_id: creatorName.trim() || 'นิสิต CS 67',
       });
 
-      // Save into LocalStorage persistence so submitted game NEVER disappears on server restarts
+      // Save into LocalStorage persistence
       try {
         const existing = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
         const localList: GameDocument[] = existing ? JSON.parse(existing) : [];
@@ -105,6 +127,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setCreatorName('');
       setCustomThumbnail('');
       setScrapedData(null);
+      setDetectedEmbedCode(undefined);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการบันทึกผลงานเกม';
       setError(msg);
@@ -124,8 +147,8 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
               <GraduationCap className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h2 className="font-extrabold text-base text-white">ส่งผลงานเกม CS 67 (Submit CS67 Project)</h2>
-              <p className="text-[11px] text-slate-300">ใส่ชื่อผู้ทำ, รูปปกเกม และ URL ผลงานเพื่อขึ้นระบบ More Then 66</p>
+              <h2 className="font-extrabold text-base text-white">ส่งผลงานเกม CS 67 (URL / HTML Embed Code)</h2>
+              <p className="text-[11px] text-slate-300">ใส่ URL เกม หรือวางโค้ด HTML Embed (`&lt;iframe src="..."&gt;`) จาก itch.io</p>
             </div>
           </div>
 
@@ -166,35 +189,39 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
               />
             </div>
 
-            {/* Input: Game URL */}
+            {/* Input: Game URL or Embed Code */}
             <div>
-              <label className="block text-xs font-semibold text-slate-200 mb-1">
-                URL ผลงานเกม (itch.io, Game Jolt, HTML5, WebGL):
+              <label className="block text-xs font-semibold text-slate-200 mb-1 flex items-center gap-1">
+                <Code className="w-3.5 h-3.5 text-sky-400" />
+                URL หรือ โค้ด HTML Embed (`&lt;iframe src="..."&gt;`):
               </label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <LinkIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-sky-400" />
-                  <input
-                    type="url"
+              <div className="space-y-2">
+                <div className="relative">
+                  <LinkIcon className="absolute left-3.5 top-3 w-4 h-4 text-sky-400" />
+                  <textarea
+                    rows={3}
                     required
-                    placeholder="https://itch.io/game-title หรือ https://gamejolt.com/..."
+                    placeholder="วางลิงก์ https://... หรือ วางโค้ด <iframe src=&quot;https://itch.io/embed-upload/...&quot;></iframe> จาก itch.io ที่นี่"
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400 font-mono"
                   />
                 </div>
-                <button
-                  type="submit"
-                  disabled={isScraping || !urlInput}
-                  className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/30 border border-sky-300/30 whitespace-nowrap"
-                >
-                  {isScraping ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <Search className="w-4 h-4" />
-                  )}
-                  <span>ตรวจสอบ URL</span>
-                </button>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isScraping || !urlInput.trim()}
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/30 border border-sky-300/30"
+                  >
+                    {isScraping ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Search className="w-4 h-4" />
+                    )}
+                    <span>ตรวจวิเคราะห์ URL / HTML Embed</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -206,25 +233,24 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
               
               {/* Status Banner */}
               <div className="p-3 rounded-xl bg-[#162248] border border-sky-500/20 flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-200">สถานะการฝังเฟรม (Embeddability):</span>
-                {scrapedData.display_mode === 'EMBEDDED' ? (
-                  <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    ALLOW_FRAMING (EMBEDDED)
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    FRAME_RESTRICTED (POPUP)
-                  </span>
-                )}
+                <span className="font-semibold text-slate-200">สถานะการเล่นในเว็บ (Embed Playing Status):</span>
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  READY_FOR_IN_WEBSITE_PLAY
+                </span>
               </div>
+
+              {detectedEmbedCode && (
+                <div className="p-3 rounded-xl bg-blue-600/10 border border-sky-400/30 text-sky-300 text-xs font-mono">
+                  ✨ ตรวจพบโค้ด HTML Embed และสกัด URL เล่นเกมสดเรียบร้อยแล้ว
+                </div>
+              )}
 
               {/* Editable Fields */}
               <div className="space-y-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                    ชื่อผลงานเกม (Extracted Title):
+                    ชื่อผลงานเกม (Game Title):
                   </label>
                   <input
                     type="text"
