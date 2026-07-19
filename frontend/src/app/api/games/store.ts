@@ -1,4 +1,4 @@
-import { GameDocument, DisplayMode } from '@/types/game';
+import { GameDocument, DisplayMode, ScrapedMetadata } from '@/types/game';
 import { getCloudGames, deleteCloudGame, saveCloudGames, SEED_GAMES } from '@/lib/db';
 import crypto from 'crypto';
 
@@ -108,7 +108,7 @@ export async function updateGameMetrics(id: string, viewInc = 0, likeInc = 0): P
   return g;
 }
 
-export async function scrapeUrl(targetUrl: string) {
+export async function scrapeUrl(targetUrl: string): Promise<ScrapedMetadata> {
   const urlCheck = checkUrlSafety(targetUrl);
   if (!urlCheck.safe) {
     throw new Error(urlCheck.reason || 'URL ไม่อนุญาต');
@@ -157,6 +157,7 @@ export async function scrapeUrl(targetUrl: string) {
       display_mode: 'EMBEDDED' as DisplayMode,
       tags: Array.from(new Set(tags)),
       original_url: targetUrl,
+      embed_code: undefined,
     };
   } catch (err: unknown) {
     if (err instanceof Error && err.message.startsWith('⚠️')) {
@@ -169,6 +170,7 @@ export async function scrapeUrl(targetUrl: string) {
       display_mode: 'EMBEDDED' as DisplayMode,
       tags: ['cs67', 'arcade', 'webgl'],
       original_url: targetUrl,
+      embed_code: undefined,
     };
   }
 }
