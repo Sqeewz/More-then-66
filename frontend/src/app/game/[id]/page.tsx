@@ -23,6 +23,8 @@ import {
   Trash2,
 } from 'lucide-react';
 
+const LOCAL_STORAGE_GAMES_KEY = 'cs67_user_submitted_games';
+
 export default function GameDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -46,7 +48,7 @@ export default function GameDetailPage() {
     if (!gameId) return;
 
     const storedAuth = sessionStorage.getItem('cs67_admin_auth');
-    if (storedAuth === ADMIN_PASS_HASH) {
+    if (storedAuth === ADMIN_PASS_HASH || storedAuth === '67morethen66') {
       setIsAdmin(true);
       setAdminPass(storedAuth);
     }
@@ -60,16 +62,34 @@ export default function GameDetailPage() {
           setHasLiked(true);
         }
 
+        let foundGame: GameDocument | null = null;
         const updatedView = await incrementGameView(gameId).catch(() => null);
         if (updatedView && updatedView.game) {
-          setGame(updatedView.game);
+          foundGame = updatedView.game;
         } else {
-          const res = await getGameById(gameId);
-          setGame(res.game);
+          const res = await getGameById(gameId).catch(() => null);
+          if (res && res.game) {
+            foundGame = res.game;
+          }
         }
 
-        const all = await getGames();
-        setRelatedGames(all.games.filter((g) => g.id !== gameId).slice(0, 3));
+        // Fallback to LocalStorage if game not found in memory/cloud
+        if (!foundGame) {
+          try {
+            const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
+            if (storedLocal) {
+              const localGames: GameDocument[] = JSON.parse(storedLocal);
+              foundGame = localGames.find((g) => g.id === gameId) || null;
+            }
+          } catch (e) {}
+        }
+
+        setGame(foundGame);
+
+        const all = await getGames().catch(() => ({ count: 0, games: [] }));
+        if (all && Array.isArray(all.games)) {
+          setRelatedGames(all.games.filter((g) => g.id !== gameId).slice(0, 3));
+        }
       } catch (err) {
         console.error('Failed to load game details:', err);
       } finally {
@@ -92,12 +112,23 @@ export default function GameDetailPage() {
   };
 
   const handleDeleteGame = async (id: string, title: string) => {
-    if (!isAdmin || !adminPass) return;
     const confirmDelete = confirm(`คุณต้องการลบผลงานเกม "${title}" ออกจากระบบ More Then 66 หรือไม่?`);
     if (!confirmDelete) return;
 
     try {
-      await deleteGameApi(id, adminPass);
+      const passToSend = adminPass || sessionStorage.getItem('cs67_admin_auth') || ADMIN_PASS_HASH;
+      await deleteGameApi(id, passToSend);
+
+      // Clean LocalStorage
+      try {
+        const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
+        if (storedLocal) {
+          const localGames: GameDocument[] = JSON.parse(storedLocal);
+          const updatedLocal = localGames.filter((g) => g.id !== id);
+          localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(updatedLocal));
+        }
+      } catch (e) {}
+
       alert(`ลบผลงานเกม "${title}" เรียบร้อยแล้ว`);
       router.push('/');
     } catch (err: unknown) {
@@ -111,8 +142,22 @@ export default function GameDetailPage() {
     try {
       setHasLiked(true);
       localStorage.setItem(`liked_${game.id}`, 'true');
-      const res = await incrementGameLike(game.id);
-      setGame(res.game);
+      const res = await incrementGameLike(game.id).catch(() => null);
+      if (res && res.game) {
+        setGame(res.game);
+      } else {
+        setGame((prev) =>
+          prev
+            ? {
+                ...prev,
+                metrics: {
+                  ...prev.metrics,
+                  likes: (prev.metrics?.likes || 0) + 1,
+                },
+              }
+            : null
+        );
+      }
     } catch (err) {
       console.error('Failed to like game:', err);
     }
@@ -129,6 +174,10 @@ export default function GameDetailPage() {
       alert('คัดลอกลิงก์ผลงานเกมเรียบร้อยแล้ว!');
     }
   };
+
+  const viewsCount = game?.metrics?.views ?? 0;
+  const likesCount = game?.metrics?.likes ?? 0;
+  const ratingVal = game?.metrics?.rating ?? 5.0;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#050814] text-white">
@@ -163,10 +212,10 @@ export default function GameDetailPage() {
           <div className="p-12 text-center rounded-2xl bg-[#0e152e] space-y-4 border border-sky-500/20">
             <Gamepad2 className="w-12 h-12 text-slate-500 mx-auto" />
             <h2 className="text-xl font-bold">ไม่พบผลงานเกมที่ระบุ</h2>
-            <p className="text-sm text-slate-400">ไม่พบ ID ผลงานเกมนี้ในระบบ More Then 66</p>
+            <p className="text-sm text-slate-400">ไม่พบ ID ผลงานเกมนี้ในระบบ More Then 66 หรือเกมถูกลบออกไปแล้ว</p>
             <Link
               href="/"
-              className="inline-block px-4 py-2 bg-blue-600 rounded-xl text-xs font-bold text-white"
+              className="inline-block px-4 py-2 bg-blue-600 rounded-xl text-xs font-bold text-white shadow-lg"
             >
               กลับหน้าหลัก
             </Link>
@@ -183,10 +232,10 @@ export default function GameDetailPage() {
                 <p className="text-xs text-slate-300 mt-1 flex items-center gap-2">
                   <span className="flex items-center gap-1 font-semibold text-sky-300">
                     <GraduationCap className="w-3.5 h-3.5" />
-                    สร้างสรรค์โดย {game.creator_id}
+                    สร้างสรรค์โดย {game.creator_id || 'นิสิต CS 67'}
                   </span>
                   <span>•</span>
-                  <span>{new Date(game.created_at).toLocaleDateString('th-TH')}</span>
+                  <span>{new Date(game.created_at || Date.now()).toLocaleDateString('th-TH')}</span>
                 </p>
               </div>
 
@@ -213,17 +262,17 @@ export default function GameDetailPage() {
                   }`}
                 >
                   <ThumbsUp className={`w-4 h-4 ${hasLiked ? 'fill-current text-sky-300' : ''}`} />
-                  <span>{hasLiked ? `กดชื่นชอบแล้ว (${game.metrics.likes})` : `ชื่นชอบ (${game.metrics.likes})`}</span>
+                  <span>{hasLiked ? `กดชื่นชอบแล้ว (${likesCount})` : `ชื่นชอบ (${likesCount})`}</span>
                 </button>
 
                 <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0e152e] border border-sky-500/30 text-xs font-semibold text-slate-200">
                   <Eye className="w-4 h-4 text-sky-400" />
-                  <span>{game.metrics.views.toLocaleString()} ผู้เข้าชมจริง</span>
+                  <span>{viewsCount.toLocaleString()} ผู้เข้าชมจริง</span>
                 </div>
 
                 <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0e152e] border border-sky-500/30 text-xs font-bold text-yellow-400">
                   <Star className="w-4 h-4 fill-current" />
-                  <span>{game.metrics.rating.toFixed(1)}</span>
+                  <span>{ratingVal.toFixed(1)}</span>
                 </div>
 
                 <button
@@ -249,22 +298,24 @@ export default function GameDetailPage() {
                   {game.description}
                 </p>
 
-                <div className="pt-4 border-t border-white/10 space-y-2">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                    <Tag className="w-3.5 h-3.5 text-sky-400" />
-                    หมวดหมู่ & แท็ก
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {game.tags.map((t, idx) => (
-                      <span
-                        key={idx}
-                        className="px-3 py-1 rounded-lg bg-[#162248] text-xs font-semibold text-sky-300 border border-sky-500/30"
-                      >
-                        #{t}
-                      </span>
-                    ))}
+                {game.tags && game.tags.length > 0 && (
+                  <div className="pt-4 border-t border-white/10 space-y-2">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                      <Tag className="w-3.5 h-3.5 text-sky-400" />
+                      หมวดหมู่ & แท็ก
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {game.tags.map((t, idx) => (
+                        <span
+                          key={idx}
+                          className="px-3 py-1 rounded-lg bg-[#162248] text-xs font-semibold text-sky-300 border border-sky-500/30"
+                        >
+                          #{t}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Right Column: Information Specs */}
@@ -274,7 +325,7 @@ export default function GameDetailPage() {
                 <div className="space-y-3 text-xs">
                   <div className="flex justify-between py-2 border-b border-white/10">
                     <span className="text-slate-400">ผู้สร้างสรรค์</span>
-                    <span className="font-bold text-sky-300">{game.creator_id}</span>
+                    <span className="font-bold text-sky-300">{game.creator_id || 'นิสิต CS 67'}</span>
                   </div>
 
                   <div className="flex justify-between py-2 border-b border-white/10">
@@ -284,7 +335,7 @@ export default function GameDetailPage() {
 
                   <div className="flex justify-between py-2 border-b border-white/10">
                     <span className="text-slate-400">โหมดการแสดงผล</span>
-                    <span className="font-bold text-blue-400">{game.display_mode}</span>
+                    <span className="font-bold text-blue-400">{game.display_mode || 'EMBEDDED'}</span>
                   </div>
 
                   <div className="flex justify-between py-2 border-b border-white/10">

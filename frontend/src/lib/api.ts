@@ -3,19 +3,23 @@ import { GameDocument, ScrapedMetadata, SubmitGamePayload } from '@/types/game';
 const RUST_BACKEND_BASE = 'http://127.0.0.1:8000/api';
 
 async function fetchWithFallback<T>(rustEndpoint: string, nextEndpoint: string, options?: RequestInit): Promise<T> {
-  try {
-    const rustRes = await fetch(`${RUST_BACKEND_BASE}${rustEndpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
-    if (rustRes.ok) {
-      return await rustRes.json();
+  const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+  if (isLocalhost) {
+    try {
+      const rustRes = await fetch(`${RUST_BACKEND_BASE}${rustEndpoint}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
+      });
+      if (rustRes.ok) {
+        return await rustRes.json();
+      }
+    } catch (err) {
+      // Fall back to Next.js API routes when Rust server is offline
     }
-  } catch (err) {
-    // Rust backend not reachable, falling back to Next.js server route
   }
 
   const nextRes = await fetch(nextEndpoint, {
