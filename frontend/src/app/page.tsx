@@ -9,6 +9,8 @@ import { deleteGameApi, getGames } from '@/lib/api';
 import { GameDocument } from '@/types/game';
 import { Gamepad2, Flame, ShieldCheck, RefreshCw, GraduationCap, Laptop, Code } from 'lucide-react';
 
+const LOCAL_STORAGE_GAMES_KEY = 'cs67_user_submitted_games';
+
 export default function HomePage() {
   const [games, setGames] = useState<GameDocument[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +27,44 @@ export default function HomePage() {
     try {
       setLoading(true);
       const res = await getGames(activeTag, searchQuery);
-      setGames(res.games);
+      let combinedGames = [...res.games];
+
+      // Restore user-submitted games from browser LocalStorage so they are NEVER lost on server restarts
+      try {
+        const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
+        if (storedLocal) {
+          const localGames: GameDocument[] = JSON.parse(storedLocal);
+          // Merge local games without duplicates
+          for (const lg of localGames) {
+            if (!combinedGames.some((g) => g.id === lg.id)) {
+              combinedGames.unshift(lg);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('LocalStorage read error:', e);
+      }
+
+      // Filter by activeTag if selected
+      if (activeTag) {
+        const tagLower = activeTag.toLowerCase();
+        combinedGames = combinedGames.filter((g) =>
+          g.tags.some((t) => t.toLowerCase() === tagLower)
+        );
+      }
+
+      // Filter by search query if typed
+      if (searchQuery) {
+        const queryLower = searchQuery.toLowerCase();
+        combinedGames = combinedGames.filter(
+          (g) =>
+            g.title.toLowerCase().includes(queryLower) ||
+            g.description.toLowerCase().includes(queryLower) ||
+            g.creator_id.toLowerCase().includes(queryLower)
+        );
+      }
+
+      setGames(combinedGames);
     } catch (err) {
       console.error('Failed to load games:', err);
     } finally {
@@ -53,6 +92,10 @@ export default function HomePage() {
     setAdminPass('');
   };
 
+  const handleGameSubmitted = () => {
+    fetchGames();
+  };
+
   const handleDeleteGame = async (id: string, title: string) => {
     if (!isAdmin || !adminPass) return;
     const confirmDelete = confirm(`คุณต้องการลบผลงานเกม "${title}" ออกจากระบบ More Then 66 หรือไม่?`);
@@ -60,6 +103,17 @@ export default function HomePage() {
 
     try {
       await deleteGameApi(id, adminPass);
+      
+      // Also remove from local storage if present
+      try {
+        const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
+        if (storedLocal) {
+          const localGames: GameDocument[] = JSON.parse(storedLocal);
+          const updatedLocal = localGames.filter((g) => g.id !== id);
+          localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(updatedLocal));
+        }
+      } catch (e) {}
+
       alert(`ลบผลงานเกม "${title}" เรียบร้อยแล้ว`);
       fetchGames();
     } catch (err: unknown) {
@@ -205,7 +259,7 @@ export default function HomePage() {
       <SubmitGameModal
         isOpen={isSubmitModalOpen}
         onClose={() => setIsSubmitModalOpen(false)}
-        onSuccess={fetchGames}
+        onSuccess={handleGameSubmitted}
       />
 
       <AdminLoginModal

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { scrapeUrlPreview, submitGame } from '@/lib/api';
-import { ScrapedMetadata } from '@/types/game';
+import { GameDocument, ScrapedMetadata } from '@/types/game';
 import {
   X,
   Link as LinkIcon,
@@ -21,6 +21,8 @@ interface SubmitGameModalProps {
   onClose: () => void;
   onSuccess: () => void;
 }
+
+const LOCAL_STORAGE_GAMES_KEY = 'cs67_user_submitted_games';
 
 export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
   isOpen,
@@ -75,7 +77,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
         .map((t) => t.trim().toLowerCase())
         .filter((t) => t.length > 0);
 
-      await submitGame({
+      const res = await submitGame({
         url: urlInput,
         custom_title: customTitle,
         custom_description: customDescription,
@@ -84,9 +86,21 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
         creator_id: creatorName.trim() || 'นิสิต CS 67',
       });
 
+      // Save into LocalStorage persistence so submitted game NEVER disappears on server restarts
+      try {
+        const existing = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
+        const localList: GameDocument[] = existing ? JSON.parse(existing) : [];
+        if (!localList.some((g) => g.id === res.game.id)) {
+          localList.unshift(res.game);
+          localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(localList));
+        }
+      } catch (e) {
+        console.error('LocalStorage write error:', e);
+      }
+
       onSuccess();
       onClose();
-      // Reset
+      // Reset Form
       setUrlInput('');
       setCreatorName('');
       setCustomThumbnail('');
@@ -289,7 +303,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10 bg-[#111a36]">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs"
+            className="px-4 py-2 rounded-xl bg-[#162248] hover:bg-[#1f3066] text-slate-300 font-semibold text-xs border border-white/10"
           >
             ยกเลิก
           </button>
