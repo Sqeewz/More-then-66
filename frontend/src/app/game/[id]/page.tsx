@@ -117,7 +117,7 @@ export default function GameDetailPage() {
 
     try {
       const passToSend = adminPass || sessionStorage.getItem('cs67_admin_auth') || ADMIN_PASS_HASH;
-      await deleteGameApi(id, passToSend);
+      await deleteGameApi(id, passToSend).catch(() => null);
 
       // Clean LocalStorage
       try {
@@ -139,28 +139,38 @@ export default function GameDetailPage() {
 
   const handleLike = async () => {
     if (!game || hasLiked) return;
+    setHasLiked(true);
+    localStorage.setItem(`liked_${game.id}`, 'true');
+
+    // Optimistically update likes in local UI state
+    setGame((prev) =>
+      prev
+        ? {
+            ...prev,
+            metrics: {
+              ...prev.metrics,
+              likes: (prev.metrics?.likes || 0) + 1,
+            },
+          }
+        : null
+    );
+
+    // Also update LocalStorage
     try {
-      setHasLiked(true);
-      localStorage.setItem(`liked_${game.id}`, 'true');
-      const res = await incrementGameLike(game.id).catch(() => null);
-      if (res && res.game) {
-        setGame(res.game);
-      } else {
-        setGame((prev) =>
-          prev
-            ? {
-                ...prev,
-                metrics: {
-                  ...prev.metrics,
-                  likes: (prev.metrics?.likes || 0) + 1,
-                },
-              }
-            : null
+      const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
+      if (storedLocal) {
+        const localGames: GameDocument[] = JSON.parse(storedLocal);
+        const updatedLocal = localGames.map((g) =>
+          g.id === game.id
+            ? { ...g, metrics: { ...g.metrics, likes: g.metrics.likes + 1 } }
+            : g
         );
+        localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(updatedLocal));
       }
-    } catch (err) {
-      console.error('Failed to like game:', err);
-    }
+    } catch (e) {}
+
+    // Async server call
+    await incrementGameLike(game.id).catch(() => null);
   };
 
   const handleShare = () => {
@@ -178,6 +188,7 @@ export default function GameDetailPage() {
   const viewsCount = game?.metrics?.views ?? 0;
   const likesCount = game?.metrics?.likes ?? 0;
   const ratingVal = game?.metrics?.rating ?? 5.0;
+  const targetUrl = game?.original_url || (game as any)?.url || '';
 
   return (
     <div className="min-h-screen flex flex-col bg-[#050814] text-white">
@@ -343,18 +354,20 @@ export default function GameDetailPage() {
                     <span className="font-bold text-white">16:9 Standard Ratio</span>
                   </div>
 
-                  <div className="flex justify-between py-2">
-                    <span className="text-slate-400">ลิงก์เว็บต้นทาง</span>
-                    <a
-                      href={game.original_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-semibold text-sky-300 hover:underline flex items-center gap-1"
-                    >
-                      <span>เยี่ยมชมเว็บไซต์</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
+                  {targetUrl && (
+                    <div className="flex justify-between py-2">
+                      <span className="text-slate-400">ลิงก์เว็บต้นทาง</span>
+                      <a
+                        href={targetUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-semibold text-sky-300 hover:underline flex items-center gap-1"
+                      >
+                        <span>เยี่ยมชมเว็บไซต์</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
 

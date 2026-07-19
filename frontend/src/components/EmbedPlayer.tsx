@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { GameDocument } from '@/types/game';
 import {
   ShieldCheck,
@@ -22,7 +22,17 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
   const [forceEmbedded, setForceEmbedded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const targetUrl = game.original_url || (game as any).url || 'https://itch.io';
   const isPopupMode = game.display_mode === 'POPUP' && !forceEmbedded;
+
+  // Auto hide loading spinner after 2.5s timeout so game is never stuck loading
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [iframeKey, forceEmbedded, game]);
 
   const handleReload = () => {
     setIsLoading(true);
@@ -43,7 +53,9 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
   };
 
   const handleOpenExternal = () => {
-    window.open(game.original_url, '_blank', 'noopener,noreferrer');
+    if (targetUrl) {
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   return (
@@ -64,7 +76,7 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
           )}
           <span className="text-slate-400 hidden sm:inline">•</span>
           <span className="text-slate-300 hidden sm:inline font-mono text-[11px] truncate max-w-xs">
-            {game.original_url}
+            {targetUrl}
           </span>
         </div>
 
@@ -107,7 +119,7 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
 
           <button
             onClick={handleOpenExternal}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#162248] hover:bg-[#1f3066] text-slate-200 hover:text-white transition-colors border border-white/10"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#162248] hover:bg-[#1f3066] text-sky-300 hover:text-white transition-colors border border-sky-500/30 font-semibold"
             title="Open Game in New Tab"
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -122,7 +134,7 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
         className="relative w-full rounded-2xl overflow-hidden bg-black border border-sky-500/30 shadow-2xl glow-box"
       >
         {isPopupMode ? (
-          /* POPUP MODE UI fallback with Force Embed Option */
+          /* POPUP MODE UI fallback */
           <div className="aspect-video w-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#0a1026] via-[#101b3e] to-[#060a19] text-white">
             <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 mb-4 animate-bounce">
               <Lock className="w-8 h-8" />
@@ -169,12 +181,13 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
 
             <iframe
               key={iframeKey}
-              src={game.original_url}
+              src={targetUrl}
               title={game.title}
               sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock allow-modals"
               allow="autoplay; gamepad; fullscreen; keyboard"
               allowFullScreen
               onLoad={() => setIsLoading(false)}
+              onError={() => setIsLoading(false)}
             />
           </div>
         )}
