@@ -7,9 +7,9 @@ import {
   Maximize2,
   RotateCw,
   ExternalLink,
-  AlertTriangle,
   Lock,
   Play,
+  MonitorPlay,
 } from 'lucide-react';
 
 interface EmbedPlayerProps {
@@ -19,9 +19,10 @@ interface EmbedPlayerProps {
 export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [iframeKey, setIframeKey] = useState(0);
+  const [forceEmbedded, setForceEmbedded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const isPopupMode = game.display_mode === 'POPUP';
+  const isPopupMode = game.display_mode === 'POPUP' && !forceEmbedded;
 
   const handleReload = () => {
     setIsLoading(true);
@@ -52,13 +53,13 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
         <div className="flex items-center gap-2">
           {isPopupMode ? (
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              Frame Restricted (External Pop-out Mode)
+              <Lock className="w-3.5 h-3.5" />
+              โหมดลิงก์ภายนอก (Pop-out Mode)
             </span>
           ) : (
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
               <ShieldCheck className="w-3.5 h-3.5" />
-              Sandboxed Frame CS67 (Secure)
+              เล่นในเว็บ (In-Website Sandboxed Player)
             </span>
           )}
           <span className="text-slate-400 hidden sm:inline">•</span>
@@ -68,6 +69,20 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
         </div>
 
         <div className="flex items-center gap-2">
+          {isPopupMode && (
+            <button
+              onClick={() => {
+                setForceEmbedded(true);
+                setIsLoading(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white font-bold shadow-md shadow-blue-600/30 transition-all border border-sky-300/30"
+              title="สลับเป็นโหมดเล่นในเว็บ"
+            >
+              <MonitorPlay className="w-3.5 h-3.5" />
+              <span>บังคับเล่นในเว็บ</span>
+            </button>
+          )}
+
           {!isPopupMode && (
             <>
               <button
@@ -107,27 +122,40 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
         className="relative w-full rounded-2xl overflow-hidden bg-black border border-sky-500/30 shadow-2xl glow-box"
       >
         {isPopupMode ? (
-          /* POPUP MODE UI fallback */
+          /* POPUP MODE UI fallback with Force Embed Option */
           <div className="aspect-video w-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#0a1026] via-[#101b3e] to-[#060a19] text-white">
             <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 mb-4 animate-bounce">
               <Lock className="w-8 h-8" />
             </div>
 
             <h3 className="text-xl font-extrabold tracking-tight">
-              Direct In-Frame Embedding Disabled by Host
+              ตรวจพบการตั้งค่าป้องกันการฝังเฟรมจากเว็บต้นทาง
             </h3>
             <p className="text-sm text-slate-300 max-w-lg mt-2 leading-relaxed">
-              เว็บต้นทางตั้งค่าความปลอดภัย <code className="bg-black/60 px-1.5 py-0.5 rounded text-amber-300">X-Frame-Options</code> ห้ามฝังใน iframe ให้คลิกปุ่มด้านล่างเพื่อเปิดเล่นในแท็บใหม่:
+              คุณสามารถกดเลือก <strong className="text-sky-300">"เล่นในหน้าเว็บนี้"</strong> เพื่อบังคับเปิดเล่นผ่าน Sandboxed Frame หรือเปิดเล่นในแท็บใหม่ได้ตามต้องการ:
             </p>
 
-            <button
-              onClick={handleOpenExternal}
-              className="mt-6 flex items-center gap-3 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:from-blue-500 hover:to-sky-400 text-white font-bold text-sm shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-white/20"
-            >
-              <Play className="w-5 h-5 fill-current" />
-              <span>เปิดเล่นเกมในแท็บใหม่ (External Tab)</span>
-              <ExternalLink className="w-4 h-4 ml-1" />
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setForceEmbedded(true);
+                  setIsLoading(true);
+                }}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:from-blue-500 hover:to-sky-400 text-white font-bold text-sm shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-white/20"
+              >
+                <MonitorPlay className="w-5 h-5" />
+                <span>เล่นในหน้าเว็บนี้ (Play In-Website)</span>
+              </button>
+
+              <button
+                onClick={handleOpenExternal}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#162248] hover:bg-[#1f3066] text-slate-200 hover:text-white font-semibold text-sm border border-white/10"
+              >
+                <Play className="w-4 h-4 fill-current" />
+                <span>เปิดเล่นในแท็บใหม่ (External Tab)</span>
+                <ExternalLink className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         ) : (
           /* EMBEDDED MODE SANDBOXED IFRAME */
@@ -143,8 +171,8 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
               key={iframeKey}
               src={game.original_url}
               title={game.title}
-              sandbox="allow-scripts allow-same-origin allow-popups"
-              allow="autoplay; gamepad"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock allow-modals"
+              allow="autoplay; gamepad; fullscreen; keyboard"
               allowFullScreen
               onLoad={() => setIsLoading(false)}
             />
@@ -156,10 +184,10 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
       {!isPopupMode && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 px-2">
           <span>
-            🛡️ Security Sandbox Policy Active: <code className="text-sky-300">allow-scripts allow-same-origin allow-popups</code>
+            🛡️ Security Sandbox Policy Active: <code className="text-sky-300">allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock</code>
           </span>
           <span>
-            CS67 Feature Policy: <code className="text-sky-300">allow="autoplay; gamepad"</code>
+            CS67 Feature Policy: <code className="text-sky-300">allow="autoplay; gamepad; fullscreen"</code>
           </span>
         </div>
       )}

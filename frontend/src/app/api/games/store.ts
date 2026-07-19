@@ -12,7 +12,6 @@ const BLOCKED_KEYWORDS = [
 export function checkUrlSafety(url: string, htmlContent?: string): { safe: boolean; reason?: string } {
   const lowerUrl = url.toLowerCase();
 
-  // Check URL string
   for (const kw of BLOCKED_KEYWORDS) {
     if (lowerUrl.includes(kw)) {
       return {
@@ -22,11 +21,9 @@ export function checkUrlSafety(url: string, htmlContent?: string): { safe: boole
     }
   }
 
-  // Check Page HTML Content if scraped
   if (htmlContent) {
     const lowerHtml = htmlContent.toLowerCase();
     for (const kw of BLOCKED_KEYWORDS) {
-      // Look for whole keyword or meta tag matches
       if (lowerHtml.includes(` ${kw} `) || lowerHtml.includes(`"${kw}"`) || lowerHtml.includes(`>${kw}<`)) {
         return {
           safe: false,
@@ -67,11 +64,11 @@ let gamesStore: GameDocument[] = [
   {
     id: 'seed-itch-demo',
     title: 'Cyber Samurai Arcade',
-    description: 'เกมวิ่งแอ็กชันสไตล์นีออนไซเบอร์พังก์ ตัวอย่างผลงานเกมภายนอกที่ทดสอบระบบกรอบ iframe ป้องกันการฝัง',
+    description: 'เกมวิ่งแอ็กชันสไตล์นีออนไซเบอร์พังก์ ตัวอย่างผลงานเกมภายนอกที่ทดสอบระบบกรอบ iframe',
     original_url: 'https://itch.io/',
     thumbnail_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
     creator_id: 'นิสิต CS67 Dev',
-    display_mode: 'POPUP',
+    display_mode: 'EMBEDDED',
     metrics: { views: 29, likes: 12, rating: 4.7 },
     tags: ['cs67', 'cyberpunk', 'itch-io', 'action'],
     created_at: new Date().toISOString(),
@@ -83,6 +80,8 @@ export function getStore(): GameDocument[] {
 }
 
 export function addGame(game: GameDocument): GameDocument {
+  // Always default user-submitted games to EMBEDDED for direct in-website playability
+  game.display_mode = 'EMBEDDED';
   gamesStore.unshift(game);
   return game;
 }
@@ -96,7 +95,6 @@ export function updateGameMetrics(id: string, viewInc = 0, likeInc = 0): GameDoc
 }
 
 export async function scrapeUrl(targetUrl: string) {
-  // 1. Initial Safety check on URL
   const urlCheck = checkUrlSafety(targetUrl);
   if (!urlCheck.safe) {
     throw new Error(urlCheck.reason || 'URL ไม่อนุญาต');
@@ -109,26 +107,8 @@ export async function scrapeUrl(targetUrl: string) {
       },
     });
 
-    const xFrame = res.headers.get('x-frame-options');
-    const csp = res.headers.get('content-security-policy');
-
-    let display_mode: DisplayMode = 'EMBEDDED';
-    if (xFrame) {
-      const xf = xFrame.toUpperCase();
-      if (xf.includes('DENY') || xf.includes('SAMEORIGIN')) {
-        display_mode = 'POPUP';
-      }
-    }
-    if (csp) {
-      const cs = csp.toLowerCase();
-      if (cs.includes("frame-ancestors 'none'") || cs.includes("frame-ancestors 'self'")) {
-        display_mode = 'POPUP';
-      }
-    }
-
     const html = await res.text();
 
-    // 2. Secondary Safety check on HTML content
     const htmlCheck = checkUrlSafety(targetUrl, html);
     if (!htmlCheck.safe) {
       throw new Error(htmlCheck.reason || 'เนื้อหาเว็บไซต์ไม่ผ่านเกณฑ์ความปลอดภัย');
@@ -159,11 +139,12 @@ export async function scrapeUrl(targetUrl: string) {
     if (html.toLowerCase().includes('webgl')) tags.push('webgl');
     if (html.toLowerCase().includes('canvas')) tags.push('html5');
 
+    // Default all scraped games to EMBEDDED mode for direct playback in website
     return {
       title: title.trim(),
       description: description.trim(),
       thumbnail_url,
-      display_mode,
+      display_mode: 'EMBEDDED' as DisplayMode,
       tags: Array.from(new Set(tags)),
       original_url: targetUrl,
     };
