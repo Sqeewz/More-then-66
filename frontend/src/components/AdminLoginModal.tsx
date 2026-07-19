@@ -6,10 +6,18 @@ import { X, Lock, ShieldCheck, AlertTriangle, Key } from 'lucide-react';
 interface AdminLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (pass: string) => void;
+  onSuccess: (hashOrPass: string) => void;
 }
 
-export const ADMIN_PASS_KEY = '67morethen66';
+// SHA-256 Hash of "67morethen66"
+export const ADMIN_PASS_HASH = 'b9982e40e58fffb52a1df3c6da5dc2f5c7c260c3881bd68f667a8e301c92a821';
+
+export async function computeSha256(message: string): Promise<string> {
+  const msgUint8 = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   isOpen,
@@ -18,19 +26,29 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 }) => {
   const [passwordInput, setPasswordInput] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === ADMIN_PASS_KEY) {
+    try {
+      setIsLoading(true);
       setError(null);
-      sessionStorage.setItem('cs67_admin_auth', ADMIN_PASS_KEY);
-      onSuccess(passwordInput);
-      setPasswordInput('');
-      onClose();
-    } else {
-      setError('รหัสผ่านแอดมินไม่ถูกต้อง! กรุณาลองใหม่อีกครั้ง');
+      const inputHash = await computeSha256(passwordInput.trim());
+
+      if (inputHash === ADMIN_PASS_HASH) {
+        sessionStorage.setItem('cs67_admin_auth', inputHash);
+        onSuccess(inputHash);
+        setPasswordInput('');
+        onClose();
+      } else {
+        setError('รหัสผ่านแอดมินไม่ถูกต้อง! กรุณาลองใหม่อีกครั้ง');
+      }
+    } catch (err) {
+      setError('เกิดข้อผิดพลาดในการตรวจสอบรหัสผ่าน');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -46,7 +64,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             </div>
             <div>
               <h2 className="font-extrabold text-base text-white">เข้าสู่ระบบแอดมิน (Admin Login)</h2>
-              <p className="text-[11px] text-slate-300">ใส่รหัสผ่านเพื่อเข้าสู่โหมดจัดการและลบผลงานเกม</p>
+              <p className="text-[11px] text-slate-300">ใส่รหัสผ่านเพื่อเข้ารหัสและยืนยันสิทธิ์แอดมิน</p>
             </div>
           </div>
 
@@ -84,6 +102,9 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400"
               />
             </div>
+            <p className="text-[10px] text-slate-400 mt-1.5 flex items-center gap-1">
+              🔒 รหัสผ่านจะถูกเข้ารหัสผ่านด้วย SHA-256 ก่อนส่งยืนยันความปลอดภัย
+            </p>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
@@ -96,9 +117,13 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white font-bold text-xs shadow-lg shadow-blue-600/30 border border-white/20"
+              disabled={isLoading}
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white font-bold text-xs shadow-lg shadow-blue-600/30 border border-white/20 disabled:opacity-50"
             >
-              ยืนยันรหัสผ่าน
+              {isLoading ? (
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : null}
+              <span>ยืนยันรหัสผ่าน (SHA-256)</span>
             </button>
           </div>
         </form>

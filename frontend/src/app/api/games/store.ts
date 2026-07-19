@@ -1,6 +1,15 @@
 import { GameDocument, DisplayMode } from '@/types/game';
+import crypto from 'crypto';
 
-const ADMIN_PASSWORD = '67morethen66';
+// SHA-256 Hash of "67morethen66"
+export const ADMIN_PASSWORD_HASH = 'b9982e40e58fffb52a1df3c6da5dc2f5c7c260c3881bd68f667a8e301c92a821';
+
+export function hashString(input: string): string {
+  if (input.length === 64 && /^[a-f0-9]+$/i.test(input)) {
+    return input.toLowerCase(); // Already SHA-256 hash
+  }
+  return crypto.createHash('sha256').update(input).digest('hex').toLowerCase();
+}
 
 const BLOCKED_KEYWORDS = [
   // Gambling / Casino keywords
@@ -87,8 +96,9 @@ export function addGame(game: GameDocument): GameDocument {
   return game;
 }
 
-export function deleteGame(id: string, pass: string): boolean {
-  if (pass !== ADMIN_PASSWORD) {
+export function deleteGame(id: string, passOrHash: string): boolean {
+  const inputHash = hashString(passOrHash);
+  if (inputHash !== ADMIN_PASSWORD_HASH) {
     return false;
   }
   const initialLen = gamesStore.length;
