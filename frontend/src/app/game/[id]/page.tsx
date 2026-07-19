@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { EmbedPlayer } from '@/components/EmbedPlayer';
 import { GameCard } from '@/components/GameCard';
 import { SubmitGameModal } from '@/components/SubmitGameModal';
-import { getGameById, getGames, incrementGameLike, incrementGameView } from '@/lib/api';
+import { AdminLoginModal, ADMIN_PASS_KEY } from '@/components/AdminLoginModal';
+import { deleteGameApi, getGameById, getGames, incrementGameLike, incrementGameView } from '@/lib/api';
 import { GameDocument } from '@/types/game';
 import {
   ArrowLeft,
@@ -19,10 +20,12 @@ import {
   Tag,
   Gamepad2,
   GraduationCap,
+  Trash2,
 } from 'lucide-react';
 
 export default function GameDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const gameId = params.id as string;
 
   const [game, setGame] = useState<GameDocument | null>(null);
@@ -31,23 +34,32 @@ export default function GameDetailPage() {
   const [hasLiked, setHasLiked] = useState(false);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
 
+  // Admin Mode State
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminPass, setAdminPass] = useState('');
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTag, setActiveTag] = useState('');
 
   useEffect(() => {
     if (!gameId) return;
 
+    const storedAuth = sessionStorage.getItem('cs67_admin_auth');
+    if (storedAuth === ADMIN_PASS_KEY) {
+      setIsAdmin(true);
+      setAdminPass(storedAuth);
+    }
+
     const loadGameDetails = async () => {
       try {
         setLoading(true);
 
-        // Check if user has liked this game previously in localStorage
         const likedInStorage = localStorage.getItem(`liked_${gameId}`);
         if (likedInStorage === 'true') {
           setHasLiked(true);
         }
 
-        // Increment Real View Counter on page visit
         const updatedView = await incrementGameView(gameId).catch(() => null);
         if (updatedView && updatedView.game) {
           setGame(updatedView.game);
@@ -56,7 +68,6 @@ export default function GameDetailPage() {
           setGame(res.game);
         }
 
-        // Fetch Related Games
         const all = await getGames();
         setRelatedGames(all.games.filter((g) => g.id !== gameId).slice(0, 3));
       } catch (err) {
@@ -68,6 +79,32 @@ export default function GameDetailPage() {
 
     loadGameDetails();
   }, [gameId]);
+
+  const handleAdminSuccess = (pass: string) => {
+    setIsAdmin(true);
+    setAdminPass(pass);
+  };
+
+  const handleAdminLogout = () => {
+    sessionStorage.removeItem('cs67_admin_auth');
+    setIsAdmin(false);
+    setAdminPass('');
+  };
+
+  const handleDeleteGame = async (id: string, title: string) => {
+    if (!isAdmin || !adminPass) return;
+    const confirmDelete = confirm(`คุณต้องการลบผลงานเกม "${title}" ออกจากระบบ More Then 66 หรือไม่?`);
+    if (!confirmDelete) return;
+
+    try {
+      await deleteGameApi(id, adminPass);
+      alert(`ลบผลงานเกม "${title}" เรียบร้อยแล้ว`);
+      router.push('/');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'ไม่สามารถลบเกมได้';
+      alert(msg);
+    }
+  };
 
   const handleLike = async () => {
     if (!game || hasLiked) return;
@@ -97,6 +134,9 @@ export default function GameDetailPage() {
     <div className="min-h-screen flex flex-col bg-[#050814] text-white">
       <Header
         onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
+        onOpenAdminModal={() => setIsAdminModalOpen(true)}
+        isAdmin={isAdmin}
+        onAdminLogout={handleAdminLogout}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         activeTag={activeTag}
@@ -152,6 +192,17 @@ export default function GameDetailPage() {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-3">
+                {isAdmin && (
+                  <button
+                    onClick={() => handleDeleteGame(game.id, game.title)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 border border-white/20 transition-all hover:scale-105 active:scale-95"
+                    title="ลบเกมนี้ออกจากระบบ"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>ลบเกมนี้</span>
+                  </button>
+                )}
+
                 <button
                   onClick={handleLike}
                   disabled={hasLiked}
@@ -264,7 +315,12 @@ export default function GameDetailPage() {
                 <h3 className="font-extrabold text-lg text-white">ผลงานเกมอื่นๆ ของ CS 67 ที่น่าสนใจ</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   {relatedGames.map((rg) => (
-                    <GameCard key={rg.id} game={rg} />
+                    <GameCard
+                      key={rg.id}
+                      game={rg}
+                      isAdmin={isAdmin}
+                      onDeleteGame={handleDeleteGame}
+                    />
                   ))}
                 </div>
               </div>
@@ -279,6 +335,12 @@ export default function GameDetailPage() {
         isOpen={isSubmitModalOpen}
         onClose={() => setIsSubmitModalOpen(false)}
         onSuccess={() => {}}
+      />
+
+      <AdminLoginModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        onSuccess={handleAdminSuccess}
       />
     </div>
   );

@@ -3,14 +3,24 @@
 import React from 'react';
 import Link from 'next/link';
 import { GameDocument } from '@/types/game';
-import { Play, Eye, ThumbsUp, Star, ExternalLink, ShieldCheck, User } from 'lucide-react';
+import { Play, Eye, ThumbsUp, Star, ExternalLink, ShieldCheck, User, Trash2 } from 'lucide-react';
 
 interface GameCardProps {
   game: GameDocument;
+  isAdmin?: boolean;
+  onDeleteGame?: (id: string, title: string) => void;
 }
 
-export const GameCard: React.FC<GameCardProps> = ({ game }) => {
+export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame }) => {
   const isPopup = game.display_mode === 'POPUP';
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onDeleteGame) {
+      onDeleteGame(game.id, game.title);
+    }
+  };
 
   return (
     <Link
@@ -32,18 +42,31 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
         {/* Dark Navy Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0e152e] via-black/20 to-transparent opacity-85 group-hover:opacity-60 transition-opacity" />
 
-        {/* Display Mode Badge */}
-        <div className="absolute top-2.5 left-2.5 flex items-center gap-1">
-          {isPopup ? (
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/90 backdrop-blur-md text-[10px] font-bold text-white shadow-md border border-amber-300/40">
-              <ExternalLink className="w-3 h-3" />
-              External Tab
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-600/90 backdrop-blur-md text-[10px] font-bold text-white shadow-md border border-emerald-300/40">
-              <ShieldCheck className="w-3 h-3" />
-              Framed Sandbox
-            </span>
+        {/* Display Mode Badge & Admin Delete Button */}
+        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 z-10">
+          <div className="flex items-center gap-1">
+            {isPopup ? (
+              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/90 backdrop-blur-md text-[10px] font-bold text-white shadow-md border border-amber-300/40">
+                <ExternalLink className="w-3 h-3" />
+                External Tab
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-600/90 backdrop-blur-md text-[10px] font-bold text-white shadow-md border border-emerald-300/40">
+                <ShieldCheck className="w-3 h-3" />
+                Framed Sandbox
+              </span>
+            )}
+          </div>
+
+          {isAdmin && (
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold text-[10px] shadow-lg shadow-red-600/40 border border-white/20 transition-all hover:scale-105 active:scale-95"
+              title="ลบผลงานเกมนี้ออกจากระบบ"
+            >
+              <Trash2 className="w-3 h-3" />
+              <span>ลบเกม</span>
+            </button>
           )}
         </div>
 

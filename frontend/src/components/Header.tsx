@@ -2,10 +2,13 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Gamepad2, PlusCircle, Search, Sparkles, GraduationCap } from 'lucide-react';
+import { Gamepad2, PlusCircle, Search, Sparkles, GraduationCap, ShieldCheck, LogOut, Lock } from 'lucide-react';
 
 interface HeaderProps {
   onOpenSubmitModal: () => void;
+  onOpenAdminModal: () => void;
+  isAdmin: boolean;
+  onAdminLogout: () => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   activeTag: string;
@@ -14,6 +17,9 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenSubmitModal,
+  onOpenAdminModal,
+  isAdmin,
+  onAdminLogout,
   searchQuery,
   setSearchQuery,
   activeTag,
@@ -56,13 +62,32 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </Link>
 
-          <button
-            onClick={onOpenSubmitModal}
-            className="md:hidden flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-medium text-xs shadow-lg active:scale-95 transition-transform"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>ส่งเกม</span>
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            {isAdmin ? (
+              <button
+                onClick={onAdminLogout}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-600/30 text-red-300 font-bold text-xs border border-red-500/40"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Admin</span>
+              </button>
+            ) : (
+              <button
+                onClick={onOpenAdminModal}
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs border border-white/10"
+              >
+                <Lock className="w-4 h-4" />
+              </button>
+            )}
+
+            <button
+              onClick={onOpenSubmitModal}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 text-white font-medium text-xs shadow-lg active:scale-95"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>ส่งเกม</span>
+            </button>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -77,8 +102,31 @@ export const Header: React.FC<HeaderProps> = ({
           />
         </div>
 
-        {/* Action Button */}
+        {/* Action Buttons */}
         <div className="hidden md:flex items-center gap-3">
+          {isAdmin ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold shadow-md">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Admin Mode</span>
+              <button
+                onClick={onAdminLogout}
+                className="ml-1 p-1 hover:bg-red-500/30 rounded-md text-red-300 transition-colors"
+                title="ออกจากระบบแอดมิน"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onOpenAdminModal}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#111a36] hover:bg-[#192750] text-slate-300 hover:text-white font-semibold text-xs border border-sky-500/20 transition-all"
+              title="เข้าสู่ระบบแอดมิน"
+            >
+              <Lock className="w-3.5 h-3.5 text-sky-400" />
+              <span>แอดมิน</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenSubmitModal}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:from-blue-500 hover:to-sky-400 text-white font-bold text-xs shadow-lg shadow-blue-500/25 hover:shadow-sky-400/40 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer border border-white/20"

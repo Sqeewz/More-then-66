@@ -1,5 +1,7 @@
 import { GameDocument, DisplayMode } from '@/types/game';
 
+const ADMIN_PASSWORD = '67morethen66';
+
 const BLOCKED_KEYWORDS = [
   // Gambling / Casino keywords
   'casino', 'slot', 'baccarat', 'pgslot', 'pg-slot', 'bet', 'gambling', 'poker', 'hilo',
@@ -80,10 +82,18 @@ export function getStore(): GameDocument[] {
 }
 
 export function addGame(game: GameDocument): GameDocument {
-  // Always default user-submitted games to EMBEDDED for direct in-website playability
   game.display_mode = 'EMBEDDED';
   gamesStore.unshift(game);
   return game;
+}
+
+export function deleteGame(id: string, pass: string): boolean {
+  if (pass !== ADMIN_PASSWORD) {
+    return false;
+  }
+  const initialLen = gamesStore.length;
+  gamesStore = gamesStore.filter((g) => g.id !== id);
+  return gamesStore.length < initialLen;
 }
 
 export function updateGameMetrics(id: string, viewInc = 0, likeInc = 0): GameDocument | null {
@@ -114,17 +124,14 @@ export async function scrapeUrl(targetUrl: string) {
       throw new Error(htmlCheck.reason || 'เนื้อหาเว็บไซต์ไม่ผ่านเกณฑ์ความปลอดภัย');
     }
 
-    // og:title or title
     const ogTitleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i);
     const titleTagMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
     const title = ogTitleMatch?.[1] || titleTagMatch?.[1] || 'ผลงานเกม CS67';
 
-    // og:description or meta description
     const ogDescMatch = html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
     const metaDescMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
     const description = ogDescMatch?.[1] || metaDescMatch?.[1] || 'เล่นผลงานเว็บเกมนี้บนแพลตฟอร์ม More Then 66 (CS67)';
 
-    // og:image
     const ogImgMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
     let thumbnail_url = ogImgMatch?.[1] || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80';
 
@@ -139,7 +146,6 @@ export async function scrapeUrl(targetUrl: string) {
     if (html.toLowerCase().includes('webgl')) tags.push('webgl');
     if (html.toLowerCase().includes('canvas')) tags.push('html5');
 
-    // Default all scraped games to EMBEDDED mode for direct playback in website
     return {
       title: title.trim(),
       description: description.trim(),

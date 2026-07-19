@@ -53,6 +53,19 @@ export async function getGameById(id: string): Promise<{ game: GameDocument }> {
   );
 }
 
+export async function deleteGameApi(id: string, adminPass: string): Promise<{ message: string }> {
+  return fetchWithFallback<{ message: string }>(
+    `/games/${id}`,
+    `/api/games/${id}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'x-admin-pass': adminPass,
+      },
+    }
+  );
+}
+
 export async function scrapeUrlPreview(url: string): Promise<ScrapedMetadata> {
   return fetchWithFallback<ScrapedMetadata>(
     `/games/scrape`,

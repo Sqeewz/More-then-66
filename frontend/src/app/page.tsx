@@ -4,9 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
 import { GameCard } from '@/components/GameCard';
 import { SubmitGameModal } from '@/components/SubmitGameModal';
-import { getGames } from '@/lib/api';
+import { AdminLoginModal, ADMIN_PASS_KEY } from '@/components/AdminLoginModal';
+import { deleteGameApi, getGames } from '@/lib/api';
 import { GameDocument } from '@/types/game';
-import { Gamepad2, Flame, Sparkles, ShieldCheck, ExternalLink, RefreshCw, GraduationCap, Laptop, Code } from 'lucide-react';
+import { Gamepad2, Flame, ShieldCheck, RefreshCw, GraduationCap, Laptop, Code } from 'lucide-react';
 
 export default function HomePage() {
   const [games, setGames] = useState<GameDocument[]>([]);
@@ -14,6 +15,11 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTag, setActiveTag] = useState('');
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+
+  // Admin Mode State
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminPass, setAdminPass] = useState('');
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
   const fetchGames = async () => {
     try {
@@ -29,13 +35,47 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchGames();
+    const storedAuth = sessionStorage.getItem('cs67_admin_auth');
+    if (storedAuth === ADMIN_PASS_KEY) {
+      setIsAdmin(true);
+      setAdminPass(storedAuth);
+    }
   }, [activeTag, searchQuery]);
+
+  const handleAdminSuccess = (pass: string) => {
+    setIsAdmin(true);
+    setAdminPass(pass);
+  };
+
+  const handleAdminLogout = () => {
+    sessionStorage.removeItem('cs67_admin_auth');
+    setIsAdmin(false);
+    setAdminPass('');
+  };
+
+  const handleDeleteGame = async (id: string, title: string) => {
+    if (!isAdmin || !adminPass) return;
+    const confirmDelete = confirm(`คุณต้องการลบผลงานเกม "${title}" ออกจากระบบ More Then 66 หรือไม่?`);
+    if (!confirmDelete) return;
+
+    try {
+      await deleteGameApi(id, adminPass);
+      alert(`ลบผลงานเกม "${title}" เรียบร้อยแล้ว`);
+      fetchGames();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'ไม่สามารถลบเกมได้';
+      alert(msg);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#050814] text-white">
       {/* Navigation Header */}
       <Header
         onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
+        onOpenAdminModal={() => setIsAdminModalOpen(true)}
+        isAdmin={isAdmin}
+        onAdminLogout={handleAdminLogout}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         activeTag={activeTag}
@@ -135,7 +175,12 @@ export default function HomePage() {
         ) : (
           <div className="game-grid">
             {games.map((game) => (
-              <GameCard key={game.id} game={game} />
+              <GameCard
+                key={game.id}
+                game={game}
+                isAdmin={isAdmin}
+                onDeleteGame={handleDeleteGame}
+              />
             ))}
           </div>
         )}
@@ -156,11 +201,17 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* Submission Modal */}
+      {/* Modals */}
       <SubmitGameModal
         isOpen={isSubmitModalOpen}
         onClose={() => setIsSubmitModalOpen(false)}
         onSuccess={fetchGames}
+      />
+
+      <AdminLoginModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        onSuccess={handleAdminSuccess}
       />
     </div>
   );
