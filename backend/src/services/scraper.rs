@@ -1,0 +1,187 @@
+use crate::error::AppError;
+use crate::models::game::DisplayMode;
+use reqwest::header::HeaderMap;
+use reqwest::Client;
+use scraper::{Html, Selector};
+use std::time::Duration;
+use url::Url;
+
+pub struct ScraperService {
+    client: Client,
+}
+
+#[derive(Debug)]
+pub struct ScrapedInfo {
+    pub title: String,
+    pub description: String,
+    pub thumbnail_url: String,
+    pub display_mode: DisplayMode,
+    pub tags: Vec<String>,
+}
+
+impl ScraperService {
+    pub fn new() -> Self {
+        let client = Client::builder()
+            .timeout(Duration::from_secs(10))
+            .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 WebGameAggregator/1.0")
+            .build()
+            .unwrap_or_default();
+
+        Self { client }
+    }
+
+    pub fn validate_url(&self, raw_url: &str) -> Result<Url, AppError> {
+        let parsed = Url::parse(raw_url)
+            .map_err(|e| AppError::InvalidUrl(format!("Invalid URL structure: {}", e)))?;
+
+        if parsed.scheme() != "http" && parsed.scheme() != "https" {
+            return Err(AppError::InvalidUrl(
+                "Only HTTP and HTTPS protocols are allowed.".to_string(),
+            ));
+        }
+
+        Ok(parsed)
+    }
+
+    pub fn check_embeddability(&self, headers: &HeaderMap) -> DisplayMode {
+        if let Some(x_frame) = headers.get("x-frame-options") {
+            if let Ok(val) = x_frame.to_str() {
+                let upper = val.to_uppercase();
+                if upper.contains("DENY") || upper.contains("SAMEORIGIN") {
+                    return DisplayMode::Popup;
+                }
+            }
+        }
+
+        if let Some(csp) = headers.get("content-security-policy") {
+            if let Ok(val) = csp.to_str() {
+                let lower = val.to_lowercase();
+                if lower.contains("frame-ancestors 'none'")
+                    || lower.contains("frame-ancestors 'self'")
+                {
+                    return DisplayMode::Popup;
+                }
+            }
+        }
+
+        DisplayMode::Embedded
+    }
+
+    pub async fn scrape(&self, target_url: &str) -> Result<ScrapedInfo, AppError> {
+        let parsed_url = self.validate_url(target_url)?;
+
+        let response = self
+            .client
+            .get(parsed_url.as_str())
+            .send()
+            .await
+            .map_err(|e| AppError::NetworkError(format!("Failed to reach target URL: {}", e)))?;
+
+        let display_mode = self.check_embeddability(response.headers());
+
+        let final_url = response.url().clone();
+        let body_text = response
+            .text()
+            .await
+            .map_err(|e| AppError::ScrapeError(format!("Failed to read response body: {}", e)))?;
+
+        let document = Html::parse_document(&body_text);
+
+        // 1. Title Extraction
+        let title = self.extract_og_meta(&document, "og:title")
+            .or_else(|| self.extract_tag_text(&document, "title"))
+            .unwrap_or_else(|| {
+                final_url
+                    .path_segments()
+                    .and_then(|mut segs| segs.next_back())
+                    .filter(|s| !s.is_empty())
+                    .map(|s| s.replace(['-', '_'], " "))
+                    .unwrap_or_else(|| "Untitled Web Game".to_string())
+            });
+
+        // 2. Description Extraction
+        let description = self.extract_og_meta(&document, "og:description")
+            .or_else(|| self.extract_meta_name(&document, "description"))
+            .unwrap_or_else(|| {
+                "Play this exciting interactive web game directly on our platform!".to_string()
+            });
+
+        // 3. Thumbnail URL Extraction
+        let thumbnail_url = self.extract_og_meta(&document, "og:image")
+            .or_else(|| self.extract_meta_name(&document, "twitter:image"))
+            .map(|thumb| self.resolve_relative_url(&final_url, &thumb))
+            .unwrap_or_else(|| {
+                "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80".to_string()
+            });
+
+        // 4. Extract or Generate Tags
+        let mut tags = Vec::new();
+        let host = final_url.host_str().unwrap_or_default();
+
+        if host.contains("itch.io") {
+            tags.push("itch-io".to_string());
+        } else if host.contains("gamejolt.com") {
+            tags.push("game-jolt".to_string());
+        } else if host.contains("github.io") {
+            tags.push("open-source".to_string());
+        }
+
+        if body_text.to_lowercase().contains("webgl") {
+            tags.push("webgl".to_string());
+        }
+        if body_text.to_lowercase().contains("canvas") || body_text.to_lowercase().contains("html5") {
+            tags.push("html5".to_string());
+        }
+        tags.push("arcade".to_string());
+
+        tags.dedup();
+
+        Ok(ScrapedInfo {
+            title,
+            description,
+            thumbnail_url,
+            display_mode,
+            tags,
+        })
+    }
+
+    fn extract_og_meta(&self, doc: &Html, property: &str) -> Option<String> {
+        let selector = Selector::parse(&format!("meta[property='{}']", property)).ok()?;
+        doc.select(&selector)
+            .next()?
+            .value()
+            .attr("content")
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+    }
+
+    fn extract_meta_name(&self, doc: &Html, name: &str) -> Option<String> {
+        let selector = Selector::parse(&format!("meta[name='{}']", name)).ok()?;
+        doc.select(&selector)
+            .next()?
+            .value()
+            .attr("content")
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+    }
+
+    fn extract_tag_text(&self, doc: &Html, tag: &str) -> Option<String> {
+        let selector = Selector::parse(tag).ok()?;
+        let text = doc.select(&selector).next()?.text().collect::<String>();
+        let trimmed = text.trim().to_string();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed)
+        }
+    }
+
+    fn resolve_relative_url(&self, base: &Url, relative: &str) -> String {
+        if relative.starts_with("http://") || relative.starts_with("https://") {
+            return relative.to_string();
+        }
+        base.join(relative)
+            .map(|u| u.to_string())
+            .unwrap_or_else(|_| relative.to_string())
+    }
+}

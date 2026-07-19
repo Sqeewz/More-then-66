@@ -1,0 +1,17 @@
+# Node dependencies and build output
+node_modules/
+.next/
+out/
+build/
+dist/
+.env*.local
+
+# Rust compilation output
+/backend/target/
+games_data.json
+
+# IDE & System files
+.DS_Store
+*.log
+.vscode/
+.idea/
