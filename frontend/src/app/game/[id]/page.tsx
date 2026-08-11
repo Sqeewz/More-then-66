@@ -281,24 +281,24 @@ export default function GameDetailPage() {
                 </p>
               </div>
 
-              {/* Action & Stats Buttons */}
-              <div className="flex items-center gap-2 flex-wrap">
+              {/* Action & Stats Buttons (Minimal Transparent Style) */}
+              <div className="flex items-center gap-1.5 flex-wrap text-xs">
                 {canEditOrDelete && (
                   <>
                     <button
                       onClick={() => setIsEditModalOpen(true)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600/30 hover:bg-amber-600/50 text-amber-200 font-bold text-xs border border-amber-500/40 transition-all shadow-md"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-transparent hover:bg-amber-500/10 text-amber-300 hover:text-amber-200 border border-amber-500/30 transition-all font-medium"
                       title="แก้ไขเกมนี้"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-3.5 h-3.5" />
                       <span>แก้ไข</span>
                     </button>
                     <button
                       onClick={() => handleDeleteGame(game.id, game.title)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-600/30 hover:bg-red-600/50 text-red-200 font-bold text-xs border border-red-500/40 transition-all shadow-md"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-transparent hover:bg-red-500/10 text-red-400 hover:text-red-300 border border-red-500/30 transition-all font-medium"
                       title="ลบเกมนี้ออกจากระบบ"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                       <span>ลบ</span>
                     </button>
                   </>
@@ -307,34 +307,35 @@ export default function GameDetailPage() {
                 <button
                   onClick={handleLike}
                   disabled={hasLiked}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-medium transition-all ${
                     hasLiked
-                      ? 'bg-blue-600/30 text-sky-300 border border-sky-400/40 cursor-default shadow-inner'
-                      : 'bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white shadow-lg shadow-blue-600/30 active:scale-95 border border-white/20'
+                      ? 'bg-transparent text-sky-400 border border-sky-400/30 cursor-default'
+                      : 'bg-transparent hover:bg-sky-500/10 text-slate-300 hover:text-white border border-white/15'
                   }`}
                 >
-                  <ThumbsUp className={`w-4 h-4 ${hasLiked ? 'fill-current text-sky-300' : ''}`} />
-                  <span>{hasLiked ? `กดชื่นชอบแล้ว (${likesCount})` : `ชื่นชอบ (${likesCount})`}</span>
+                  <ThumbsUp className={`w-3.5 h-3.5 ${hasLiked ? 'fill-current text-sky-400' : ''}`} />
+                  <span>{hasLiked ? `ชื่นชอบแล้ว (${likesCount})` : `ชื่นชอบ (${likesCount})`}</span>
                 </button>
 
-                <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0e152e] border border-sky-500/30 text-xs font-semibold text-slate-200">
-                  <Eye className="w-4 h-4 text-sky-400" />
-                  <span>{viewsCount.toLocaleString()} เข้าชม</span>
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-transparent border border-white/10 text-slate-300 font-medium">
+                  <Eye className="w-3.5 h-3.5 text-sky-400" />
+                  <span>{viewsCount.toLocaleString()}</span>
                 </div>
 
-                <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0e152e] border border-sky-500/30 text-xs font-bold text-yellow-400">
-                  <Star className="w-4 h-4 fill-current" />
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-transparent border border-white/10 text-yellow-400 font-medium">
+                  <Star className="w-3.5 h-3.5 fill-current" />
                   <span>{ratingVal.toFixed(1)}</span>
                 </div>
 
                 <button
                   onClick={handleShare}
-                  className="p-2 rounded-xl bg-[#0e152e] hover:bg-[#162248] border border-sky-500/30 text-slate-200 hover:text-white transition-colors"
+                  className="p-1.5 rounded-lg bg-transparent hover:bg-white/5 border border-white/10 text-slate-300 hover:text-white transition-colors"
                   title="แชร์ผลงานเกม"
                 >
-                  <Share2 className="w-4 h-4" />
+                  <Share2 className="w-3.5 h-3.5" />
                 </button>
               </div>
+
             </div>
 
             {/* Main Content Layout: Left (Main Content) vs Right (Sidebar QR Code) */}

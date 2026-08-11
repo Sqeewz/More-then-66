@@ -44,17 +44,17 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
         <div className="absolute inset-0 bg-gradient-to-t from-[#0e152e] via-black/20 to-transparent opacity-85 group-hover:opacity-60 transition-opacity" />
 
         {/* Display Mode Badge & Admin Delete Button */}
-        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 z-10">
+        <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1 z-10">
           <div className="flex items-center gap-1">
             {isPopup ? (
-              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/90 backdrop-blur-md text-[10px] font-bold text-white shadow-md border border-amber-300/40">
-                <ExternalLink className="w-3 h-3" />
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-[10px] text-slate-300 border border-white/10">
+                <ExternalLink className="w-2.5 h-2.5" />
                 External Tab
               </span>
             ) : (
-              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-600/90 backdrop-blur-md text-[10px] font-bold text-white shadow-md border border-emerald-300/40">
-                <ShieldCheck className="w-3 h-3" />
-                Framed Sandbox
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-[10px] text-slate-300 border border-white/10">
+                <ShieldCheck className="w-2.5 h-2.5 text-sky-400" />
+                Sandbox
               </span>
             )}
           </div>
@@ -62,14 +62,15 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
           {isAdmin && (
             <button
               onClick={handleDelete}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-600 hover:bg-red-500 text-white font-bold text-[10px] shadow-lg shadow-red-600/40 border border-white/20 transition-all hover:scale-105 active:scale-95"
+              className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/60 hover:bg-red-500/30 text-red-400 font-medium text-[10px] border border-red-500/30 transition-all"
               title="ลบผลงานเกมนี้ออกจากระบบ"
             >
-              <Trash2 className="w-3 h-3" />
-              <span>ลบเกม</span>
+              <Trash2 className="w-2.5 h-2.5" />
+              <span>ลบ</span>
             </button>
           )}
         </div>
+
 
         {/* Play Icon Overlay */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-blue-950/50 backdrop-blur-[2px]">

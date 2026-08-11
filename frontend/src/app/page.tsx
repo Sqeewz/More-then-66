@@ -1,15 +1,109 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { GameCard } from '@/components/GameCard';
 import { SubmitGameModal } from '@/components/SubmitGameModal';
 import { AdminLoginModal, ADMIN_PASS_HASH } from '@/components/AdminLoginModal';
 import { deleteGameApi, getGames } from '@/lib/api';
 import { GameDocument } from '@/types/game';
-import { Gamepad2, Flame, ShieldCheck, RefreshCw, GraduationCap, Laptop, Code } from 'lucide-react';
+import {
+  Gamepad2,
+  Flame,
+  ShieldCheck,
+  RefreshCw,
+  GraduationCap,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Info,
+  Sparkles,
+  TrendingUp,
+  Box,
+  Puzzle,
+  Cpu,
+} from 'lucide-react';
 
 const LOCAL_STORAGE_GAMES_KEY = 'cs67_user_submitted_games';
+
+interface GameRowProps {
+  title: string;
+  icon: React.ReactNode;
+  games: GameDocument[];
+  isAdmin: boolean;
+  onDeleteGame: (id: string, title: string) => void;
+}
+
+const NetflixGameRow: React.FC<GameRowProps> = ({ title, icon, games, isAdmin, onDeleteGame }) => {
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (rowRef.current) {
+      const { scrollLeft, clientWidth } = rowRef.current;
+      const scrollAmount = clientWidth * 0.75;
+      rowRef.current.scrollTo({
+        left: direction === 'left' ? scrollLeft - scrollAmount : scrollLeft + scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  if (games.length === 0) return null;
+
+  return (
+    <div className="space-y-3 relative group/row py-2">
+      {/* Row Header */}
+      <div className="flex items-center justify-between px-1">
+        <h2 className="font-extrabold text-lg md:text-xl text-white tracking-tight flex items-center gap-2">
+          {icon}
+          <span>{title}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-[#111a36] text-sky-300 font-semibold border border-sky-500/20">
+            {games.length}
+          </span>
+        </h2>
+      </div>
+
+      {/* Row Carousel Container */}
+      <div className="relative">
+        {/* Left Scroll Button */}
+        <button
+          onClick={() => scroll('left')}
+          className="absolute left-0 top-0 bottom-0 z-20 w-12 bg-gradient-to-r from-[#050814] to-transparent flex items-center justify-start pl-1 opacity-0 group-hover/row:opacity-100 transition-opacity duration-300 hover:scale-110 text-white"
+          title="เลื่อนซ้าย"
+        >
+          <div className="w-9 h-9 rounded-full bg-[#0e152e]/90 border border-sky-400/30 flex items-center justify-center shadow-lg hover:bg-blue-600">
+            <ChevronLeft className="w-5 h-5 text-white" />
+          </div>
+        </button>
+
+        {/* Horizontal Game Scroll */}
+        <div
+          ref={rowRef}
+          className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth py-3 px-1"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {games.map((game) => (
+            <div key={game.id} className="w-[280px] md:w-[320px] flex-shrink-0">
+              <GameCard game={game} isAdmin={isAdmin} onDeleteGame={onDeleteGame} />
+            </div>
+          ))}
+        </div>
+
+        {/* Right Scroll Button */}
+        <button
+          onClick={() => scroll('right')}
+          className="absolute right-0 top-0 bottom-0 z-20 w-12 bg-gradient-to-l from-[#050814] to-transparent flex items-center justify-end pr-1 opacity-0 group-hover/row:opacity-100 transition-opacity duration-300 hover:scale-110 text-white"
+          title="เลื่อนขวา"
+        >
+          <div className="w-9 h-9 rounded-full bg-[#0e152e]/90 border border-sky-400/30 flex items-center justify-center shadow-lg hover:bg-blue-600">
+            <ChevronRight className="w-5 h-5 text-white" />
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default function HomePage() {
   const [games, setGames] = useState<GameDocument[]>([]);
@@ -48,7 +142,7 @@ export default function HomePage() {
       if (activeTag) {
         const tagLower = activeTag.toLowerCase();
         combinedGames = combinedGames.filter((g) =>
-          g.tags.some((t) => t.toLowerCase() === tagLower)
+          g.tags?.some((t) => t.toLowerCase() === tagLower)
         );
       }
 
@@ -59,7 +153,7 @@ export default function HomePage() {
           (g) =>
             g.title.toLowerCase().includes(queryLower) ||
             g.description.toLowerCase().includes(queryLower) ||
-            g.creator_id.toLowerCase().includes(queryLower)
+            (g.creator_id && g.creator_id.toLowerCase().includes(queryLower))
         );
       }
 
@@ -99,10 +193,8 @@ export default function HomePage() {
     const confirmDelete = confirm(`คุณต้องการลบผลงานเกม "${title}" ออกจากระบบ More Then 66 หรือไม่?`);
     if (!confirmDelete) return;
 
-    // Optimistically remove from UI
     setGames((prev) => prev.filter((g) => g.id !== id));
 
-    // Remove from LocalStorage
     try {
       const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
       if (storedLocal) {
@@ -112,19 +204,27 @@ export default function HomePage() {
       }
     } catch (e) {}
 
-    // Call Delete API
     try {
       const passToSend = adminPass || sessionStorage.getItem('cs67_admin_auth') || ADMIN_PASS_HASH;
       await deleteGameApi(id, passToSend);
       alert(`ลบผลงานเกม "${title}" ออกจากระบบเรียบร้อยแล้ว`);
       fetchGames();
     } catch (err: unknown) {
-      console.warn('API delete warning (removed locally):', err);
+      console.warn('API delete warning:', err);
     }
   };
 
+  // Featured Spotlight Game for Netflix Hero Billboard
+  const featuredGame = games.length > 0 ? games[0] : null;
+
+  // Categorized Game Rows
+  const cs67Projects = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('cs67')));
+  const webglGames = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('webgl') || t.toLowerCase().includes('3d')));
+  const puzzleGames = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('puzzle')));
+  const arcadeGames = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('arcade') || t.toLowerCase().includes('action') || t.toLowerCase().includes('html5')));
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#050814] text-white">
+    <div className="min-h-screen flex flex-col bg-[#050814] text-white selection:bg-sky-500 selection:text-white">
       {/* Navigation Header */}
       <Header
         onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
@@ -137,106 +237,153 @@ export default function HomePage() {
         setActiveTag={setActiveTag}
       />
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-8 space-y-8">
-        
-        {/* Hero Banner Section */}
-        <div className="relative rounded-3xl overflow-hidden p-8 md:p-12 bg-gradient-to-br from-[#0c1633] via-[#111f47] to-[#080d21] border border-sky-500/30 shadow-2xl">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-sky-400/15 rounded-full blur-3xl pointer-events-none" />
+      {/* Netflix Hero Billboard Section */}
+      {featuredGame && !searchQuery && !activeTag && (
+        <div className="relative w-full aspect-[21/9] md:aspect-[21/8] max-h-[520px] overflow-hidden bg-black border-b border-sky-500/20">
+          {/* Hero Backdrop Image */}
+          <img
+            src={featuredGame.cover_image_url || featuredGame.thumbnail_url}
+            alt={featuredGame.title}
+            className="w-full h-full object-cover object-center transform scale-105 filter brightness-90 animate-fade-in"
+          />
 
-          <div className="relative z-10 max-w-3xl space-y-5">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/20 border border-sky-400/30 text-sky-300 text-xs font-bold uppercase tracking-wider shadow-sm">
-              <GraduationCap className="w-4 h-4 text-sky-300" />
-              COMPUTER SCIENCE CS 67 GAME HUB
+          {/* Dark Navy Cinematic Gradients */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050814] via-[#050814]/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050814] via-[#050814]/70 to-transparent w-2/3" />
+
+          {/* Hero Billboard Content */}
+          <div className="absolute bottom-6 md:bottom-12 left-4 md:left-12 right-4 max-w-2xl space-y-3 z-10">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-blue-600/90 text-white font-bold text-xs shadow-lg border border-sky-300/40">
+                <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
+                FEATURED SPOTLIGHT
+              </span>
+              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/20 text-sky-300 font-bold text-[11px] border border-sky-400/30">
+                <GraduationCap className="w-3 h-3" />
+                CS 67
+              </span>
             </div>
 
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight">
-              More Then <span className="gradient-text-blue">66</span>
-              <span className="block text-xl md:text-2xl text-slate-200 mt-2 font-extrabold">
-                ศูนย์รวมและคลังแสดงผลงานสร้างสรรค์ ของชาว CS 67
-              </span>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-lg">
+              {featuredGame.title}
             </h1>
 
-            <p className="text-sm md:text-base text-slate-200 leading-relaxed font-normal">
-              ยินดีต้อนรับสู่ <strong className="text-sky-300">More Then 66</strong> แพลตฟอร์มคลังรวมผลงานโปรเจกต์เว็บเกมและนวัตกรรมดิจิทัล ของนิสิต/นักศึกษา สาขาวิทยาการคอมพิวเตอร์ รุ่น 67 (Computer Science CS 67) รวบรวมและจัดแสดงผลงานพัฒนาเกมทั้งประเภท WebGL, HTML5, และ 3D จาก itch.io และเว็บบอร์ดผลงาน เพื่อส่งเสริมศักยภาพด้านซอฟต์แวร์และการพัฒนาเกมของชาว CS67 ทุกคน!
+            <p className="text-xs md:text-sm text-slate-200 line-clamp-2 md:line-clamp-3 leading-relaxed drop-shadow max-w-xl">
+              {featuredGame.description}
             </p>
 
-            {/* Feature badging */}
-            <div className="flex flex-wrap gap-3 pt-2 text-xs font-semibold text-slate-200">
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#091129] border border-sky-500/30 shadow-md">
-                <Laptop className="w-4 h-4 text-sky-400" />
-                <span>ผลงานนิสิต วิทยาการคอมพิวเตอร์ CS 67</span>
-              </div>
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#091129] border border-sky-500/30 shadow-md">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>เล่นเกมในระบบ Sandboxed Frame 16:9</span>
-              </div>
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#091129] border border-sky-500/30 shadow-md">
-                <Code className="w-4 h-4 text-blue-400" />
-                <span>รองรับ WebGL, Canvas & HTML5</span>
-              </div>
+            {/* Netflix Hero Buttons (Transparent & Minimal) */}
+            <div className="flex items-center gap-2.5 pt-2">
+              <Link
+                href={`/game/${featuredGame.id}`}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-transparent hover:bg-sky-500/15 text-white hover:text-sky-300 font-semibold text-xs border border-sky-400/40 transition-all cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-current ml-0.5 text-sky-400" />
+                <span>เล่นเกมเลย</span>
+              </Link>
+
+              <Link
+                href={`/game/${featuredGame.id}`}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-transparent hover:bg-white/5 text-slate-300 hover:text-white font-medium text-xs border border-white/10 transition-all"
+              >
+                <Info className="w-3.5 h-3.5 text-slate-400" />
+                <span>ข้อมูลเพิ่มเติม</span>
+              </Link>
             </div>
+
           </div>
         </div>
+      )}
 
-        {/* Section Heading */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <Flame className="w-5 h-5 text-sky-400 fill-sky-400" />
-            <h2 className="font-extrabold text-xl text-white tracking-tight">
-              {activeTag ? `หมวดหมู่: ${activeTag.toUpperCase()}` : '🎮 ผลงานเกม CS 67 & Trending Games'}
-            </h2>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#0e152e] text-sky-300 font-semibold border border-sky-500/30">
-              {games.length} {games.length === 1 ? 'เกม' : 'เกม'}
-            </span>
-          </div>
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-8">
+        
+        {/* Active Tag or Search View */}
+        {(activeTag || searchQuery) ? (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-extrabold text-xl text-white tracking-tight flex items-center gap-2">
+                <Flame className="w-5 h-5 text-sky-400 fill-sky-400" />
+                <span>{activeTag ? `หมวดหมู่: ${activeTag.toUpperCase()}` : `ผลการค้นหา: "${searchQuery}"`}</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#0e152e] text-sky-300 font-semibold border border-sky-500/30">
+                  {games.length} เกม
+                </span>
+              </h2>
 
-          <button
-            onClick={fetchGames}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0e152e] hover:bg-[#162248] text-xs font-semibold text-slate-300 hover:text-white border border-white/10 transition-colors"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>รีเฟรช</span>
-          </button>
-        </div>
-
-        {/* Game Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div
-                key={i}
-                className="aspect-[16/12] rounded-2xl bg-[#0e152e] border border-white/5 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : games.length === 0 ? (
-          <div className="p-12 rounded-2xl bg-[#0e152e] border border-sky-500/20 text-center space-y-4 shadow-xl">
-            <div className="w-16 h-16 mx-auto rounded-full bg-blue-600/20 border border-sky-400/30 flex items-center justify-center text-sky-300">
-              <Gamepad2 className="w-8 h-8" />
+              <button
+                onClick={fetchGames}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0e152e] hover:bg-[#162248] text-xs font-semibold text-slate-300 border border-white/10"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                <span>รีเฟรช</span>
+              </button>
             </div>
-            <h3 className="font-bold text-lg text-white">ไม่พบผลงานเกมที่ค้นหา</h3>
-            <p className="text-sm text-slate-400 max-w-sm mx-auto">
-              ยังไม่มีเกมในหมวดหมู่นี้ ร่วมเป็นคนแรกที่ส่งผลงานเกมเข้าสู่ระบบ More Then 66!
-            </p>
-            <button
-              onClick={() => setIsSubmitModalOpen(true)}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white text-xs font-bold shadow-lg shadow-blue-600/30"
-            >
-              ส่งผลงานเกม CS 67
-            </button>
+
+            {games.length === 0 ? (
+              <div className="p-12 rounded-2xl bg-[#0e152e] border border-sky-500/20 text-center space-y-4 shadow-xl">
+                <Gamepad2 className="w-12 h-12 text-slate-500 mx-auto" />
+                <h3 className="font-bold text-lg text-white">ไม่พบผลงานเกมที่ค้นหา</h3>
+                <p className="text-xs text-slate-400">ลองค้นหาด้วยคำอื่น หรือเลือกหมวดหมู่อื่นดูครับ</p>
+              </div>
+            ) : (
+              <div className="game-grid">
+                {games.map((game) => (
+                  <GameCard key={game.id} game={game} isAdmin={isAdmin} onDeleteGame={handleDeleteGame} />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
-          <div className="game-grid">
-            {games.map((game) => (
-              <GameCard
-                key={game.id}
-                game={game}
+          /* Netflix Categorized Horizontal Rows */
+          <div className="space-y-8">
+            
+            {/* Row 1: All Trending Games */}
+            <NetflixGameRow
+              title="🔥 ผลงานยอดนิยม (Trending CS 67 Games)"
+              icon={<TrendingUp className="w-5 h-5 text-sky-400" />}
+              games={games}
+              isAdmin={isAdmin}
+              onDeleteGame={handleDeleteGame}
+            />
+
+            {/* Row 2: CS 67 Projects */}
+            <NetflixGameRow
+              title="💻 CS 67 Projects (โปรเจกต์วิทยาการคอมพิวเตอร์)"
+              icon={<Cpu className="w-5 h-5 text-blue-400" />}
+              games={cs67Projects.length > 0 ? cs67Projects : games.slice(0, 4)}
+              isAdmin={isAdmin}
+              onDeleteGame={handleDeleteGame}
+            />
+
+            {/* Row 3: WebGL & 3D Titles */}
+            <NetflixGameRow
+              title="⚡ WebGL / 3D Graphics (เกมสามมิติ)"
+              icon={<Box className="w-5 h-5 text-cyan-400" />}
+              games={webglGames.length > 0 ? webglGames : games.slice(1, 5)}
+              isAdmin={isAdmin}
+              onDeleteGame={handleDeleteGame}
+            />
+
+            {/* Row 4: Puzzle & Brain Games */}
+            <NetflixGameRow
+              title="🧩 Puzzle & Brain (เกมปริศนาเเละลับสมอง)"
+              icon={<Puzzle className="w-5 h-5 text-amber-400" />}
+              games={puzzleGames.length > 0 ? puzzleGames : games.slice(2, 6)}
+              isAdmin={isAdmin}
+              onDeleteGame={handleDeleteGame}
+            />
+
+            {/* Row 5: Arcade & Action */}
+            {arcadeGames.length > 0 && (
+              <NetflixGameRow
+                title="🕹️ Arcade & Action (เกมอาเขตและแอ็กชัน)"
+                icon={<Gamepad2 className="w-5 h-5 text-emerald-400" />}
+                games={arcadeGames}
                 isAdmin={isAdmin}
                 onDeleteGame={handleDeleteGame}
               />
-            ))}
+            )}
+
           </div>
         )}
 
@@ -249,7 +396,7 @@ export default function HomePage() {
           <div className="flex items-center gap-4 text-slate-300 font-medium">
             <span>สาขาวิทยาการคอมพิวเตอร์ รุ่น 67</span>
             <span>•</span>
-            <span>Next.js App Router</span>
+            <span>NextAuth .ac.th SSO</span>
             <span>•</span>
             <span>Sandboxed Runtime</span>
           </div>
