@@ -47,10 +47,11 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Full-Height Big Logo (Far Left - Matches Red Box) */}
         <Link href="/" className="flex-shrink-0 group flex items-center">
           <img
-            src="/logo.png"
+            src="/logo.png?v=2"
             alt="One 4 All Logo"
             className="h-16 md:h-20 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow-xl"
           />
+
         </Link>
 
         {/* Right Content Column */}
