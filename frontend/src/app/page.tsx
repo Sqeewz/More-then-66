@@ -167,7 +167,7 @@ export default function LandingPage() {
           max-height: none;
           display: grid;
           grid-template-columns: 44% 43% 13%;
-          background-image: url('/wallmain.jpg');
+          background-image: url('https://u.cubeupload.com/zmonochrome/tumblr8b1866a9355004.jpg');
           background-size: cover;
           background-position: center;
           position: relative;
@@ -375,18 +375,15 @@ export default function LandingPage() {
         }
 
         .art-window {
-          width: 65%;
-          height: 60%;
-          max-width: 380px;
-          max-height: 380px;
+          width: 90%;
+          height: 88%;
           position: relative;
           overflow: hidden;
-          border-radius: 12px;
-          background: linear-gradient(135deg, rgba(20, 30, 30, 0.1) 0%, rgba(10, 15, 15, 0.4) 100%);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+          border-radius: 6px;
+          background: linear-gradient(135deg, rgba(20, 30, 30, 0.05) 0%, rgba(10, 15, 15, 0.3) 100%);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         .art-window::after {
@@ -400,7 +397,7 @@ export default function LandingPage() {
         }
 
         .large-bg-kanji {
-          font-size: 8rem;
+          font-size: 16rem;
           color: rgba(255, 255, 255, 0.02);
           position: absolute;
           top: -20px; left: -20px;
