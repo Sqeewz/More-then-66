@@ -202,7 +202,7 @@ export default function HomePage() {
         const updatedLocal = localGames.filter((g) => g.id !== id);
         localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(updatedLocal));
       }
-    } catch (e) {}
+    } catch (e) { }
 
     try {
       const passToSend = adminPass || sessionStorage.getItem('cs67_admin_auth') || ADMIN_PASS_HASH;
@@ -297,7 +297,7 @@ export default function HomePage() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-8">
-        
+
         {/* Active Tag or Search View */}
         {(activeTag || searchQuery) ? (
           <div className="space-y-6">
@@ -336,7 +336,7 @@ export default function HomePage() {
         ) : (
           /* Netflix Categorized Horizontal Rows */
           <div className="space-y-8">
-            
+
             {/* Row 1: All Trending Games */}
             <NetflixGameRow
               title="🔥 ผลงานยอดนิยม (Trending CS 67 Games)"
@@ -395,9 +395,9 @@ export default function HomePage() {
           <p>© 2026 One 4 All - Computer Science CS 67 Game Hub. All Rights Reserved.</p>
 
           <div className="flex items-center gap-4 text-slate-300 font-medium">
-            <span>สาขาวิทยาการคอมพิวเตอร์ รุ่น 67</span>
+            <span>สาขาวิทยาการคอมพิวเตอร์ รุ่น 18</span>
             <span>•</span>
-            <span>NextAuth .ac.th SSO</span>
+            <span>NextAuth rmuti.ac.th SSO</span>
             <span>•</span>
             <span>Sandboxed Runtime</span>
           </div>
