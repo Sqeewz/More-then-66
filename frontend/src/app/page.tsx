@@ -148,7 +148,7 @@ export default function LandingPage() {
 
         .anime-landing-wrapper {
           background: #060608;
-          background-image: radial-gradient(circle at center, #10042bff 0%, #060608 100%);
+          background-image: radial-gradient(circle at center, #07073cff 0%, #060608 100%);
           font-family: 'Noto Sans JP', 'Syncopate', sans-serif;
           width: 100vw;
           height: 100vh;
@@ -247,7 +247,7 @@ export default function LandingPage() {
           justify-content: space-between;
           position: relative;
           z-index: 15;
-          background: linear-gradient(90deg, rgba(6, 6, 8, 0.98) 0%, rgba(70, 3, 3, 0.65) 75%, rgba(0, 0, 0, 0) 100%);
+          background: linear-gradient(90deg, rgba(6, 6, 8, 0.98) 0%, rgba(12, 3, 70, 0.65) 75%, rgba(0, 0, 0, 0) 100%);
         }
 
         .hero-quote-header {
@@ -257,7 +257,7 @@ export default function LandingPage() {
           letter-spacing: 2px;
           line-height: 1.5;
           text-transform: uppercase;
-          border-left: 3px solid #b5893d;
+          border-left: 3px solid #3d9db5ff;
           padding-left: 10px;
         }
 
@@ -282,9 +282,9 @@ export default function LandingPage() {
           letter-spacing: -6px;
           display: inline-block;
           text-shadow: 
-              1px 1px 0px #b5893d,
-              2px 2px 0px #8a6428,
-              3px 3px 0px #5e4319,
+              1px 1px 0px #1228b8ff,
+              2px 2px 0px #0a1794ff,
+              3px 3px 0px #060853ff,
               5px 5px 25px rgba(0, 0, 0, 0.95);
         }
 
@@ -316,20 +316,20 @@ export default function LandingPage() {
         }
 
         .numeric-badge:hover {
-          background-color: #f59e0b;
-          color: #000000;
+          background-color: #0c0c76ff;
+          color: #ffffffff;
           transform: translateY(-2px) scale(1.04);
-          box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+          box-shadow: 0 10px 25px rgba(54, 17, 247, 0.4);
         }
 
         .content-text-box {
           background: rgba(10, 10, 14, 0.8);
           border: 1px solid rgba(255, 255, 255, 0.12);
-          border-left: 3px solid #b5893d;
+          border-left: 3px solid #493db5ff;
           padding: 14px 16px;
           margin-top: 20px;
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
           border-radius: 6px;
           box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
           color: #cbd5e1;
@@ -380,8 +380,8 @@ export default function LandingPage() {
           overflow: hidden;
           border-radius: 6px;
           background: linear-gradient(135deg, rgba(20, 30, 30, 0.05) 0%, rgba(10, 15, 15, 0.3) 100%);
-          backdrop-filter: blur(4px);
-          -webkit-backdrop-filter: blur(4px);
+          backdrop-filter: blur(1.5px);
+          -webkit-backdrop-filter: blur(1.5px);
           border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
@@ -390,7 +390,7 @@ export default function LandingPage() {
           position: absolute;
           width: 100%;
           height: 2px;
-          background: linear-gradient(90deg, transparent, rgba(181, 137, 61, 0.3), rgba(255,255,255,0.4), rgba(181, 137, 61, 0.3), transparent);
+          background: linear-gradient(90deg, transparent, rgba(59, 61, 180, 0.3), rgba(168, 168, 178, 0.4), rgba(58, 59, 177, 0.3), transparent);
           top: 0; z-index: 2;
           animation: laser-scan 4s linear infinite;
         }
