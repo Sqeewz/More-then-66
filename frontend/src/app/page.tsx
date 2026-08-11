@@ -160,11 +160,14 @@ export default function LandingPage() {
         }
 
         .canvas-container {
-          width: 100vw;
-          height: 100vh;
+          width: 100%;
+          min-height: calc(100vh - 100px);
+          height: calc(100vh - 100px);
+          max-width: none;
+          max-height: none;
           display: grid;
           grid-template-columns: 44% 43% 13%;
-          background-image: url('https://u.cubeupload.com/zmonochrome/tumblr8b1866a9355004.jpg');
+          background-image: url('/wallmain.jpg');
           background-size: cover;
           background-position: center;
           position: relative;
@@ -173,6 +176,9 @@ export default function LandingPage() {
               0 30px 100px rgba(0, 0, 0, 0.8),
               inset 0 0 80px rgba(6, 6, 8, 0.9),
               inset 0 0 140px rgba(0, 0, 0, 0.95);
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 0;
           overflow: hidden;
           transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
@@ -369,15 +375,18 @@ export default function LandingPage() {
         }
 
         .art-window {
-          width: 90%;
-          height: 88%;
+          width: 65%;
+          height: 60%;
+          max-width: 380px;
+          max-height: 380px;
           position: relative;
           overflow: hidden;
-          border-radius: 6px;
-          background: linear-gradient(135deg, rgba(20, 30, 30, 0.05) 0%, rgba(10, 15, 15, 0.3) 100%);
-          backdrop-filter: blur(4px);
-          -webkit-backdrop-filter: blur(4px);
-          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 12px;
+          background: linear-gradient(135deg, rgba(20, 30, 30, 0.1) 0%, rgba(10, 15, 15, 0.4) 100%);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
         }
 
         .art-window::after {
@@ -391,7 +400,7 @@ export default function LandingPage() {
         }
 
         .large-bg-kanji {
-          font-size: 16rem;
+          font-size: 8rem;
           color: rgba(255, 255, 255, 0.02);
           position: absolute;
           top: -20px; left: -20px;
@@ -568,7 +577,7 @@ export default function LandingPage() {
           <div className="ui-corner-bracket top-left"></div>
           <div className="ui-corner-bracket bottom-right"></div>
 
-          <div className="nihility-bg-text">NIHILITY NIHILITY NIHILITY</div>
+          <div className="nihility-bg-text">COMSCI COMSCI COMSCI COMSCI COMSCI COMSCI</div>
 
           {/* Canvas for floating petals */}
           <canvas id="petals-canvas" ref={petalsCanvasRef}></canvas>
@@ -576,15 +585,15 @@ export default function LandingPage() {
           {/* Left Panel */}
           <section className="left-panel">
             <div className="hero-quote-header">
-              Fret not! The hero Chixia has arrived!
-              <span className="quote-jp">心配ご無用！正義 de 味方、熾霞のお出ましだ！</span>
+              Warning: The following content was created by a Computer Science student 67
+              <span className="quote-jp">Please offer feedback politely.</span>
             </div>
 
             <div className="main-title-group">
-              <span className="japanese-sub">ブレイジング・ブライト</span>
-              <h1 className="main-kanji">朝日</h1>
+              <span className="japanese-sub">Computer・Science</span>
+              <h1 className="main-kanji">14 All</h1>
               <br />
-              
+
               {/* Enter Main Showcase Button */}
               <Link href="/hub" className="numeric-badge group">
                 <span>เข้าสู่หน้าเว็บหลัก</span>
@@ -597,8 +606,8 @@ export default function LandingPage() {
             </div>
 
             <div className="left-footer">
-              <p className="game-meta">OVERDRIVE MODE // FREQUENCY: STABLE</p>
-              <div className="tag-pill">BOOM BOOM!</div>
+              <p className="game-meta">THANIN RABIEPPHO // SUPAWADEE PHOPPHIMAI</p>
+              <div className="tag-pill">COM SCI DI WA</div>
             </div>
           </section>
 
@@ -608,7 +617,7 @@ export default function LandingPage() {
               <span className="large-bg-kanji">古</span>
               <div className="tech-overlay">
                 <span>STATUS: ACTIVE</span>
-                <span>GLASS: JINSHI_DARK</span>
+                <span>GLASS: GOD</span>
                 <div className="live-pulse-bar"></div>
               </div>
             </div>
