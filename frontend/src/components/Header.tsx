@@ -52,12 +52,13 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-lg tracking-tight text-white group-hover:text-sky-300 transition-colors">
-                  More Then <span className="text-sky-400">66</span>
+                <span className="font-extrabold text-xl tracking-tight text-white group-hover:text-sky-300 transition-colors">
+                  One <span className="gradient-text-one4all">4 All</span>
                 </span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-500/10 text-sky-300 font-semibold border border-sky-400/20 uppercase">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-sky-500/20 via-indigo-500/20 to-purple-500/20 text-sky-300 font-bold border border-sky-400/30 uppercase tracking-wider">
                   CS 67
                 </span>
+
               </div>
             </div>
           </Link>

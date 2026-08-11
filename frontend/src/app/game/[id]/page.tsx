@@ -133,7 +133,8 @@ export default function GameDetailPage() {
   const canEditOrDelete = isOwner || isUserAdmin;
 
   const handleDeleteGame = async (id: string, title: string) => {
-    const confirmDelete = confirm(`คุณต้องการลบผลงานเกม "${title}" ออกจากระบบ More Then 66 หรือไม่?`);
+    const confirmDelete = confirm(`คุณต้องการลบผลงานเกม "${title}" ออกจากระบบ One 4 All หรือไม่?`);
+
     if (!confirmDelete) return;
 
     try {

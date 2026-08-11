@@ -3,9 +3,10 @@ import './globals.css';
 import { Providers } from '@/components/Providers';
 
 export const metadata: Metadata = {
-  title: 'More Then 66 — CS67 Game Hub',
-  description: 'คลังผลงานเกม วิทยาการคอมพิวเตอร์ รุ่น 67',
+  title: 'One 4 All — CS67 Game Hub',
+  description: 'ศูนย์รวมและคลังแสดงผลงานเกม วิทยาการคอมพิวเตอร์ รุ่น 67 (One 4 All)',
 };
+
 
 export default function RootLayout({
   children,
