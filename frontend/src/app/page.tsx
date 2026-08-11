@@ -1,28 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { Header } from '@/components/Header';
-import { SubmitGameModal } from '@/components/SubmitGameModal';
-import { AdminLoginModal } from '@/components/AdminLoginModal';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { useGames } from '@/hooks/useGames';
-import { GameCard } from '@/components/GameCard';
-import { deleteGameApi } from '@/lib/api';
-import { LOCAL_STORAGE_GAMES_KEY } from '@/lib/constants';
-import { GameDocument } from '@/types/game';
-import { Gamepad2, Flame, RefreshCw, Sparkles, TrendingUp, Box, Puzzle, Cpu, LogIn, LogOut, ArrowDown } from 'lucide-react';
+import { LogIn, LogOut, ArrowRight, Sparkles } from 'lucide-react';
 
-export default function HomePage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTag, setActiveTag] = useState('');
-  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-
-  const { isAdmin, adminPass, handleAdminSuccess, handleAdminLogout } = useAdminAuth();
-  const { games, setGames, loading, refetch } = useGames(activeTag, searchQuery);
-
+export default function LandingPage() {
   const { data: session } = useSession();
 
   const mainCanvasRef = useRef<HTMLDivElement>(null);
@@ -157,54 +140,28 @@ export default function HomePage() {
     };
   }, []);
 
-  const handleDeleteGame = async (id: string, title: string) => {
-    const confirmDelete = confirm(`คุณต้องการลบผลงานเกม "${title}" ออกจากระบบ หรือไม่?`);
-    if (!confirmDelete) return;
-
-    setGames((prev) => prev.filter((g) => g.id !== id));
-
-    try {
-      const raw = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
-      if (raw) {
-        const localGames: GameDocument[] = JSON.parse(raw);
-        localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(localGames.filter((g) => g.id !== id)));
-      }
-    } catch {}
-
-    try {
-      await deleteGameApi(id, adminPass);
-      alert(`ลบผลงานเกม "${title}" ออกจากระบบเรียบร้อยแล้ว`);
-      refetch();
-    } catch (err: unknown) {
-      console.warn('[HomePage] API delete warning:', err);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col bg-[#060608] text-white selection:bg-amber-500 selection:text-black">
-      {/* Dynamic Style Block for Anime Cyberpunk Aesthetic */}
+    <div className="w-screen h-screen overflow-hidden bg-[#060608] text-white selection:bg-amber-500 selection:text-black">
+      {/* Dynamic Style Block for Dedicated Fullscreen Anime Landing */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;900&family=Syncopate:wght@700&display=swap');
 
-        .anime-hero-wrapper {
+        .anime-landing-wrapper {
           background: #060608;
           background-image: radial-gradient(circle at center, #2b0404 0%, #060608 100%);
           font-family: 'Noto Sans JP', 'Syncopate', sans-serif;
+          width: 100vw;
+          height: 100vh;
           display: flex;
           justify-content: center;
           align-items: center;
-          width: 100%;
-          min-height: calc(100vh - 100px);
           position: relative;
-          padding: 0;
+          overflow: hidden;
         }
 
         .canvas-container {
-          width: 100%;
-          min-height: calc(100vh - 100px);
-          height: calc(100vh - 100px);
-          max-width: none;
-          max-height: none;
+          width: 100vw;
+          height: 100vh;
           display: grid;
           grid-template-columns: 44% 43% 13%;
           background-image: url('https://u.cubeupload.com/zmonochrome/tumblr8b1866a9355004.jpg');
@@ -216,9 +173,6 @@ export default function HomePage() {
               0 30px 100px rgba(0, 0, 0, 0.8),
               inset 0 0 80px rgba(6, 6, 8, 0.9),
               inset 0 0 140px rgba(0, 0, 0, 0.95);
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 0;
           overflow: hidden;
           transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
@@ -243,9 +197,9 @@ export default function HomePage() {
 
         .ui-corner-bracket {
           position: absolute;
-          width: 15px;
-          height: 15px;
-          border: 2px solid rgba(255, 255, 255, 0.15);
+          width: 20px;
+          height: 20px;
+          border: 2px solid rgba(255, 255, 255, 0.25);
           z-index: 13;
           pointer-events: none;
         }
@@ -282,12 +236,12 @@ export default function HomePage() {
         }
 
         .left-panel {
-          padding: 5% 7%;
+          padding: 6% 8%;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           position: relative;
-          z-index: 5;
+          z-index: 15;
           background: linear-gradient(90deg, rgba(6, 6, 8, 0.98) 0%, rgba(70, 3, 3, 0.65) 75%, rgba(0, 0, 0, 0) 100%);
         }
 
@@ -340,21 +294,32 @@ export default function HomePage() {
         }
 
         .numeric-badge {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
           background-color: #ffffff;
           color: #000000;
-          padding: 4px 16px;
-          font-size: 0.8rem;
-          font-weight: bold;
-          letter-spacing: 3px;
-          margin-top: 10px;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-          border-radius: 2px;
+          padding: 8px 22px;
+          font-size: 0.85rem;
+          font-weight: 800;
+          letter-spacing: 2px;
+          margin-top: 14px;
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+          border-radius: 4px;
+          text-decoration: none;
+          transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .numeric-badge:hover {
+          background-color: #f59e0b;
+          color: #000000;
+          transform: translateY(-2px) scale(1.04);
+          box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
         }
 
         .content-text-box {
-          background: rgba(10, 10, 14, 0.75);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(10, 10, 14, 0.8);
+          border: 1px solid rgba(255, 255, 255, 0.12);
           border-left: 3px solid #b5893d;
           padding: 14px 16px;
           margin-top: 20px;
@@ -367,19 +332,6 @@ export default function HomePage() {
           line-height: 1.6;
           max-height: 140px;
           overflow-y: auto;
-        }
-
-        .content-text-box::-webkit-scrollbar {
-          width: 4px;
-        }
-
-        .content-text-box::-webkit-scrollbar-thumb {
-          background: #b5893d;
-          border-radius: 2px;
-        }
-
-        .content-text-box::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
         }
 
         .left-footer {
@@ -417,11 +369,11 @@ export default function HomePage() {
         }
 
         .art-window {
-          width: 92%;
-          height: 90%;
+          width: 90%;
+          height: 88%;
           position: relative;
           overflow: hidden;
-          border-radius: 4px;
+          border-radius: 6px;
           background: linear-gradient(135deg, rgba(20, 30, 30, 0.05) 0%, rgba(10, 15, 15, 0.3) 100%);
           backdrop-filter: blur(4px);
           -webkit-backdrop-filter: blur(4px);
@@ -468,27 +420,34 @@ export default function HomePage() {
           animation: bar-stretch 1.2s infinite ease-in-out;
         }
 
+        /* Scaled down logo container */
         .character-root {
           position: absolute;
-          width: 140%; height: 115%;
-          bottom: 2%; left: -20%;
+          width: 100%;
+          height: 100%;
+          top: 0;
+          left: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           z-index: 10;
           pointer-events: none;
           transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
           will-change: transform;
         }
 
+        /* Slightly reduced logo size */
         .character-img {
-          width: 100%; height: 100%;
+          max-height: 52vh;
+          width: auto;
           object-fit: contain;
-          object-position: bottom center;
-          filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 60px rgba(220, 38, 38, 0.12)); 
+          filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 45px rgba(56, 189, 248, 0.35)); 
           animation: float-character 6s ease-in-out infinite;
         }
 
         .right-panel {
           background: transparent;
-          padding: 40px 15px;
+          padding: 40px 20px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -500,13 +459,16 @@ export default function HomePage() {
         }
 
         .pill-box {
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.25);
           border-radius: 20px;
-          padding: 4px 18px;
-          font-size: 0.65rem;
+          padding: 6px 20px;
+          font-size: 0.7rem;
           letter-spacing: 2px;
           font-weight: bold;
-          background: rgba(255,255,255,0.02);
+          background: rgba(255, 255, 255, 0.05);
+          text-decoration: none;
+          color: #ffffff;
+          transition: all 0.2s ease;
         }
 
         .vertical-text-wrap {
@@ -558,7 +520,7 @@ export default function HomePage() {
 
         @keyframes float-character {
           0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
+          50% { transform: translateY(-8px); }
         }
 
         @keyframes laser-scan {
@@ -580,12 +542,10 @@ export default function HomePage() {
         @media (max-width: 768px) {
           .canvas-container {
             grid-template-columns: 1fr;
-            height: auto;
-            max-height: none;
+            height: 100vh;
           }
-          .character-root {
-            width: 100%;
-            left: 0;
+          .character-img {
+            max-height: 40vh;
           }
           .right-panel {
             flex-direction: row;
@@ -601,20 +561,8 @@ export default function HomePage() {
         }
       `}</style>
 
-      {/* Header Bar */}
-      <Header
-        onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
-        onOpenAdminModal={() => setIsAdminModalOpen(true)}
-        isAdmin={isAdmin}
-        onAdminLogout={handleAdminLogout}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        activeTag={activeTag}
-        setActiveTag={setActiveTag}
-      />
-
-      {/* Main Anime Parallax Hero Showcase */}
-      <div className="anime-hero-wrapper">
+      {/* Standalone Fullscreen Anime Canvas Landing */}
+      <div className="anime-landing-wrapper">
         <div className="canvas-container" id="main-canvas" ref={mainCanvasRef}>
           <div className="canvas-dot-overlay"></div>
           <div className="ui-corner-bracket top-left"></div>
@@ -636,15 +584,12 @@ export default function HomePage() {
               <span className="japanese-sub">ブレイジング・ブライト</span>
               <h1 className="main-kanji">朝日</h1>
               <br />
-              <button
-                onClick={() => {
-                  document.getElementById('games-showcase')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="numeric-badge hover:bg-amber-400 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer flex items-center gap-2 border border-black/10 group"
-              >
+              
+              {/* Enter Main Showcase Button */}
+              <Link href="/hub" className="numeric-badge group">
                 <span>เข้าสู่หน้าเว็บหลัก</span>
-                <ArrowDown className="w-3.5 h-3.5 text-black group-hover:translate-y-0.5 transition-transform" />
-              </button>
+                <ArrowRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform" />
+              </Link>
 
               <div className="content-text-box">
                 ยินดีต้อนรับสู่ One 4 All — Computer Science CS67 Game Hub! ศูนย์รวมผลงานการพัฒนาเว็บเกมและมัลติมีเดียโดยนิสิตวิทยาการคอมพิวเตอร์ รุ่น 67 สามารถเลือกเล่นเกม ค้นหา หรือส่งผลงานเกมของคุณขึ้นสู่แพลตฟอร์มได้ที่นี่!
@@ -657,7 +602,7 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* Center Panel */}
+          {/* Center Panel: Slightly reduced logo size */}
           <section className="center-panel">
             <div className="art-window">
               <span className="large-bg-kanji">古</span>
@@ -671,12 +616,12 @@ export default function HomePage() {
               <img
                 src="/logo.png?v=2"
                 alt="One 4 All CS67 Logo"
-                className="character-img max-h-[85vh] object-contain drop-shadow-[0_20px_50px_rgba(56,189,248,0.4)] p-4"
+                className="character-img p-2"
               />
             </div>
           </section>
 
-          {/* Right Panel */}
+          {/* Right Panel: LOGIN Button */}
           <aside className="right-panel">
             {session?.user ? (
               <button
@@ -711,68 +656,6 @@ export default function HomePage() {
           </aside>
         </div>
       </div>
-
-      {/* Main Game Showcase Content Area */}
-      <main id="games-showcase" className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-8 space-y-8 scroll-mt-24">
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <h2 className="font-extrabold text-2xl text-white tracking-tight flex items-center gap-2">
-            <Flame className="w-6 h-6 text-amber-400 fill-amber-400" />
-            <span>คลังผลงานเกม CS67 (Game Showcase)</span>
-            <span className="text-xs px-3 py-1 rounded-full bg-[#0e152e] text-amber-300 font-semibold border border-amber-500/30">
-              {games.length} ผลงาน
-            </span>
-          </h2>
-
-          <button
-            onClick={refetch}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#0e152e] hover:bg-[#162248] text-xs font-semibold text-slate-300 border border-white/10 transition-colors"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>รีเฟรช</span>
-          </button>
-        </div>
-
-        {games.length === 0 ? (
-          <div className="p-12 rounded-2xl bg-[#0e152e] border border-amber-500/20 text-center space-y-4 shadow-xl">
-            <Gamepad2 className="w-12 h-12 text-slate-500 mx-auto" />
-            <h3 className="font-bold text-lg text-white">ยังไม่มีผลงานเกมในหมวดหมู่นี้</h3>
-            <p className="text-xs text-slate-400">ลองค้นหาด้วยคำอื่น หรือกดปุ่ม "ส่งผลงานเกม" ด้านบนเพื่อเพิ่มเกมใหม่ได้เลยครับ</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {games.map((game) => (
-              <GameCard key={game.id} game={game} isAdmin={isAdmin} onDeleteGame={handleDeleteGame} />
-            ))}
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="mt-auto border-t border-white/10 bg-[#03060f] py-6 px-4 text-center text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 One 4 All - Computer Science CS 67 Game Hub. All Rights Reserved.</p>
-          <div className="flex items-center gap-4 text-slate-300 font-medium">
-            <span>สาขาวิทยาการคอมพิวเตอร์ รุ่น 67</span>
-            <span>•</span>
-            <span>NextAuth .ac.th SSO</span>
-            <span>•</span>
-            <span>Sandboxed Runtime</span>
-          </div>
-        </div>
-      </footer>
-
-      {/* Modals */}
-      <SubmitGameModal
-        isOpen={isSubmitModalOpen}
-        onClose={() => setIsSubmitModalOpen(false)}
-        onSuccess={refetch}
-      />
-
-      <AdminLoginModal
-        isOpen={isAdminModalOpen}
-        onClose={() => setIsAdminModalOpen(false)}
-        onSuccess={handleAdminSuccess}
-      />
     </div>
   );
 }
