@@ -1,17 +1,19 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { GameCard } from '@/components/GameCard';
 import { SubmitGameModal } from '@/components/SubmitGameModal';
-import { AdminLoginModal, ADMIN_PASS_HASH } from '@/components/AdminLoginModal';
-import { deleteGameApi, getGames } from '@/lib/api';
+import { AdminLoginModal } from '@/components/AdminLoginModal';
+import { deleteGameApi } from '@/lib/api';
 import { GameDocument } from '@/types/game';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useGames } from '@/hooks/useGames';
+import { LOCAL_STORAGE_GAMES_KEY } from '@/lib/constants';
 import {
   Gamepad2,
   Flame,
-  ShieldCheck,
   RefreshCw,
   GraduationCap,
   ChevronLeft,
@@ -25,7 +27,10 @@ import {
   Cpu,
 } from 'lucide-react';
 
-const LOCAL_STORAGE_GAMES_KEY = 'cs67_user_submitted_games';
+// ---------------------------------------------------------------------------
+// NetflixGameRow — Presentational component (Single Responsibility)
+// Responsible only for rendering a horizontally-scrollable row of game cards.
+// ---------------------------------------------------------------------------
 
 interface GameRowProps {
   title: string;
@@ -105,123 +110,59 @@ const NetflixGameRow: React.FC<GameRowProps> = ({ title, icon, games, isAdmin, o
   );
 };
 
+// ---------------------------------------------------------------------------
+// HomePage — Container component (uses hooks, delegates rendering)
+// ---------------------------------------------------------------------------
+
 export default function HomePage() {
-  const [games, setGames] = useState<GameDocument[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTag, setActiveTag] = useState('');
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-
-  // Admin Mode State
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminPass, setAdminPass] = useState('');
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
-  const fetchGames = async () => {
-    try {
-      setLoading(true);
-      const res = await getGames(activeTag, searchQuery);
-      let combinedGames = [...res.games];
+  // ── Custom Hooks (OOP: each hook has a single responsibility) ──────────────
+  const { isAdmin, adminPass, handleAdminSuccess, handleAdminLogout } = useAdminAuth();
+  const { games, setGames, loading, refetch } = useGames(activeTag, searchQuery);
 
-      // Restore user-submitted games from browser LocalStorage
-      try {
-        const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
-        if (storedLocal) {
-          const localGames: GameDocument[] = JSON.parse(storedLocal);
-          for (const lg of localGames) {
-            if (!combinedGames.some((g) => g.id === lg.id)) {
-              combinedGames.unshift(lg);
-            }
-          }
-        }
-      } catch (e) {
-        console.error('LocalStorage read error:', e);
-      }
+  // ── Event Handlers ─────────────────────────────────────────────────────────
 
-      // Filter by activeTag if selected
-      if (activeTag) {
-        const tagLower = activeTag.toLowerCase();
-        combinedGames = combinedGames.filter((g) =>
-          g.tags?.some((t) => t.toLowerCase() === tagLower)
-        );
-      }
-
-      // Filter by search query if typed
-      if (searchQuery) {
-        const queryLower = searchQuery.toLowerCase();
-        combinedGames = combinedGames.filter(
-          (g) =>
-            g.title.toLowerCase().includes(queryLower) ||
-            g.description.toLowerCase().includes(queryLower) ||
-            (g.creator_id && g.creator_id.toLowerCase().includes(queryLower))
-        );
-      }
-
-      setGames(combinedGames);
-    } catch (err) {
-      console.error('Failed to load games:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchGames();
-    const storedAuth = sessionStorage.getItem('cs67_admin_auth');
-    if (storedAuth === ADMIN_PASS_HASH || storedAuth === '67morethen66') {
-      setIsAdmin(true);
-      setAdminPass(storedAuth);
-    }
-  }, [activeTag, searchQuery]);
-
-  const handleAdminSuccess = (hashOrPass: string) => {
-    setIsAdmin(true);
-    setAdminPass(hashOrPass);
-  };
-
-  const handleAdminLogout = () => {
-    sessionStorage.removeItem('cs67_admin_auth');
-    setIsAdmin(false);
-    setAdminPass('');
-  };
-
-  const handleGameSubmitted = () => {
-    fetchGames();
-  };
+  const handleGameSubmitted = () => refetch();
 
   const handleDeleteGame = async (id: string, title: string) => {
     const confirmDelete = confirm(`คุณต้องการลบผลงานเกม "${title}" ออกจากระบบ More Then 66 หรือไม่?`);
     if (!confirmDelete) return;
 
+    // Optimistic UI update
     setGames((prev) => prev.filter((g) => g.id !== id));
 
+    // Sync LocalStorage
     try {
-      const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
-      if (storedLocal) {
-        const localGames: GameDocument[] = JSON.parse(storedLocal);
-        const updatedLocal = localGames.filter((g) => g.id !== id);
-        localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(updatedLocal));
+      const raw = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
+      if (raw) {
+        const localGames: GameDocument[] = JSON.parse(raw);
+        localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(localGames.filter((g) => g.id !== id)));
       }
-    } catch (e) { }
+    } catch { /* LocalStorage unavailable */ }
 
+    // API delete
     try {
-      const passToSend = adminPass || sessionStorage.getItem('cs67_admin_auth') || ADMIN_PASS_HASH;
-      await deleteGameApi(id, passToSend);
+      await deleteGameApi(id, adminPass);
       alert(`ลบผลงานเกม "${title}" ออกจากระบบเรียบร้อยแล้ว`);
-      fetchGames();
+      refetch();
     } catch (err: unknown) {
-      console.warn('API delete warning:', err);
+      console.warn('[HomePage] API delete warning:', err);
     }
   };
 
-  // Featured Spotlight Game for Netflix Hero Billboard
-  const featuredGame = games.length > 0 ? games[0] : null;
+  // ── Derived Data ───────────────────────────────────────────────────────────
 
-  // Categorized Game Rows
+  const featuredGame = games.length > 0 ? games[0] : null;
   const cs67Projects = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('cs67')));
-  const webglGames = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('webgl') || t.toLowerCase().includes('3d')));
-  const puzzleGames = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('puzzle')));
-  const arcadeGames = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('arcade') || t.toLowerCase().includes('action') || t.toLowerCase().includes('html5')));
+  const webglGames   = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('webgl') || t.toLowerCase().includes('3d')));
+  const puzzleGames  = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('puzzle')));
+  const arcadeGames  = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('arcade') || t.toLowerCase().includes('action') || t.toLowerCase().includes('html5')));
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen flex flex-col bg-[#050814] text-white selection:bg-sky-500 selection:text-white">
@@ -272,7 +213,7 @@ export default function HomePage() {
               {featuredGame.description}
             </p>
 
-            {/* Netflix Hero Buttons (Transparent & Minimal) */}
+            {/* Netflix Hero Buttons */}
             <div className="flex items-center gap-2.5 pt-2">
               <Link
                 href={`/game/${featuredGame.id}`}
@@ -290,7 +231,6 @@ export default function HomePage() {
                 <span>ข้อมูลเพิ่มเติม</span>
               </Link>
             </div>
-
           </div>
         </div>
       )}
@@ -311,7 +251,7 @@ export default function HomePage() {
               </h2>
 
               <button
-                onClick={fetchGames}
+                onClick={refetch}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0e152e] hover:bg-[#162248] text-xs font-semibold text-slate-300 border border-white/10"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -336,8 +276,6 @@ export default function HomePage() {
         ) : (
           /* Netflix Categorized Horizontal Rows */
           <div className="space-y-8">
-
-            {/* Row 1: All Trending Games */}
             <NetflixGameRow
               title="🔥 ผลงานยอดนิยม (Trending CS 67 Games)"
               icon={<TrendingUp className="w-5 h-5 text-sky-400" />}
@@ -345,8 +283,6 @@ export default function HomePage() {
               isAdmin={isAdmin}
               onDeleteGame={handleDeleteGame}
             />
-
-            {/* Row 2: CS 67 Projects */}
             <NetflixGameRow
               title="💻 CS 67 Projects (โปรเจกต์วิทยาการคอมพิวเตอร์)"
               icon={<Cpu className="w-5 h-5 text-blue-400" />}
@@ -354,8 +290,6 @@ export default function HomePage() {
               isAdmin={isAdmin}
               onDeleteGame={handleDeleteGame}
             />
-
-            {/* Row 3: WebGL & 3D Titles */}
             <NetflixGameRow
               title="⚡ WebGL / 3D Graphics (เกมสามมิติ)"
               icon={<Box className="w-5 h-5 text-cyan-400" />}
@@ -363,8 +297,6 @@ export default function HomePage() {
               isAdmin={isAdmin}
               onDeleteGame={handleDeleteGame}
             />
-
-            {/* Row 4: Puzzle & Brain Games */}
             <NetflixGameRow
               title="🧩 Puzzle & Brain (เกมปริศนาเเละลับสมอง)"
               icon={<Puzzle className="w-5 h-5 text-amber-400" />}
@@ -372,8 +304,6 @@ export default function HomePage() {
               isAdmin={isAdmin}
               onDeleteGame={handleDeleteGame}
             />
-
-            {/* Row 5: Arcade & Action */}
             {arcadeGames.length > 0 && (
               <NetflixGameRow
                 title="🕹️ Arcade & Action (เกมอาเขตและแอ็กชัน)"
@@ -383,7 +313,6 @@ export default function HomePage() {
                 onDeleteGame={handleDeleteGame}
               />
             )}
-
           </div>
         )}
 
@@ -393,11 +322,10 @@ export default function HomePage() {
       <footer className="mt-auto border-t border-white/10 bg-[#03060f] py-6 px-4 text-center text-xs text-slate-400">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 One 4 All - Computer Science CS 67 Game Hub. All Rights Reserved.</p>
-
           <div className="flex items-center gap-4 text-slate-300 font-medium">
-            <span>สาขาวิทยาการคอมพิวเตอร์ รุ่น 18</span>
+            <span>สาขาวิทยาการคอมพิวเตอร์ รุ่น 67</span>
             <span>•</span>
-            <span>NextAuth rmuti.ac.th SSO</span>
+            <span>NextAuth .ac.th SSO</span>
             <span>•</span>
             <span>Sandboxed Runtime</span>
           </div>

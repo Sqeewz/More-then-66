@@ -9,9 +9,11 @@ import { GameCard } from '@/components/GameCard';
 import { EmbedPlayer } from '@/components/EmbedPlayer';
 import { SubmitGameModal } from '@/components/SubmitGameModal';
 import { EditGameModal } from '@/components/EditGameModal';
-import { AdminLoginModal, ADMIN_PASS_HASH } from '@/components/AdminLoginModal';
+import { AdminLoginModal } from '@/components/AdminLoginModal';
 import { deleteGameApi, getGameById, getGames, incrementGameLike, incrementGameView } from '@/lib/api';
 import { GameDocument } from '@/types/game';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { LOCAL_STORAGE_GAMES_KEY, ADMIN_SESSION_KEY } from '@/lib/constants';
 import {
   ArrowLeft,
   ThumbsUp,
@@ -25,14 +27,11 @@ import {
   Trash2,
   Edit,
   FileText,
-  QrCode,
   Play,
   ShieldCheck,
   Smartphone,
   X,
 } from 'lucide-react';
-
-const LOCAL_STORAGE_GAMES_KEY = 'cs67_user_submitted_games';
 
 export default function GameDetailPage() {
   const params = useParams();
@@ -47,24 +46,15 @@ export default function GameDetailPage() {
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPlayModalOpen, setIsPlayModalOpen] = useState(false);
-
-
-  // Admin Mode State
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminPass, setAdminPass] = useState('');
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTag, setActiveTag] = useState('');
 
+  // ── Admin Auth (Single Responsibility — handled by useAdminAuth hook) ─────
+  const { isAdmin, adminPass, handleAdminSuccess, handleAdminLogout } = useAdminAuth();
+
   useEffect(() => {
     if (!gameId) return;
-
-    const storedAuth = sessionStorage.getItem('cs67_admin_auth');
-    if (storedAuth === ADMIN_PASS_HASH || storedAuth === '67morethen66') {
-      setIsAdmin(true);
-      setAdminPass(storedAuth);
-    }
 
     const loadGameDetails = async () => {
       try {
@@ -113,17 +103,6 @@ export default function GameDetailPage() {
     loadGameDetails();
   }, [gameId]);
 
-  const handleAdminSuccess = (hashOrPass: string) => {
-    setIsAdmin(true);
-    setAdminPass(hashOrPass);
-  };
-
-  const handleAdminLogout = () => {
-    sessionStorage.removeItem('cs67_admin_auth');
-    setIsAdmin(false);
-    setAdminPass('');
-  };
-
   const isOwner =
     !!session?.user?.email &&
     !!game?.creator_email &&
@@ -138,7 +117,7 @@ export default function GameDetailPage() {
     if (!confirmDelete) return;
 
     try {
-      const passToSend = adminPass || sessionStorage.getItem('cs67_admin_auth') || ADMIN_PASS_HASH;
+      const passToSend = adminPass || sessionStorage.getItem(ADMIN_SESSION_KEY) || '';
       await deleteGameApi(id, passToSend).catch(() => null);
 
       try {
