@@ -1,5 +1,6 @@
 import { GameDocument, DisplayMode, ScrapedMetadata } from '@/types/game';
 import { getCloudGames, deleteCloudGame, saveCloudGames, SEED_GAMES } from '@/lib/db';
+import { isAdmin } from '@/lib/auth';
 import crypto from 'crypto';
 
 // SHA-256 Hash of "67morethen66"
@@ -96,6 +97,70 @@ export async function deleteGame(id: string, passOrHash: string): Promise<boolea
   return updatedGames.length < initialLen || initialLen > 0;
 }
 
+export async function updateGame(
+  id: string,
+  updates: Partial<GameDocument>,
+  requesterEmail: string
+): Promise<GameDocument | null> {
+  const games = await getStore();
+  const gameIndex = games.findIndex((g) => g.id === id);
+  if (gameIndex === -1) return null;
+
+  const game = games[gameIndex];
+
+  // Permission check: owner or admin
+  const canEdit =
+    (game.creator_email && game.creator_email.toLowerCase() === requesterEmail.toLowerCase()) ||
+    isAdmin(requesterEmail);
+
+  if (!canEdit) return null;
+
+  const allowedUpdates: Partial<GameDocument> = {
+    title: updates.title ?? game.title,
+    description: updates.description ?? game.description,
+    cover_image_url: updates.cover_image_url ?? game.cover_image_url,
+    qr_image_url: updates.qr_image_url ?? game.qr_image_url,
+    pdf_drive_url: updates.pdf_drive_url ?? game.pdf_drive_url,
+    pdf_title: updates.pdf_title ?? game.pdf_title,
+    tags: updates.tags ?? game.tags,
+    thumbnail_url: updates.thumbnail_url ?? game.thumbnail_url,
+  };
+
+  games[gameIndex] = { ...game, ...allowedUpdates };
+  inMemoryGames = games;
+
+  try {
+    await saveCloudGames(games);
+  } catch (e) {}
+
+  return games[gameIndex];
+}
+
+export async function deleteGameByEmail(
+  id: string,
+  requesterEmail: string
+): Promise<boolean> {
+  const games = await getStore();
+  const game = games.find((g) => g.id === id);
+  if (!game) return false;
+
+  const canDelete =
+    (game.creator_email && game.creator_email.toLowerCase() === requesterEmail.toLowerCase()) ||
+    isAdmin(requesterEmail);
+
+  if (!canDelete) return false;
+
+  const updated = games.filter((g) => g.id !== id);
+  inMemoryGames = updated;
+
+  try {
+    await deleteCloudGame(id);
+    await saveCloudGames(updated);
+  } catch (e) {}
+
+  return true;
+}
+
 export async function updateGameMetrics(id: string, viewInc = 0, likeInc = 0): Promise<GameDocument | null> {
   const games = await getStore();
   const g = games.find((item) => item.id === id);
@@ -174,3 +239,4 @@ export async function scrapeUrl(targetUrl: string): Promise<ScrapedMetadata> {
     };
   }
 }
+

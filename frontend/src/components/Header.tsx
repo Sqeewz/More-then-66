@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Gamepad2, PlusCircle, Search, Sparkles, GraduationCap, ShieldCheck, LogOut, Lock } from 'lucide-react';
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { Gamepad2, PlusCircle, Search, Sparkles, GraduationCap, ShieldCheck, LogOut, Lock, LogIn } from 'lucide-react';
 
 interface HeaderProps {
   onOpenSubmitModal: () => void;
@@ -25,6 +26,9 @@ export const Header: React.FC<HeaderProps> = ({
   activeTag,
   setActiveTag,
 }) => {
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user?.email;
+
   const categories = [
     { id: '', label: '🔥 ทั้งหมด (All)' },
     { id: 'cs67', label: '💻 CS 67 Projects' },
@@ -63,20 +67,22 @@ export const Header: React.FC<HeaderProps> = ({
           </Link>
 
           <div className="flex items-center gap-2 md:hidden">
-            {isAdmin ? (
+            {isLoggedIn ? (
               <button
-                onClick={onAdminLogout}
+                onClick={() => signOut()}
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-600/30 text-red-300 font-bold text-xs border border-red-500/40"
+                title="ออกจากระบบ"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Admin</span>
+                <span>ออก</span>
               </button>
             ) : (
               <button
-                onClick={onOpenAdminModal}
-                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 text-xs border border-white/10"
+                onClick={() => signIn('google')}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600/30 text-sky-300 font-bold text-xs border border-sky-400/40"
               >
-                <Lock className="w-4 h-4" />
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Login</span>
               </button>
             )}
 
@@ -127,6 +133,36 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          {isLoggedIn ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#111a36] border border-sky-500/20">
+              {session.user?.image ? (
+                <img
+                  src={session.user.image}
+                  alt="Profile"
+                  className="w-6 h-6 rounded-full border border-sky-400/40"
+                />
+              ) : null}
+              <span className="text-xs font-semibold text-slate-200 max-w-[100px] truncate">
+                {session.user?.name || session.user?.email}
+              </span>
+              <button
+                onClick={() => signOut()}
+                className="p-1 hover:bg-red-500/20 rounded text-slate-400 hover:text-red-300 transition-colors"
+                title="ออกจากระบบ"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => signIn('google')}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white font-semibold text-xs border border-sky-500/20 transition-all"
+            >
+              <LogIn className="w-3.5 h-3.5 text-sky-400" />
+              <span>เข้าสู่ระบบ (.ac.th)</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenSubmitModal}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:from-blue-500 hover:to-sky-400 text-white font-bold text-xs shadow-lg shadow-blue-500/25 hover:shadow-sky-400/40 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer border border-white/20"
@@ -158,3 +194,4 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
+

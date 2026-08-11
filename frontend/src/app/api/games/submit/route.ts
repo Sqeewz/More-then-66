@@ -21,10 +21,16 @@ export async function POST(request: NextRequest) {
       embed_code: body.embed_code || scraped.embed_code,
       thumbnail_url: body.custom_thumbnail_url || scraped.thumbnail_url,
       creator_id: body.creator_id || 'นิสิต CS 67',
+      creator_email: body.creator_email || undefined,
+      creator_name: body.creator_name || undefined,
       display_mode: scraped.display_mode,
       metrics: { views: 0, likes: 0, rating: 5.0 },
       tags: body.custom_tags || scraped.tags,
       created_at: new Date().toISOString(),
+      qr_image_url: body.qr_image_url || undefined,
+      cover_image_url: body.cover_image_url || undefined,
+      pdf_drive_url: body.pdf_drive_url || undefined,
+      pdf_title: body.pdf_title || undefined,
     };
 
     await addGame(newGame);
@@ -38,3 +44,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+

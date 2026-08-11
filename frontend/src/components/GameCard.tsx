@@ -13,6 +13,7 @@ interface GameCardProps {
 
 export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame }) => {
   const isPopup = game.display_mode === 'POPUP';
+  const displayImage = game.cover_image_url || game.thumbnail_url;
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -30,7 +31,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
       {/* Thumbnail Container */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-black/50">
         <img
-          src={game.thumbnail_url}
+          src={displayImage}
           alt={game.title}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
           onError={(e) => {
@@ -94,9 +95,10 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
           {game.description}
         </p>
 
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1.5 mt-3">
-          {game.tags.slice(0, 3).map((tag, idx) => (
+        {/* Tags & Feature Badges */}
+        <div className="flex flex-wrap items-center gap-1.5 mt-3">
+          {(game.tags || []).slice(0, 3).map((tag, idx) => (
+
             <span
               key={idx}
               className="px-2 py-0.5 rounded-md bg-[#162248] text-[10px] font-semibold text-sky-200 border border-sky-500/20"
@@ -104,6 +106,17 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
               #{tag}
             </span>
           ))}
+          {(game.qr_image_url || game.original_url) && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/20 text-[10px] font-bold text-sky-300 border border-sky-500/30">
+              📱 QR
+            </span>
+          )}
+
+          {game.pdf_drive_url && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/20 text-[10px] font-bold text-rose-300 border border-rose-500/30">
+              📄 PDF
+            </span>
+          )}
         </div>
 
         {/* Footer Metrics */}
@@ -121,10 +134,11 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
 
           <span className="flex items-center gap-1 text-[10px] text-sky-300 font-semibold tracking-wide truncate max-w-[120px]">
             <User className="w-3 h-3 flex-shrink-0" />
-            <span className="truncate">{game.creator_id}</span>
+            <span className="truncate">{game.creator_name || game.creator_id}</span>
           </span>
         </div>
       </div>
     </Link>
   );
 };
+

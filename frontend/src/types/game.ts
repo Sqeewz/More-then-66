@@ -14,10 +14,16 @@ export interface GameDocument {
   embed_code?: string;
   thumbnail_url: string;
   creator_id: string;
+  creator_email?: string;
+  creator_name?: string;
   display_mode: DisplayMode;
   metrics: GameMetrics;
   tags: string[];
   created_at: string;
+  qr_image_url?: string;
+  cover_image_url?: string;
+  pdf_drive_url?: string;
+  pdf_title?: string;
 }
 
 export interface ScrapedMetadata {
@@ -38,4 +44,11 @@ export interface SubmitGamePayload {
   custom_thumbnail_url?: string;
   custom_tags?: string[];
   creator_id?: string;
+  creator_email?: string;
+  creator_name?: string;
+  qr_image_url?: string;
+  cover_image_url?: string;
+  pdf_drive_url?: string;
+  pdf_title?: string;
 }
+

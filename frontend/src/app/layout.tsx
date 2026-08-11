@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { Providers } from '@/components/Providers';
 
 export const metadata: Metadata = {
-  title: 'mt66.cc | Web Game Aggregator & Framing Platform',
-  description: 'Discover, frame, and play user-submitted web games, HTML5 & WebGL titles from across the indie ecosystem.',
+  title: 'More Then 66 — CS67 Game Hub',
+  description: 'คลังผลงานเกม วิทยาการคอมพิวเตอร์ รุ่น 67',
 };
 
 export default function RootLayout({
@@ -12,12 +13,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="th">
       <body>
-        <div className="min-h-screen flex flex-col bg-[#0b0d14]">
-          {children}
-        </div>
+        <Providers>
+          <div className="min-h-screen flex flex-col bg-[#050814]">
+            {children}
+          </div>
+        </Providers>
       </body>
     </html>
   );
 }
+

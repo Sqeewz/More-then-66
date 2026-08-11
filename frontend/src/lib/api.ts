@@ -92,6 +92,20 @@ export async function submitGame(payload: SubmitGamePayload): Promise<{ message:
   );
 }
 
+export async function editGame(
+  id: string,
+  updates: Partial<GameDocument>
+): Promise<{ message: string; game: GameDocument }> {
+  return fetchWithFallback<{ message: string; game: GameDocument }>(
+    `/games/${id}/edit`,
+    `/api/games/${id}/edit`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    }
+  );
+}
+
 export async function incrementGameView(id: string): Promise<{ game: GameDocument }> {
   return fetchWithFallback<{ game: GameDocument }>(
     `/games/${id}/view`,
@@ -107,3 +121,4 @@ export async function incrementGameLike(id: string): Promise<{ game: GameDocumen
     { method: 'POST' }
   );
 }
+
