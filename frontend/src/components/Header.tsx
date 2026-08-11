@@ -47,10 +47,9 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Brand Logo: More Then 66 */}
         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-400/30 flex items-center justify-center text-sky-400 group-hover:bg-sky-500/20 transition-colors">
-              <Gamepad2 className="w-4.5 h-4.5" />
-            </div>
+            <img src="/logo.png" alt="One 4 All Logo" className="w-8 h-8 rounded-lg object-contain group-hover:scale-105 transition-transform" />
             <div>
+
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-xl tracking-tight text-white group-hover:text-sky-300 transition-colors">
                   One <span className="gradient-text-one4all">4 All</span>
