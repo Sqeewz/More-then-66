@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useSession, signIn, signOut } from 'next-auth/react';
 import { Header } from '@/components/Header';
 import { SubmitGameModal } from '@/components/SubmitGameModal';
 import { AdminLoginModal } from '@/components/AdminLoginModal';
@@ -11,7 +12,7 @@ import { GameCard } from '@/components/GameCard';
 import { deleteGameApi } from '@/lib/api';
 import { LOCAL_STORAGE_GAMES_KEY } from '@/lib/constants';
 import { GameDocument } from '@/types/game';
-import { Gamepad2, Flame, RefreshCw, Sparkles, TrendingUp, Box, Puzzle, Cpu } from 'lucide-react';
+import { Gamepad2, Flame, RefreshCw, Sparkles, TrendingUp, Box, Puzzle, Cpu, LogIn, LogOut, ArrowDown } from 'lucide-react';
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,6 +22,8 @@ export default function HomePage() {
 
   const { isAdmin, adminPass, handleAdminSuccess, handleAdminLogout } = useAdminAuth();
   const { games, setGames, loading, refetch } = useGames(activeTag, searchQuery);
+
+  const { data: session } = useSession();
 
   const mainCanvasRef = useRef<HTMLDivElement>(null);
   const charLayerRef = useRef<HTMLDivElement>(null);
@@ -190,17 +193,20 @@ export default function HomePage() {
           display: flex;
           justify-content: center;
           align-items: center;
-          padding: 40px 10px;
+          width: 100%;
+          min-height: calc(100vh - 100px);
           position: relative;
+          padding: 0;
         }
 
         .canvas-container {
-          width: 95vw;
-          height: 53.43vw; 
-          max-width: 1200px;
-          max-height: 675px;
+          width: 100%;
+          min-height: calc(100vh - 100px);
+          height: calc(100vh - 100px);
+          max-width: none;
+          max-height: none;
           display: grid;
-          grid-template-columns: 45% 42% 13%;
+          grid-template-columns: 44% 43% 13%;
           background-image: url('https://u.cubeupload.com/zmonochrome/tumblr8b1866a9355004.jpg');
           background-size: cover;
           background-position: center;
@@ -210,8 +216,9 @@ export default function HomePage() {
               0 30px 100px rgba(0, 0, 0, 0.8),
               inset 0 0 80px rgba(6, 6, 8, 0.9),
               inset 0 0 140px rgba(0, 0, 0, 0.95);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          border-radius: 12px;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 0;
           overflow: hidden;
           transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
@@ -629,7 +636,15 @@ export default function HomePage() {
               <span className="japanese-sub">ブレイジング・ブライト</span>
               <h1 className="main-kanji">朝日</h1>
               <br />
-              <div className="numeric-badge">1542991141</div>
+              <button
+                onClick={() => {
+                  document.getElementById('games-showcase')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="numeric-badge hover:bg-amber-400 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer flex items-center gap-2 border border-black/10 group"
+              >
+                <span>เข้าสู่หน้าเว็บหลัก</span>
+                <ArrowDown className="w-3.5 h-3.5 text-black group-hover:translate-y-0.5 transition-transform" />
+              </button>
 
               <div className="content-text-box">
                 ยินดีต้อนรับสู่ One 4 All — Computer Science CS67 Game Hub! ศูนย์รวมผลงานการพัฒนาเว็บเกมและมัลติมีเดียโดยนิสิตวิทยาการคอมพิวเตอร์ รุ่น 67 สามารถเลือกเล่นเกม ค้นหา หรือส่งผลงานเกมของคุณขึ้นสู่แพลตฟอร์มได้ที่นี่!
@@ -654,16 +669,35 @@ export default function HomePage() {
             </div>
             <div className="character-root" id="character-layer" ref={charLayerRef}>
               <img
-                src="https://u.cubeupload.com/zmonochrome/b00chisarenderwuthering.png"
-                alt="Render"
-                className="character-img"
+                src="/logo.png?v=2"
+                alt="One 4 All CS67 Logo"
+                className="character-img max-h-[85vh] object-contain drop-shadow-[0_20px_50px_rgba(56,189,248,0.4)] p-4"
               />
             </div>
           </section>
 
           {/* Right Panel */}
           <aside className="right-panel">
-            <div className="pill-box">YUFFIE</div>
+            {session?.user ? (
+              <button
+                onClick={() => signOut()}
+                className="pill-box hover:bg-red-500/30 hover:border-red-400 text-red-300 transition-all duration-200 cursor-pointer flex items-center gap-1.5 backdrop-blur-md"
+                title={`Sign Out (${session.user.name || session.user.email})`}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>ออกจากระบบ</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => signIn('google')}
+                className="pill-box hover:bg-amber-500/25 hover:border-amber-400 text-amber-300 font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-lg shadow-amber-500/20 backdrop-blur-md hover:scale-105"
+                title="เข้าสู่ระบบด้วย Google SSO (.ac.th)"
+              >
+                <LogIn className="w-3.5 h-3.5 text-amber-400" />
+                <span>LOGIN (.ac.th)</span>
+              </button>
+            )}
+
             <div className="vertical-text-wrap">
               <span className="v-kanji-title">朝日</span>
               <span className="v-latin-sub">ASAHI</span>
@@ -679,7 +713,7 @@ export default function HomePage() {
       </div>
 
       {/* Main Game Showcase Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-8 space-y-8">
+      <main id="games-showcase" className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-8 space-y-8 scroll-mt-24">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
           <h2 className="font-extrabold text-2xl text-white tracking-tight flex items-center gap-2">
             <Flame className="w-6 h-6 text-amber-400 fill-amber-400" />
