@@ -4,7 +4,7 @@ import { Providers } from '@/components/Providers';
 
 export const metadata: Metadata = {
   title: 'One 4 All — CS67 Game Hub',
-  description: 'ศูนย์รวมและคลังแสดงผลงานเกม วิทยาการคอมพิวเตอร์ รุ่น 67 (One 4 All)',
+  description: 'ศูนย์รวมและคลังแสดงผลงานเกม วิทยาการคอมพิวเตอร์ รุ่น 18 (One 4 All)',
   icons: {
     icon: '/logo.png?v=2',
     shortcut: '/logo.png?v=2',

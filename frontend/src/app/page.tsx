@@ -260,7 +260,7 @@ export default function HomePage() {
               </span>
               <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/20 text-sky-300 font-bold text-[11px] border border-sky-400/30">
                 <GraduationCap className="w-3 h-3" />
-                CS 67
+                By CS 67
               </span>
             </div>
 
