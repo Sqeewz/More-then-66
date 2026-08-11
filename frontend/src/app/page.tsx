@@ -325,17 +325,17 @@ export default function LandingPage() {
         .content-text-box {
           background: rgba(10, 10, 14, 0.8);
           border: 1px solid rgba(255, 255, 255, 0.12);
-          border-left: 3px solid #493db5ff;
-          padding: 14px 16px;
-          margin-top: 20px;
+          border-left: 4px solid #3d5db5ff;
+          padding: 20px 20px;
+          margin-top: 25px;
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
-          border-radius: 6px;
+          border-radius: 15px;
           box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
           color: #cbd5e1;
-          font-size: 0.75rem;
+          font-size: 20px;
           line-height: 1.6;
-          max-height: 140px;
+          max-height: 260px;
           overflow-y: auto;
         }
 
