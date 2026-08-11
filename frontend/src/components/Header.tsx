@@ -45,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="w-full flex items-center gap-5 md:gap-6">
         
         {/* Full-Height Large Prominent Logo (Far Left) */}
-        <Link href="/" className="flex-shrink-0 group flex items-center">
+        <Link href="/hub" className="flex-shrink-0 group flex items-center">
           <img
             src="/logo.png?v=2"
             alt="One 4 All Logo"

@@ -130,7 +130,7 @@ export default function GameDetailPage() {
       } catch (e) {}
 
       alert(`ลบผลงานเกม "${title}" เรียบร้อยแล้ว`);
-      router.push('/');
+      router.push('/hub');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'ไม่สามารถลบเกมได้';
       alert(msg);
@@ -208,7 +208,7 @@ export default function GameDetailPage() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
         {/* Back Link */}
         <Link
-          href="/"
+          href="/hub"
           className="inline-flex items-center gap-2 text-xs font-semibold text-sky-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -231,7 +231,7 @@ export default function GameDetailPage() {
               ไม่พบ ID ผลงานเกมนี้ในระบบ More Then 66 หรือเกมถูกลบออกไปแล้ว
             </p>
             <Link
-              href="/"
+              href="/hub"
               className="inline-block px-4 py-2 bg-blue-600 rounded-xl text-xs font-bold text-white shadow-lg"
             >
               กลับหน้าหลัก

@@ -424,7 +424,7 @@ export default function LandingPage() {
         .live-pulse-bar {
           width: 40px;
           height: 2px;
-          background-color: #b5893d;
+          background-color: #287ea4ff;
           animation: bar-stretch 1.2s infinite ease-in-out;
         }
 
@@ -504,7 +504,7 @@ export default function LandingPage() {
         }
 
         .diamond {
-          color: #b5893d;
+          color: #3d52b5ff;
           font-size: 0.7rem;
           animation: pulse-glow 2s infinite ease-in-out;
         }
@@ -614,7 +614,7 @@ export default function LandingPage() {
           {/* Center Panel: Slightly reduced logo size */}
           <section className="center-panel">
             <div className="art-window">
-              <span className="large-bg-kanji">古</span>
+              <span className="large-bg-kanji">RMUTI</span>
               <div className="tech-overlay">
                 <span>STATUS: ACTIVE</span>
                 <span>GLASS: GOD</span>
@@ -653,10 +653,17 @@ export default function LandingPage() {
             )}
 
             <div className="vertical-text-wrap">
-              <span className="v-kanji-title">朝日</span>
-              <span className="v-latin-sub">ASAHI</span>
+              <span className="v-kanji-title">RMUTI</span>
               <span className="diamond">✦</span>
-              <span className="v-latin-sub">CREATIVE</span>
+              <span className="v-latin-sub">AI</span>
+              <span className="diamond">✦</span>
+              <span className="v-latin-sub">CODE</span>
+              <span className="diamond">✦</span>
+              <span className="v-latin-sub">LEARNING</span>
+              <span className="diamond">✦</span>
+              <span className="v-latin-sub">GAME</span>
+              <span className="diamond">✦</span>
+              <span className="v-latin-sub">WEB</span>
             </div>
             <div className="panel-footer-stamp">
               <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '10px' }}>—</div>
