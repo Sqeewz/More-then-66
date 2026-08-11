@@ -328,8 +328,8 @@ export default function LandingPage() {
           border-left: 3px solid #493db5ff;
           padding: 14px 16px;
           margin-top: 20px;
-          backdrop-filter: blur(4px);
-          -webkit-backdrop-filter: blur(4px);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
           border-radius: 6px;
           box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
           color: #cbd5e1;
@@ -374,15 +374,18 @@ export default function LandingPage() {
         }
 
         .art-window {
-          width: 90%;
-          height: 88%;
+          width: 76%;
+          height: 65%;
+          max-width: 460px;
+          max-height: 420px;
           position: relative;
           overflow: hidden;
-          border-radius: 6px;
-          background: linear-gradient(135deg, rgba(20, 30, 30, 0.05) 0%, rgba(10, 15, 15, 0.3) 100%);
-          backdrop-filter: blur(1.5px);
-          -webkit-backdrop-filter: blur(1.5px);
-          border: 1px solid rgba(255, 255, 255, 0.06);
+          border-radius: 10px;
+          background: linear-gradient(135deg, rgba(20, 30, 30, 0.08) 0%, rgba(10, 15, 15, 0.35) 100%);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
         }
 
         .art-window::after {
@@ -396,7 +399,7 @@ export default function LandingPage() {
         }
 
         .large-bg-kanji {
-          font-size: 16rem;
+          font-size: 10rem;
           color: rgba(255, 255, 255, 0.02);
           position: absolute;
           top: -20px; left: -20px;
@@ -441,9 +444,10 @@ export default function LandingPage() {
           will-change: transform;
         }
 
-        /* Slightly reduced logo size */
+        /* Logo fits inside the blurred art window card */
         .character-img {
-          max-height: 52vh;
+          max-height: 46vh;
+          max-width: 68%;
           width: auto;
           object-fit: contain;
           filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 45px rgba(56, 189, 248, 0.35)); 
