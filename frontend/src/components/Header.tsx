@@ -136,14 +136,17 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
 
-              <button
-                onClick={onOpenSubmitModal}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-transparent hover:bg-sky-500/15 text-sky-300 hover:text-white font-bold text-xs md:text-sm border border-sky-400/40 transition-all cursor-pointer whitespace-nowrap shadow-sm"
-              >
-                <PlusCircle className="w-4 h-4 text-sky-400" />
-                <span>ส่งผลงานเกม</span>
-                <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
-              </button>
+              {(isLoggedIn || isAdmin) && (
+                <button
+                  onClick={onOpenSubmitModal}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-transparent hover:bg-sky-500/15 text-sky-300 hover:text-white font-bold text-xs md:text-sm border border-sky-400/40 transition-all cursor-pointer whitespace-nowrap shadow-sm"
+                >
+                  <PlusCircle className="w-4 h-4 text-sky-400" />
+                  <span>ส่งผลงานเกม</span>
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
+                </button>
+              )}
+
             </div>
 
           </div>
