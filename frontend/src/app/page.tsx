@@ -148,7 +148,7 @@ export default function LandingPage() {
 
         .anime-landing-wrapper {
           background: #060608;
-          background-image: radial-gradient(circle at center, #2b0404 0%, #060608 100%);
+          background-image: radial-gradient(circle at center, #10042bff 0%, #060608 100%);
           font-family: 'Noto Sans JP', 'Syncopate', sans-serif;
           width: 100vw;
           height: 100vh;
@@ -160,9 +160,9 @@ export default function LandingPage() {
         }
 
         .canvas-container {
-          width: 100%;
-          min-height: calc(100vh - 100px);
-          height: calc(100vh - 100px);
+          width: 100vw;
+          height: 100vh;
+          min-height: 100vh;
           max-width: none;
           max-height: none;
           display: grid;
@@ -176,8 +176,7 @@ export default function LandingPage() {
               0 30px 100px rgba(0, 0, 0, 0.8),
               inset 0 0 80px rgba(6, 6, 8, 0.9),
               inset 0 0 140px rgba(0, 0, 0, 0.95);
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          border: none;
           border-radius: 0;
           overflow: hidden;
           transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
@@ -588,7 +587,7 @@ export default function LandingPage() {
 
             <div className="main-title-group">
               <span className="japanese-sub">Computer・Science</span>
-              <h1 className="main-kanji">14 All</h1>
+              <h1 className="main-kanji">67</h1>
               <br />
 
               {/* Enter Main Showcase Button */}
@@ -598,7 +597,7 @@ export default function LandingPage() {
               </Link>
 
               <div className="content-text-box">
-                ยินดีต้อนรับสู่ One 4 All — Computer Science CS67 Game Hub! ศูนย์รวมผลงานการพัฒนาเว็บเกมและมัลติมีเดียโดยนิสิตวิทยาการคอมพิวเตอร์ รุ่น 67 สามารถเลือกเล่นเกม ค้นหา หรือส่งผลงานเกมของคุณขึ้นสู่แพลตฟอร์มได้ที่นี่!
+                แหล่งรวบรวมและจัดแสดงผลงานสร้างสรรค์ด้านการพัฒนาเว็บเกม (Web Games) และสื่อมัลติมีเดียแบบปฏิสัมพันธ์ (Interactive Multimedia) ซึ่งรังสรรค์โดยนิสิตสาขาวิชาวิทยาการคอมพิวเตอร์ รุ่น 67 พื้นที่นี้เป็นศูนย์กลางในการสะท้อนศักยภาพ การประยุกต์ใช้องค์ความรู้ด้านวิทยาการคำนวณ การเขียนโปรแกรม การออกแบบ UI/UX และเทคโนโลยีเว็บสมัยใหม่ มาผสมผสานกับความคิดสร้างสรรค์เพื่อสร้างประสบการณ์ดิจิทัลที่ตอบโจทย์ทั้งความบันเทิงและการใช้งานจริง
               </div>
             </div>
 
