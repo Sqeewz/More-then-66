@@ -133,8 +133,8 @@ export async function updateGame(
   const isAdminEmail = !!(requesterEmail && isAdmin(requesterEmail));
   const isValidAdminPass = adminPassHeader === '67morethen66' || adminPassHeader === ADMIN_PASSWORD_HASH || hashString(adminPassHeader || '') === ADMIN_PASSWORD_HASH;
 
-  // Allow edit if owner, admin, valid admin pass, or any valid session/request
-  const canEdit = isOwner || isAdminEmail || isValidAdminPass || !!requesterEmail || true;
+  // Allow edit if owner, admin, or valid admin pass header/session
+  const canEdit = isOwner || isAdminEmail || isValidAdminPass || !!requesterEmail;
 
   if (!canEdit) return null;
 
