@@ -82,15 +82,30 @@ export async function scrapeUrlPreview(url: string): Promise<ScrapedMetadata> {
 }
 
 export async function submitGame(payload: SubmitGamePayload): Promise<{ message: string; game: GameDocument }> {
+  // ── Client-side guard: strip Base64/blob URLs before sending ──────────────
+  // This prevents 413 errors if old JS is still running or Blob upload failed
+  const safeUrl = (val: string | undefined): string | undefined => {
+    if (!val) return undefined;
+    if (val.startsWith('data:') || val.startsWith('blob:')) return undefined;
+    return val;
+  };
+  const safePayload = {
+    ...payload,
+    custom_thumbnail_url: safeUrl(payload.custom_thumbnail_url),
+    qr_image_url: safeUrl(payload.qr_image_url),
+    cover_image_url: safeUrl(payload.cover_image_url),
+  };
+
   return fetchWithFallback<{ message: string; game: GameDocument }>(
     `/games/submit`,
     `/api/games/submit`,
     {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(safePayload),
     }
   );
 }
+
 
 export async function editGame(
   id: string,
