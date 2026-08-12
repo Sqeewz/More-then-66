@@ -2,7 +2,10 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 
 const ALLOWED_DOMAIN = process.env.ALLOWED_EMAIL_DOMAIN || 'ac.th';
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase());
+const ADMIN_EMAILS = [
+  'kanakrit.pr@rmuti.ac.th',
+  ...(process.env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean),
+];
 
 const googleClientId = (process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID || '').trim();
 const googleClientSecret = (process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET || '').trim();
