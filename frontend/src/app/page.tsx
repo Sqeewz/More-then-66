@@ -613,6 +613,11 @@ export default function LandingPage() {
             top: 25px;
             right: 25px;
           }
+          .pill-box {
+            padding: 5px 12px;
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+          }
           .right-panel {
             flex-direction: column;
             padding: 30px 20px;
@@ -737,7 +742,7 @@ export default function LandingPage() {
                 title="เข้าสู่ระบบด้วย Google SSO (.ac.th)"
               >
                 <LogIn className="w-3.5 h-3.5 text-amber-400" />
-                <span>LOGIN (.ac.th)</span>
+                <span>LOGIN <span className="hidden md:inline">(.ac.th)</span></span>
               </button>
             )}
           </div>
