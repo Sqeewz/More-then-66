@@ -141,7 +141,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="w-screen h-screen overflow-hidden bg-[#060608] text-white selection:bg-amber-500 selection:text-black">
+    <div className="w-full min-h-screen md:h-screen md:overflow-hidden bg-[#060608] text-white selection:bg-amber-500 selection:text-black">
       {/* Dynamic Style Block for Dedicated Fullscreen Anime Landing */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;900&family=Syncopate:wght@700&display=swap');
@@ -157,6 +157,14 @@ export default function LandingPage() {
           align-items: center;
           position: relative;
           overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+          .anime-landing-wrapper {
+            height: auto;
+            min-height: 100vh;
+            overflow-y: auto;
+          }
         }
 
         .canvas-container {
@@ -259,6 +267,7 @@ export default function LandingPage() {
           text-transform: uppercase;
           border-left: 3px solid #3d9db5ff;
           padding-left: 10px;
+          transition: padding-right 0.3s ease;
         }
 
         .quote-jp {
@@ -522,6 +531,10 @@ export default function LandingPage() {
           margin-top: 8px;
         }
 
+        .login-button-container {
+          z-index: 50;
+        }
+
         @keyframes move-nihility {
           0% { transform: translate(0, -50%); }
           100% { transform: translate(-50%, -50%); } 
@@ -549,23 +562,143 @@ export default function LandingPage() {
         }
 
         @media (max-width: 768px) {
+          .anime-landing-wrapper {
+            height: auto;
+            min-height: 100vh;
+            overflow-y: auto;
+          }
           .canvas-container {
             grid-template-columns: 1fr;
-            height: 100vh;
+            height: auto;
+            min-height: 100vh;
+            overflow-y: auto;
+          }
+          .left-panel {
+            padding: 35px 24px;
+            background: linear-gradient(180deg, rgba(6, 6, 8, 0.95) 0%, rgba(12, 3, 70, 0.9) 100%);
+          }
+          .hero-quote-header {
+            padding-right: 125px; /* Leave space for the floating Login button */
+            font-size: 0.7rem;
+          }
+          .main-kanji {
+            font-size: 6rem;
+            letter-spacing: -3px;
+          }
+          .content-text-box {
+            font-size: 15px;
+            line-height: 1.5;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 200px;
+          }
+          .art-window {
+            width: 90%;
+            height: 300px;
+            margin: 20px auto;
           }
           .character-img {
-            max-height: 40vh;
+            max-height: 32vh;
+          }
+          .login-button-container {
+            position: absolute;
+            top: 25px;
+            right: 25px;
           }
           .right-panel {
-            flex-direction: row;
-            padding: 20px;
+            flex-direction: column;
+            padding: 30px 20px;
+            background: linear-gradient(180deg, rgba(12, 3, 70, 0.9) 0%, rgba(6, 6, 8, 0.98) 100%);
+            gap: 20px;
           }
           .vertical-text-wrap {
             flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
           }
           .v-kanji-title, .v-latin-sub, .micro-japanese {
             writing-mode: horizontal-tb;
             transform: none;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+          }
+          .v-kanji-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+          }
+          .diamond {
+            display: none;
+          }
+          .panel-footer-stamp {
+            margin-top: 10px;
+          }
+          .micro-japanese {
+            writing-mode: horizontal-tb;
+            transform: none;
+          }
+        }
+
+        /* Landscape Mobile Devices (height constrained) */
+        @media (max-height: 550px) {
+          .left-panel {
+            padding: 15px 25px;
+          }
+          .hero-quote-header {
+            font-size: 0.65rem;
+            line-height: 1.3;
+          }
+          .quote-jp {
+            font-size: 0.55rem;
+            margin-top: 2px;
+          }
+          .main-title-group {
+            margin-top: 5px;
+          }
+          .main-kanji {
+            font-size: 4.5rem;
+            letter-spacing: -2px;
+          }
+          .japanese-sub {
+            font-size: 0.75rem;
+            margin-bottom: 2px;
+            letter-spacing: 3px;
+          }
+          .numeric-badge {
+            padding: 5px 15px;
+            font-size: 0.75rem;
+            margin-top: 5px;
+          }
+          .content-text-box {
+            font-size: 14px;
+            line-height: 1.4;
+            padding: 12px;
+            margin-top: 10px;
+            max-height: 95px;
+          }
+          .art-window {
+            height: 80%;
+            width: 90%;
+          }
+          .character-img {
+            max-height: 60vh;
+          }
+          .right-panel {
+            padding: 15px 10px;
+          }
+          .vertical-text-wrap {
+            gap: 8px;
+          }
+          .v-kanji-title {
+            font-size: 1.4rem;
+            letter-spacing: 4px;
+          }
+          .v-latin-sub {
+            font-size: 0.55rem;
+            letter-spacing: 3px;
+          }
+          .left-footer {
+            padding-top: 5px;
           }
         }
       `}</style>
@@ -632,25 +765,27 @@ export default function LandingPage() {
 
           {/* Right Panel: LOGIN Button */}
           <aside className="right-panel">
-            {session?.user ? (
-              <button
-                onClick={() => signOut()}
-                className="pill-box hover:bg-red-500/30 hover:border-red-400 text-red-300 transition-all duration-200 cursor-pointer flex items-center gap-1.5 backdrop-blur-md"
-                title={`Sign Out (${session.user.name || session.user.email})`}
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>ออกจากระบบ</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => signIn('google')}
-                className="pill-box hover:bg-amber-500/25 hover:border-amber-400 text-amber-300 font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-lg shadow-amber-500/20 backdrop-blur-md hover:scale-105"
-                title="เข้าสู่ระบบด้วย Google SSO (.ac.th)"
-              >
-                <LogIn className="w-3.5 h-3.5 text-amber-400" />
-                <span>LOGIN (.ac.th)</span>
-              </button>
-            )}
+            <div className="login-button-container">
+              {session?.user ? (
+                <button
+                  onClick={() => signOut()}
+                  className="pill-box hover:bg-red-500/30 hover:border-red-400 text-red-300 transition-all duration-200 cursor-pointer flex items-center gap-1.5 backdrop-blur-md"
+                  title={`Sign Out (${session.user.name || session.user.email})`}
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>ออกจากระบบ</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => signIn('google')}
+                  className="pill-box hover:bg-amber-500/25 hover:border-amber-400 text-amber-300 font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-lg shadow-amber-500/20 backdrop-blur-md hover:scale-105"
+                  title="เข้าสู่ระบบด้วย Google SSO (.ac.th)"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-amber-400" />
+                  <span>LOGIN (.ac.th)</span>
+                </button>
+              )}
+            </div>
 
             <div className="vertical-text-wrap">
               <span className="v-kanji-title">RMUTI</span>
