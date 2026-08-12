@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSession, signIn } from 'next-auth/react';
 import { convertGDriveToEmbed, convertGDriveToDirectImage } from '@/lib/qr-reader';
 import { submitGame } from '@/lib/api';
@@ -31,6 +32,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const router = useRouter();
   const { data: session } = useSession();
 
   // Inputs
@@ -105,7 +107,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       // Convert Google Drive links if used
       const finalQrUrl = qrUrlInput.trim()
         ? convertGDriveToDirectImage(qrUrlInput.trim())
-        : `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(finalGameUrl)}`;
+        : undefined;
 
       const finalCoverUrl = coverUrlInput.trim()
         ? convertGDriveToDirectImage(coverUrlInput.trim())
@@ -158,6 +160,11 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setPdfUrlInput('');
       setPdfTitleInput('');
       setGameTitle('');
+
+      // Navigate to the newly created game page immediately!
+      if (res.game?.id) {
+        router.push(`/game/${res.game.id}`);
+      }
       setGameDesc('');
       setTagsInput('cs67');
       setQrPreview('');

@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       original_url: urlCheck.url!,
       url: urlCheck.url!,
       embed_code: typeof body.embed_code === 'string' ? body.embed_code.slice(0, 4000) : scraped.embed_code,
-      thumbnail_url: sanitizeUrl(body.custom_thumbnail_url) || scraped.thumbnail_url,
+      thumbnail_url: sanitizeUrl(body.cover_image_url || body.custom_thumbnail_url) || scraped.thumbnail_url,
       // Bind creator info from verified session, not from client-supplied body
       creator_id: session.user.email,
       creator_email: session.user.email,
