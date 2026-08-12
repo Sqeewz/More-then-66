@@ -20,9 +20,10 @@ function sanitizeText(text: unknown, maxLen: number): string {
 function sanitizeUrl(url: unknown, maxLen = 2048): string {
   if (typeof url !== 'string') return '';
   const trimmed = url.trim();
-  if (trimmed.startsWith('data:image/')) {
-    return trimmed.slice(0, 1000000); // Allow up to 1MB for base64 data URLs
-  }
+  // ❌ Reject Base64 data URLs entirely — they break KV storage and cause 413 errors
+  if (trimmed.startsWith('data:')) return '';
+  // ❌ Reject blob: URLs — browser-only, not usable server-side
+  if (trimmed.startsWith('blob:')) return '';
   return trimmed.slice(0, maxLen);
 }
 
@@ -56,6 +57,15 @@ export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อนส่งผลงาน' }, { status: 401 });
+  }
+
+  // ── Body Size Guard (reject if > 200KB — no Base64 images allowed) ──────
+  const contentLength = Number(request.headers.get('content-length') || 0);
+  if (contentLength > 200 * 1024) {
+    return NextResponse.json(
+      { error: 'ข้อมูลที่ส่งมาใหญ่เกินไป — กรุณาใช้ URL รูปภาพจากภายนอกแทนการอัปโหลดไฟล์โดยตรง' },
+      { status: 413 }
+    );
   }
 
   try {
