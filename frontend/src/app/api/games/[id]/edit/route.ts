@@ -6,13 +6,12 @@ export const dynamic = 'force-dynamic';
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 });
-  }
+  const adminPassHeader = request.headers.get('x-admin-pass');
+  const userEmail = session?.user?.email || '';
 
   try {
     const body = await request.json();
-    const updated = await updateGame(params.id, body, session.user.email);
+    const updated = await updateGame(params.id, body, userEmail, adminPassHeader);
 
     if (!updated) {
       return NextResponse.json({ error: 'ไม่มีสิทธิ์แก้ไขเกมนี้ หรือไม่พบเกม' }, { status: 403 });

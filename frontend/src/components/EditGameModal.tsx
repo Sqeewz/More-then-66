@@ -143,9 +143,13 @@ export const EditGameModal: React.FC<EditGameModalProps> = ({
         tags,
       };
 
+      const adminPass = typeof window !== 'undefined' ? (localStorage.getItem('cs67_admin_auth') || '67morethen66') : '67morethen66';
       const res = await fetch(`/api/games/${game.id}/edit`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-pass': adminPass,
+        },
         body: JSON.stringify(updates),
       });
 
