@@ -100,15 +100,11 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
     setIsUploading(true);
     try {
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json().catch(() => ({ error: 'อัพโหลดไฟล์ไม่สำเร็จ' }));
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'อัพโหลดไฟล์ไม่สำเร็จ' }));
-        console.warn('Upload notice:', err.error);
-        return {};
+        throw new Error(data.error || 'อัพโหลดไฟล์ไม่สำเร็จ');
       }
-      return await res.json();
-    } catch {
-      console.warn('Upload failed, using URL fallback');
-      return {};
+      return data;
     } finally {
       setIsUploading(false);
     }
@@ -116,8 +112,8 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
 
   // Submit
   const handleSubmit = async () => {
-    if (!decodedUrl && !qrFile) {
-      setError('กรุณาอัพโหลดรูป QR Code หรือใส่ URL เกม');
+    if (!decodedUrl.trim() && !qrFile) {
+      setError('กรุณาอัพโหลดรูป QR Code หรือใส่ URL เกมในช่องด้านล่าง');
       return;
     }
     if (!gameTitle.trim()) {
@@ -129,16 +125,27 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setIsSubmitting(true);
       setError(null);
 
-      // 1. Upload QR file to Blob (if provided) to get a real URL
-      const uploaded = await uploadFiles();
+      // Auto-prefix https:// if missing
+      let finalGameUrl = decodedUrl.trim();
+      if (finalGameUrl && !finalGameUrl.startsWith('http://') && !finalGameUrl.startsWith('https://')) {
+        finalGameUrl = `https://${finalGameUrl}`;
+      }
+
+      // 1. Upload files to Vercel Blob (if files were selected)
+      let uploaded: { qr_image_url?: string; cover_image_url?: string } = {};
+      if (qrFile || coverFile) {
+        uploaded = await uploadFiles();
+      }
 
       // 2. Prepare PDF URL
       const embedPdfUrl = pdfUrl ? convertGDriveToEmbed(pdfUrl) : undefined;
 
-      // 3. QR URL: always auto-generate from qrserver.com (reliable, no storage needed)
-      const finalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(decodedUrl)}`;
+      // 3. QR URL: prefer uploaded QR -> auto-generated from qrserver.com
+      const finalQrUrl = uploaded.qr_image_url || (finalGameUrl
+        ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(finalGameUrl)}`
+        : undefined);
 
-      // 4. Cover URL: prefer Blob upload → manual URL → nothing
+      // 4. Cover URL: prefer Blob upload -> manual URL input -> undefined
       const finalCoverUrl = uploaded.cover_image_url || coverUrl.trim() || undefined;
 
       // 5. Parse tags
@@ -146,7 +153,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
 
       // 6. Submit game
       const res = await submitGame({
-        url: decodedUrl,
+        url: finalGameUrl,
         custom_title: gameTitle.trim(),
         custom_description:
           gameDesc.trim() || `ผลงานเกม CS67 โดย ${session?.user?.name || 'นิสิต CS 67'}`,

@@ -182,22 +182,30 @@ export default function GameDetailPage() {
     }
   };
 
+  const DEFAULT_COVER_IMAGE = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80';
+
   const viewsCount = game?.metrics?.views ?? 0;
   const likesCount = game?.metrics?.likes ?? 0;
   const ratingVal = game?.metrics?.rating ?? 5.0;
   const targetUrl = game?.original_url || (game as any)?.url || '';
+
   const displayCoverImage = (() => {
     const url = game?.cover_image_url || game?.thumbnail_url;
-    // Reject broken/truncated Base64 data URLs — only accept real http(s) URLs
-    if (!url || url.startsWith('data:')) return undefined;
+    if (!url || url.startsWith('data:') || url.startsWith('blob:')) return DEFAULT_COVER_IMAGE;
     return url;
   })();
 
-  // Always use auto-generated QR from qrserver.com for reliability
-  // (stored Base64 qr_image_url values are always broken due to KV size limits)
-  const qrDisplayUrl = targetUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(targetUrl)}`
-    : '';
+  const qrDisplayUrl = (() => {
+    // 1. If stored qr_image_url is a real HTTP(S) URL (Vercel Blob / Custom), use it!
+    if (game?.qr_image_url && (game.qr_image_url.startsWith('http://') || game.qr_image_url.startsWith('https://'))) {
+      return game.qr_image_url;
+    }
+    // 2. Otherwise auto-generate from targetUrl using qrserver.com
+    if (targetUrl) {
+      return `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(targetUrl)}`;
+    }
+    return '';
+  })();
 
 
   return (
@@ -446,6 +454,11 @@ export default function GameDetailPage() {
                       src={qrDisplayUrl}
                       alt="Scan to Play QR Code"
                       className="w-60 h-60 object-contain"
+                      onError={(e) => {
+                        if (targetUrl) {
+                          (e.target as HTMLImageElement).src = `https://quickchart.io/qr?text=${encodeURIComponent(targetUrl)}&size=350`;
+                        }
+                      }}
                     />
                   </div>
 

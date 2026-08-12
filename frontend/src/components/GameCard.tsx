@@ -11,9 +11,15 @@ interface GameCardProps {
   onDeleteGame?: (id: string, title: string) => void;
 }
 
+const DEFAULT_CARD_COVER = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80';
+
 export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame }) => {
   const isPopup = game.display_mode === 'POPUP';
-  const displayImage = game.cover_image_url || game.thumbnail_url;
+  const displayImage = (() => {
+    const url = game.cover_image_url || game.thumbnail_url;
+    if (!url || url.startsWith('data:') || url.startsWith('blob:')) return DEFAULT_CARD_COVER;
+    return url;
+  })();
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -35,8 +41,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
           alt={game.title}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
           onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80';
+            (e.target as HTMLImageElement).src = DEFAULT_CARD_COVER;
           }}
         />
         
