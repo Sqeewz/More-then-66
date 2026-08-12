@@ -67,17 +67,12 @@ export default function GameDetailPage() {
         }
 
         let foundGame: GameDocument | null = null;
-        const updatedView = await incrementGameView(gameId).catch(() => null);
-        if (updatedView && updatedView.game) {
-          foundGame = updatedView.game;
-        } else {
-          const res = await getGameById(gameId).catch(() => null);
-          if (res && res.game) {
-            foundGame = res.game;
-          }
+        const res = await getGameById(gameId).catch(() => null);
+        if (res && res.game && res.game.title) {
+          foundGame = res.game;
         }
 
-        // Fallback to LocalStorage if game not found in memory/cloud
+        // Fallback to LocalStorage if game not found in cloud
         if (!foundGame) {
           try {
             const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
@@ -89,6 +84,9 @@ export default function GameDetailPage() {
         }
 
         setGame(foundGame);
+
+        // Increment view count in background asynchronously
+        incrementGameView(gameId).catch(() => null);
 
         const all = await getGames().catch(() => ({ count: 0, games: [] }));
         if (all && Array.isArray(all.games)) {
