@@ -17,6 +17,15 @@ function sanitizeText(text: unknown, maxLen: number): string {
   return text.trim().slice(0, maxLen).replace(/[<>]/g, ''); // strip basic HTML injection
 }
 
+function sanitizeUrl(url: unknown, maxLen = 2048): string {
+  if (typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('data:image/')) {
+    return trimmed.slice(0, 1000000); // Allow up to 1MB for base64 data URLs
+  }
+  return trimmed.slice(0, maxLen);
+}
+
 function validateUrl(raw: unknown): { valid: boolean; url?: string; error?: string } {
   if (typeof raw !== 'string' || !raw.trim()) {
     return { valid: false, error: 'URL จำเป็นต้องระบุ' };
@@ -70,7 +79,7 @@ export async function POST(request: NextRequest) {
       description: customDesc || scraped.description,
       original_url: urlCheck.url!,
       embed_code: typeof body.embed_code === 'string' ? body.embed_code.slice(0, 4000) : scraped.embed_code,
-      thumbnail_url: typeof body.custom_thumbnail_url === 'string' ? body.custom_thumbnail_url.slice(0, 2048) : scraped.thumbnail_url,
+      thumbnail_url: sanitizeUrl(body.custom_thumbnail_url) || scraped.thumbnail_url,
       // Bind creator info from verified session, not from client-supplied body
       creator_id: session.user.email,
       creator_email: session.user.email,
@@ -79,9 +88,9 @@ export async function POST(request: NextRequest) {
       metrics: { views: 0, likes: 0, rating: 5.0 },
       tags: Array.isArray(body.custom_tags) ? (body.custom_tags as string[]).slice(0, 10).map((t) => String(t).slice(0, 50)) : scraped.tags,
       created_at: new Date().toISOString(),
-      qr_image_url: typeof body.qr_image_url === 'string' ? body.qr_image_url.slice(0, 2048) : undefined,
-      cover_image_url: typeof body.cover_image_url === 'string' ? body.cover_image_url.slice(0, 2048) : undefined,
-      pdf_drive_url: typeof body.pdf_drive_url === 'string' ? body.pdf_drive_url.slice(0, 2048) : undefined,
+      qr_image_url: body.qr_image_url ? sanitizeUrl(body.qr_image_url) : undefined,
+      cover_image_url: body.cover_image_url ? sanitizeUrl(body.cover_image_url) : undefined,
+      pdf_drive_url: body.pdf_drive_url ? sanitizeUrl(body.pdf_drive_url) : undefined,
       pdf_title: sanitizeText(body.pdf_title, 200) || undefined,
     };
 

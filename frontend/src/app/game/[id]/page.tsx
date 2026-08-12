@@ -442,13 +442,15 @@ export default function GameDetailPage() {
                   </div>
 
                   {/* Sleek Circular Play Symbol Button below QR Code */}
-                  <button
-                    onClick={() => setIsPlayModalOpen(true)}
+                  <a
+                    href={targetUrl}
+                    target="_blank"
+                    rel="noreferrer"
                     className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/40 border border-white/30 hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer my-1"
                     title="กดเพื่อเล่นเกม (Play Game)"
                   >
                     <Play className="w-6 h-6 fill-current ml-1 text-white" />
-                  </button>
+                  </a>
 
 
                   <div className="space-y-3 w-full">
