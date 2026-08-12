@@ -186,11 +186,19 @@ export default function GameDetailPage() {
   const likesCount = game?.metrics?.likes ?? 0;
   const ratingVal = game?.metrics?.rating ?? 5.0;
   const targetUrl = game?.original_url || (game as any)?.url || '';
-  const displayCoverImage = game?.cover_image_url || game?.thumbnail_url;
+  const displayCoverImage = (() => {
+    const url = game?.cover_image_url || game?.thumbnail_url;
+    // Reject broken/truncated Base64 data URLs — only accept real http(s) URLs
+    if (!url || url.startsWith('data:')) return undefined;
+    return url;
+  })();
 
-  const qrDisplayUrl =
-    game?.qr_image_url ||
-    (targetUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(targetUrl)}` : '');
+  // Always use auto-generated QR from qrserver.com for reliability
+  // (stored Base64 qr_image_url values are always broken due to KV size limits)
+  const qrDisplayUrl = targetUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(targetUrl)}`
+    : '';
+
 
   return (
     <div className="min-h-screen flex flex-col bg-[#050814] text-white">

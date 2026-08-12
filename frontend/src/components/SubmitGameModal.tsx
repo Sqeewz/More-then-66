@@ -18,64 +18,6 @@ import {
   LogIn,
 } from 'lucide-react';
 
-function compressImage(file: File, maxWidth = 1200, maxHeight = 720, quality = 0.75): Promise<File> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(file);
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              resolve(file);
-              return;
-            }
-            const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-            const newName = `${baseName}.jpg`;
-            const compressedFile = new File([blob], newName, {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            });
-            resolve(compressedFile);
-          },
-          'image/jpeg',
-          quality
-        );
-      };
-      img.onerror = () => resolve(file);
-    };
-    reader.onerror = () => resolve(file);
-  });
-}
-
 interface SubmitGameModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -98,9 +40,10 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
   const [qrDecoding, setQrDecoding] = useState(false);
   const [qrError, setQrError] = useState('');
 
-  // Cover Upload
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [coverPreview, setCoverPreview] = useState<string>('');
+  // Cover Image URL (not file upload)
+  const [coverUrl, setCoverUrl] = useState('');
+  const [coverPreview, setCoverPreview] = useState('');
+  const [coverUrlError, setCoverUrlError] = useState('');
 
   // PDF
   const [pdfUrl, setPdfUrl] = useState('');
@@ -112,12 +55,10 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
   const [tagsInput, setTagsInput] = useState('cs67');
 
   // State
-  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const qrInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -126,7 +67,6 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
     setQrDecoding(true);
     setQrError('');
 
-    // Decode original first for maximum success rate
     const url = await decodeQRFromFile(file);
     setQrDecoding(false);
 
@@ -136,50 +76,19 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setQrError('ไม่สามารถอ่าน QR Code ได้ กรุณาใส่ URL เกมเองในช่องด้านล่าง');
     }
 
-    // Compress for storage/preview
-    try {
-      const compressed = await compressImage(file, 600, 600, 0.85);
-      setQrFile(compressed);
-      setQrPreview(URL.createObjectURL(compressed));
-    } catch {
-      setQrFile(file);
-      setQrPreview(URL.createObjectURL(file));
-    }
+    setQrFile(file);
+    setQrPreview(URL.createObjectURL(file));
   };
 
-  // Handle Cover file select
-  const handleCoverFileChange = async (file: File) => {
-    try {
-      const compressed = await compressImage(file, 1280, 720, 0.75);
-      setCoverFile(compressed);
-      setCoverPreview(URL.createObjectURL(compressed));
-    } catch {
-      setCoverFile(file);
-      setCoverPreview(URL.createObjectURL(file));
+  // Handle cover URL input
+  const handleCoverUrlChange = (url: string) => {
+    setCoverUrl(url);
+    setCoverUrlError('');
+    if (url.trim()) {
+      setCoverPreview(url.trim());
+    } else {
+      setCoverPreview('');
     }
-  };
-
-  // Upload files to Vercel Blob API
-  const uploadFiles = async (): Promise<{ qr_image_url?: string; cover_image_url?: string }> => {
-    if (!qrFile && !coverFile) return {};
-
-    const formData = new FormData();
-    if (qrFile) formData.append('qr_image', qrFile);
-    if (coverFile) formData.append('cover_image', coverFile);
-
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'อัพโหลดไฟล์ไม่สำเร็จ' }));
-      // If Blob token is missing or upload fails, log warning & continue gracefully if possible
-      console.warn('Upload API notice:', err.error);
-      return {};
-    }
-
-    return res.json();
   };
 
   // Submit
@@ -197,48 +106,39 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setIsSubmitting(true);
       setError(null);
 
-      // 1. Upload files
-      setIsUploading(true);
-      let uploaded: { qr_image_url?: string; cover_image_url?: string } = {};
-      try {
-        uploaded = await uploadFiles();
-      } catch (e) {
-        console.warn('Blob upload fallback active');
-      }
-      setIsUploading(false);
-
-      // 2. Prepare PDF URL
+      // Prepare PDF URL
       const embedPdfUrl = pdfUrl ? convertGDriveToEmbed(pdfUrl) : undefined;
 
-      // 3. Prepare QR Image URL (User upload OR Auto-generated from URL)
-      const autoGeneratedQr = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(decodedUrl)}`;
-      const finalQrUrl = uploaded.qr_image_url || (qrFile ? qrPreview : autoGeneratedQr);
+      // QR URL: always use auto-generated from qrserver.com (reliable, no storage needed)
+      const finalQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(decodedUrl)}`;
 
-      // 4. Parse tags
+      // Cover: use the provided external URL
+      const finalCoverUrl = coverUrl.trim() || undefined;
+
+      // Parse tags
       const tags = tagsInput
         .split(',')
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean);
 
-      // 5. Submit game
+      // Submit game
       const res = await submitGame({
         url: decodedUrl,
         custom_title: gameTitle.trim(),
         custom_description:
           gameDesc.trim() || `ผลงานเกม CS67 โดย ${session?.user?.name || 'นิสิต CS 67'}`,
-        custom_thumbnail_url: uploaded.cover_image_url || coverPreview || undefined,
+        custom_thumbnail_url: finalCoverUrl,
         custom_tags: tags,
         creator_id: session?.user?.name || 'นิสิต CS 67',
         creator_email: session?.user?.email || undefined,
         creator_name: session?.user?.name || undefined,
         qr_image_url: finalQrUrl,
-        cover_image_url: uploaded.cover_image_url || coverPreview || undefined,
+        cover_image_url: finalCoverUrl,
         pdf_drive_url: embedPdfUrl,
         pdf_title: pdfTitle.trim() || undefined,
       });
 
-
-      // 5. Save to LocalStorage persistence
+      // Save to LocalStorage persistence
       try {
         const existing = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
         const localList: GameDocument[] = existing ? JSON.parse(existing) : [];
@@ -255,7 +155,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setQrFile(null);
       setQrPreview('');
       setDecodedUrl('');
-      setCoverFile(null);
+      setCoverUrl('');
       setCoverPreview('');
       setPdfUrl('');
       setPdfTitle('');
@@ -263,7 +163,6 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setGameDesc('');
       setTagsInput('cs67');
     } catch (err: unknown) {
-      setIsUploading(false);
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเผยแพร่ผลงาน');
     } finally {
       setIsSubmitting(false);
@@ -282,7 +181,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
             <div>
               <h2 className="font-extrabold text-base text-white">ส่งผลงานเกม CS 67</h2>
               <p className="text-[11px] text-slate-300">
-                อัพโหลด QR Code + รูปปกเกม และแนบ PDF คู่มือ
+                ใส่ URL QR Code + ลิงก์รูปปกเกม และแนบ PDF คู่มือ
               </p>
             </div>
           </div>
@@ -332,7 +231,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
           <div className="space-y-2">
             <label className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
               <QrCode className="w-3.5 h-3.5 text-sky-400" />
-              1. อัพโหลดรูป QR Code ของเกม *
+              1. อัพโหลดรูป QR Code ของเกม (เพื่ออ่าน URL อัตโนมัติ) *
             </label>
 
             <div
@@ -361,7 +260,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
                 <div className="space-y-2">
                   <QrCode className="w-9 h-9 text-sky-400/50 mx-auto group-hover:text-sky-300 transition-colors" />
                   <p className="text-xs text-slate-300">คลิกหรือลากรูป QR Code มาวาง</p>
-                  <p className="text-[10px] text-slate-400">ระบบจะดึง URL จาก QR อัตโนมัติ (JPG, PNG, WebP ≤ 2MB)</p>
+                  <p className="text-[10px] text-slate-400">ระบบจะดึง URL จาก QR อัตโนมัติ (JPG, PNG, WebP)</p>
                 </div>
               )}
               <input
@@ -389,38 +288,42 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
             </div>
           </div>
 
-          {/* STEP 2: Cover Image Upload */}
+          {/* STEP 2: Cover Image URL */}
           <div className="space-y-2">
             <label className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
               <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
-              2. อัพโหลดรูปปกเกม *
+              2. ลิงก์รูปปกเกม (URL รูปภาพจากภายนอก) *
             </label>
 
-            <div
-              onClick={() => coverInputRef.current?.click()}
-              className="relative border-2 border-dashed border-sky-500/40 hover:border-sky-400 rounded-xl overflow-hidden cursor-pointer transition-colors group"
-            >
-              {coverPreview ? (
-                <div className="relative aspect-[16/9] w-full bg-black">
-                  <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="text-white text-xs font-semibold">คลิกเพื่อเปลี่ยนรูปปก</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-5 text-center bg-[#111a36] hover:bg-[#162248] transition-colors">
-                  <ImageIcon className="w-9 h-9 text-sky-400/50 mx-auto group-hover:text-sky-300 transition-colors" />
-                  <p className="text-xs text-slate-300 mt-1">คลิกหรือลากรูปปกเกมมาวาง</p>
-                  <p className="text-[10px] text-slate-400">แนะนำอัตราส่วน 16:9 (JPG/PNG ≤ 5MB)</p>
+            <div className="space-y-2">
+              <input
+                type="url"
+                placeholder="https://i.imgur.com/xxx.jpg  หรือ  https://drive.google.com/..."
+                value={coverUrl}
+                onChange={(e) => handleCoverUrlChange(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 font-mono"
+              />
+              {coverUrlError && <p className="text-[11px] text-red-400">{coverUrlError}</p>}
+              <p className="text-[10px] text-slate-400">
+                💡 แนะนำ: อัปโหลดรูปที่{' '}
+                <a href="https://imgur.com/upload" target="_blank" rel="noreferrer" className="text-sky-400 underline">imgur.com</a>
+                {' '}→ คลิกขวาที่รูป → Copy Image Address แล้ววางที่นี่
+              </p>
+
+              {/* Preview */}
+              {coverPreview && (
+                <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden border border-sky-500/30 bg-black">
+                  <img
+                    src={coverPreview}
+                    alt="Cover Preview"
+                    className="w-full h-full object-cover"
+                    onError={() => {
+                      setCoverUrlError('ไม่สามารถโหลดรูปจาก URL นี้ได้ กรุณาตรวจสอบ URL อีกครั้ง');
+                      setCoverPreview('');
+                    }}
+                  />
                 </div>
               )}
-              <input
-                ref={coverInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleCoverFileChange(e.target.files[0])}
-              />
             </div>
           </div>
 
@@ -505,7 +408,7 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
             ) : (
               <CheckCircle2 className="w-4 h-4" />
             )}
-            <span>{isUploading ? 'กำลังอัพโหลดไฟล์...' : 'เผยแพร่ผลงานเกม CS67'}</span>
+            <span>{isSubmitting ? 'กำลังส่งผลงาน...' : 'เผยแพร่ผลงานเกม CS67'}</span>
           </button>
         </div>
       </div>
