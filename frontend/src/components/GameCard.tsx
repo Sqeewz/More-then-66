@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { GameDocument } from '@/types/game';
 import { Play, Eye, ThumbsUp, Star, ExternalLink, ShieldCheck, User, Trash2 } from 'lucide-react';
 
+import { convertGDriveToDirectImage } from '@/lib/qr-reader';
+
 interface GameCardProps {
   game: GameDocument;
   isAdmin?: boolean;
@@ -18,7 +20,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
   const displayImage = (() => {
     const url = game.cover_image_url || game.thumbnail_url;
     if (!url || url.startsWith('data:') || url.startsWith('blob:')) return DEFAULT_CARD_COVER;
-    return url;
+    return convertGDriveToDirectImage(url);
   })();
 
   const handleDelete = (e: React.MouseEvent) => {

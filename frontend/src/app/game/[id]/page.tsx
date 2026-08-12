@@ -14,6 +14,7 @@ import { deleteGameApi, getGameById, getGames, incrementGameLike, incrementGameV
 import { GameDocument } from '@/types/game';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { LOCAL_STORAGE_GAMES_KEY, ADMIN_SESSION_KEY } from '@/lib/constants';
+import { convertGDriveToEmbed, convertGDriveToDirectImage } from '@/lib/qr-reader';
 import {
   ArrowLeft,
   ThumbsUp,
@@ -187,25 +188,39 @@ export default function GameDetailPage() {
   const viewsCount = game?.metrics?.views ?? 0;
   const likesCount = game?.metrics?.likes ?? 0;
   const ratingVal = game?.metrics?.rating ?? 5.0;
-  const targetUrl = game?.original_url || (game as any)?.url || '';
+  const targetUrl = (game?.original_url || (game as any)?.url || '').trim();
 
   const displayCoverImage = (() => {
     const url = game?.cover_image_url || game?.thumbnail_url;
     if (!url || url.startsWith('data:') || url.startsWith('blob:')) return DEFAULT_COVER_IMAGE;
-    return url;
+    return convertGDriveToDirectImage(url);
   })();
 
   const qrDisplayUrl = (() => {
-    // 1. If stored qr_image_url is a real HTTP(S) URL (Vercel Blob / Custom), use it!
-    if (game?.qr_image_url && (game.qr_image_url.startsWith('http://') || game.qr_image_url.startsWith('https://'))) {
-      return game.qr_image_url;
+    const rawQr = game?.qr_image_url;
+    if (
+      rawQr &&
+      (rawQr.startsWith('http://') || rawQr.startsWith('https://')) &&
+      !rawQr.includes('data=undefined') &&
+      !rawQr.includes('data=null') &&
+      !rawQr.includes('data=&')
+    ) {
+      return convertGDriveToDirectImage(rawQr);
     }
-    // 2. Otherwise auto-generate from targetUrl using qrserver.com
-    if (targetUrl) {
-      return `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(targetUrl)}`;
-    }
-    return '';
+    const dataToEncode = targetUrl || (typeof window !== 'undefined' ? window.location.href : 'https://dek67game.vercel.app');
+    return `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(dataToEncode)}`;
   })();
+
+  const handlePlayClick = (e: React.MouseEvent) => {
+    if (!targetUrl || targetUrl === '#') {
+      e.preventDefault();
+      if (game?.pdf_drive_url) {
+        window.open(game.pdf_drive_url, '_blank');
+      } else {
+        alert('ผู้พัฒนาไม่ได้ระบุ URL เกมสำหรับเล่นสด');
+      }
+    }
+  };
 
 
   return (
@@ -347,9 +362,10 @@ export default function GameDetailPage() {
                     รูปภาพปกผลงาน — คลิกที่ภาพเพื่อเปิดเล่นเกม
                   </h2>
                   <a
-                    href={targetUrl}
+                    href={targetUrl || '#'}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={handlePlayClick}
                     className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden border border-sky-500/30 shadow-2xl bg-black group block cursor-pointer"
                     title="คลิกเพื่อเข้าเล่นเกมต้นทาง"
                   >
@@ -358,8 +374,7 @@ export default function GameDetailPage() {
                       alt={game.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80';
+                        (e.target as HTMLImageElement).src = DEFAULT_COVER_IMAGE;
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0e152e]/80 via-black/20 to-transparent group-hover:bg-blue-950/40 transition-all flex items-center justify-center">
@@ -379,7 +394,7 @@ export default function GameDetailPage() {
                     รายละเอียดผลงานเกม
                   </h2>
                   
-                  <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-line">
+                  <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">
                     {game.description || 'ยังไม่มีคำอธิบายสำหรับเกมนี้'}
                   </p>
 
@@ -467,18 +482,18 @@ export default function GameDetailPage() {
                       alt="Scan to Play QR Code"
                       className="w-60 h-60 object-contain"
                       onError={(e) => {
-                        if (targetUrl) {
-                          (e.target as HTMLImageElement).src = `https://quickchart.io/qr?text=${encodeURIComponent(targetUrl)}&size=350`;
-                        }
+                        const dataToEncode = targetUrl || (typeof window !== 'undefined' ? window.location.href : 'https://dek67game.vercel.app');
+                        (e.target as HTMLImageElement).src = `https://quickchart.io/qr?text=${encodeURIComponent(dataToEncode)}&size=350`;
                       }}
                     />
                   </div>
 
                   {/* Sleek Circular Play Symbol Button below QR Code */}
                   <a
-                    href={targetUrl}
+                    href={targetUrl || '#'}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={handlePlayClick}
                     className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/40 border border-white/30 hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer my-1"
                     title="กดเพื่อเล่นเกม (Play Game)"
                   >
@@ -491,17 +506,16 @@ export default function GameDetailPage() {
                       ใช้กล้องโทรศัพท์มือถือ หรือแอป QR Reader สแกนรูปภาพนี้เพื่อเปิดเล่นเกมผ่านสมาร์ทโฟนได้ทันที
                     </p>
 
-                    {targetUrl && (
-                      <a
-                        href={targetUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#162248] hover:bg-[#1f3066] text-sky-300 hover:text-white text-xs font-semibold border border-sky-500/30 transition-all"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>เปิดเล่นในแท็บใหม่ (External Tab)</span>
-                      </a>
-                    )}
+                    <a
+                      href={targetUrl || '#'}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={handlePlayClick}
+                      className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#162248] hover:bg-[#1f3066] text-sky-300 hover:text-white text-xs font-semibold border border-sky-500/30 transition-all"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>เปิดเล่นในแท็บใหม่ (External Tab)</span>
+                    </a>
                   </div>
 
 
