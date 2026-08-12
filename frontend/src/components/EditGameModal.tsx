@@ -143,8 +143,15 @@ export const EditGameModal: React.FC<EditGameModalProps> = ({
         tags,
       };
 
+      const pathId = typeof window !== 'undefined' ? window.location.pathname.split('/').filter(Boolean).pop() : '';
+      const targetId = game?.id && game.id !== 'undefined' ? game.id : (pathId && pathId !== 'game' ? pathId : '');
+
+      if (!targetId) {
+        throw new Error('ไม่พบ ID ผลงานเกม ไม่สามารถบันทึกการแก้ไขได้');
+      }
+
       const adminPass = typeof window !== 'undefined' ? (localStorage.getItem('cs67_admin_auth') || '67morethen66') : '67morethen66';
-      const res = await fetch(`/api/games/${game.id}/edit`, {
+      const res = await fetch(`/api/games/${targetId}/edit`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

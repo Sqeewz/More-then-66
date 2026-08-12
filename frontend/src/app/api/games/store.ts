@@ -103,9 +103,28 @@ export async function updateGame(
   requesterEmail?: string,
   adminPassHeader?: string | null
 ): Promise<GameDocument | null> {
+  if (!id || id === 'undefined') return null;
+
   const games = await getStore();
-  const gameIndex = games.findIndex((g) => g.id === id);
-  if (gameIndex === -1) return null;
+  let gameIndex = games.findIndex((g) => g.id === id);
+
+  if (gameIndex === -1) {
+    const newEntry: GameDocument = {
+      id,
+      title: updates.title || 'CS67 Game',
+      description: updates.description || '',
+      original_url: updates.original_url || (updates as any).url || '',
+      url: updates.original_url || (updates as any).url || '',
+      thumbnail_url: updates.cover_image_url || '',
+      creator_id: requesterEmail || 'CS 67',
+      display_mode: 'EMBEDDED',
+      metrics: { views: 0, likes: 0, rating: 5.0 },
+      tags: updates.tags || ['cs67'],
+      created_at: new Date().toISOString(),
+    };
+    games.unshift(newEntry);
+    gameIndex = 0;
+  }
 
   const game = games[gameIndex];
 
