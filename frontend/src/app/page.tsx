@@ -85,9 +85,11 @@ export default function LandingPage() {
         this.spin = Math.random() * 0.8 - 0.4;
 
         const colors = [
-          'rgba(239, 68, 68, 0.25)',
-          'rgba(249, 115, 22, 0.20)',
-          'rgba(254, 205, 211, 0.25)',
+          'rgba(56, 189, 248, 0.3)',   // ฟ้า
+          'rgba(37, 99, 235, 0.25)',   // น้ำเงิน
+          'rgba(139, 92, 246, 0.25)',  // ม่วง
+          'rgba(255, 255, 255, 0.35)',  // ขาว
+          'rgba(186, 230, 253, 0.3)',   // ฟ้าอ่อนเกือบขาว
         ];
         this.color = colors[Math.floor(Math.random() * colors.length)];
       }
@@ -168,7 +170,7 @@ export default function LandingPage() {
           max-height: none;
           display: grid;
           grid-template-columns: 44% 43% 13%;
-          background-image: url('https://u.cubeupload.com/zmonochrome/tumblr8b1866a9355004.jpg');
+          background-image: url('/wallmain.png');
           background-size: cover;
           background-position: center;
           position: relative;
