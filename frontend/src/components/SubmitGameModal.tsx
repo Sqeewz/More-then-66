@@ -160,15 +160,16 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setPdfUrlInput('');
       setPdfTitleInput('');
       setGameTitle('');
-
-      // Navigate to the newly created game page immediately!
-      if (res.game?.id) {
-        router.push(`/game/${res.game.id}`);
-      }
       setGameDesc('');
       setTagsInput('cs67');
       setQrPreview('');
       setCoverPreview('');
+      setIsSubmitting(false);
+
+      // Clean navigation directly to the new game page
+      if (res.game?.id) {
+        window.location.href = `/game/${res.game.id}`;
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเผยแพร่ผลงาน');
     } finally {

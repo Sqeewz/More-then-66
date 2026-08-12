@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
       url: urlCheck.url!,
       embed_code: typeof body.embed_code === 'string' ? body.embed_code.slice(0, 4000) : scraped.embed_code,
       thumbnail_url: sanitizeUrl(body.cover_image_url || body.custom_thumbnail_url) || scraped.thumbnail_url,
+      cover_image_url: sanitizeUrl(body.cover_image_url || body.custom_thumbnail_url) || scraped.thumbnail_url,
       // Bind creator info from verified session, not from client-supplied body
       creator_id: session.user.email,
       creator_email: session.user.email,
@@ -100,7 +101,6 @@ export async function POST(request: NextRequest) {
       tags: Array.isArray(body.custom_tags) ? (body.custom_tags as string[]).slice(0, 10).map((t) => String(t).slice(0, 50)) : scraped.tags,
       created_at: new Date().toISOString(),
       qr_image_url: body.qr_image_url ? sanitizeUrl(body.qr_image_url) : undefined,
-      cover_image_url: body.cover_image_url ? sanitizeUrl(body.cover_image_url) : undefined,
       pdf_drive_url: body.pdf_drive_url ? sanitizeUrl(body.pdf_drive_url) : undefined,
       pdf_title: sanitizeText(body.pdf_title, 200) || undefined,
     };
