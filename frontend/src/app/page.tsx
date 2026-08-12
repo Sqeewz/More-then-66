@@ -519,7 +519,7 @@ export default function LandingPage() {
 
         .diamond {
           color: #3d52b5ff;
-          font-size: 0.7rem;
+          font-size: 1.4rem;
           animation: pulse-glow 2s infinite ease-in-out;
         }
 
