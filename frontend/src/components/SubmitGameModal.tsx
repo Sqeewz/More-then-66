@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useSession, signIn } from 'next-auth/react';
-import { decodeQRFromFile, convertGDriveToEmbed } from '@/lib/qr-reader';
+import { convertGDriveToEmbed, convertGDriveToDirectImage } from '@/lib/qr-reader';
 import { submitGame } from '@/lib/api';
 import { GameDocument } from '@/types/game';
 import {
@@ -16,7 +16,6 @@ import {
   GraduationCap,
   Link as LinkIcon,
   LogIn,
-  Upload,
 } from 'lucide-react';
 
 interface SubmitGameModalProps {
@@ -34,86 +33,58 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
 }) => {
   const { data: session } = useSession();
 
-  // QR Upload
-  const [qrFile, setQrFile] = useState<File | null>(null);
-  const [qrPreview, setQrPreview] = useState<string>('');
-  const [decodedUrl, setDecodedUrl] = useState<string>('');
-  const [qrDecoding, setQrDecoding] = useState(false);
-  const [qrError, setQrError] = useState('');
-
-  // Cover — supports file upload OR direct URL
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [coverPreview, setCoverPreview] = useState('');
-  const [coverUrl, setCoverUrl] = useState('');
-  const [coverMode, setCoverMode] = useState<'file' | 'url'>('file');
-
-  // PDF
-  const [pdfUrl, setPdfUrl] = useState('');
-  const [pdfTitle, setPdfTitle] = useState('');
+  // Inputs
+  const [qrUrlInput, setQrUrlInput] = useState('');
+  const [gameUrlInput, setGameUrlInput] = useState('');
+  const [coverUrlInput, setCoverUrlInput] = useState('');
+  const [pdfUrlInput, setPdfUrlInput] = useState('');
+  const [pdfTitleInput, setPdfTitleInput] = useState('');
 
   // Game Info
   const [gameTitle, setGameTitle] = useState('');
   const [gameDesc, setGameDesc] = useState('');
   const [tagsInput, setTagsInput] = useState('cs67');
 
-  // State
-  const [isUploading, setIsUploading] = useState(false);
+  // Preview States
+  const [qrPreview, setQrPreview] = useState('');
+  const [coverPreview, setCoverPreview] = useState('');
+  const [qrError, setQrError] = useState('');
+  const [coverError, setCoverError] = useState('');
+
+  // Submit State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const qrInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
-
   if (!isOpen) return null;
 
-  // Handle QR file select
-  const handleQrFileChange = async (file: File) => {
-    setQrDecoding(true);
+  // Handle QR URL Input
+  const handleQrUrlChange = (val: string) => {
+    setQrUrlInput(val);
     setQrError('');
-    const url = await decodeQRFromFile(file);
-    setQrDecoding(false);
-    if (url) {
-      setDecodedUrl(url);
+    if (val.trim()) {
+      const converted = convertGDriveToDirectImage(val.trim());
+      setQrPreview(converted);
     } else {
-      setQrError('ไม่สามารถอ่าน QR Code ได้ กรุณาใส่ URL เกมเองในช่องด้านล่าง');
-    }
-    setQrFile(file);
-    setQrPreview(URL.createObjectURL(file));
-  };
-
-  // Handle Cover file select
-  const handleCoverFileChange = (file: File) => {
-    setCoverFile(file);
-    setCoverPreview(URL.createObjectURL(file));
-    setCoverUrl('');
-  };
-
-  // Upload files via Blob API
-  const uploadFiles = async (): Promise<{ qr_image_url?: string; cover_image_url?: string }> => {
-    const hasFiles = qrFile || coverFile;
-    if (!hasFiles) return {};
-
-    const formData = new FormData();
-    if (qrFile) formData.append('qr_image', qrFile);
-    if (coverFile) formData.append('cover_image', coverFile);
-
-    setIsUploading(true);
-    try {
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json().catch(() => ({ error: 'อัพโหลดไฟล์ไม่สำเร็จ' }));
-      if (!res.ok) {
-        throw new Error(data.error || 'อัพโหลดไฟล์ไม่สำเร็จ');
-      }
-      return data;
-    } finally {
-      setIsUploading(false);
+      setQrPreview('');
     }
   };
 
-  // Submit
+  // Handle Cover URL Input
+  const handleCoverUrlChange = (val: string) => {
+    setCoverUrlInput(val);
+    setCoverError('');
+    if (val.trim()) {
+      const converted = convertGDriveToDirectImage(val.trim());
+      setCoverPreview(converted);
+    } else {
+      setCoverPreview('');
+    }
+  };
+
+  // Submit Handler
   const handleSubmit = async () => {
-    if (!decodedUrl.trim() && !qrFile) {
-      setError('กรุณาอัพโหลดรูป QR Code หรือใส่ URL เกมในช่องด้านล่าง');
+    if (!gameUrlInput.trim()) {
+      setError('กรุณาใส่ URL สำหรับเข้าเล่นเกม');
       return;
     }
     if (!gameTitle.trim()) {
@@ -125,33 +96,32 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       setIsSubmitting(true);
       setError(null);
 
-      // Auto-prefix https:// if missing
-      let finalGameUrl = decodedUrl.trim();
+      // Auto-prefix https:// on Game URL
+      let finalGameUrl = gameUrlInput.trim();
       if (finalGameUrl && !finalGameUrl.startsWith('http://') && !finalGameUrl.startsWith('https://')) {
         finalGameUrl = `https://${finalGameUrl}`;
       }
 
-      // 1. Upload files to Vercel Blob (if files were selected)
-      let uploaded: { qr_image_url?: string; cover_image_url?: string } = {};
-      if (qrFile || coverFile) {
-        uploaded = await uploadFiles();
-      }
+      // Convert Google Drive links if used
+      const finalQrUrl = qrUrlInput.trim()
+        ? convertGDriveToDirectImage(qrUrlInput.trim())
+        : `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(finalGameUrl)}`;
 
-      // 2. Prepare PDF URL
-      const embedPdfUrl = pdfUrl ? convertGDriveToEmbed(pdfUrl) : undefined;
+      const finalCoverUrl = coverUrlInput.trim()
+        ? convertGDriveToDirectImage(coverUrlInput.trim())
+        : undefined;
 
-      // 3. QR URL: prefer uploaded QR -> auto-generated from qrserver.com
-      const finalQrUrl = uploaded.qr_image_url || (finalGameUrl
-        ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(finalGameUrl)}`
-        : undefined);
+      const embedPdfUrl = pdfUrlInput.trim()
+        ? convertGDriveToEmbed(pdfUrlInput.trim())
+        : undefined;
 
-      // 4. Cover URL: prefer Blob upload -> manual URL input -> undefined
-      const finalCoverUrl = uploaded.cover_image_url || coverUrl.trim() || undefined;
+      // Parse tags
+      const tags = tagsInput
+        .split(',')
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean);
 
-      // 5. Parse tags
-      const tags = tagsInput.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
-
-      // 6. Submit game
+      // Submit Game
       const res = await submitGame({
         url: finalGameUrl,
         custom_title: gameTitle.trim(),
@@ -165,10 +135,10 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
         qr_image_url: finalQrUrl,
         cover_image_url: finalCoverUrl,
         pdf_drive_url: embedPdfUrl,
-        pdf_title: pdfTitle.trim() || undefined,
+        pdf_title: pdfTitleInput.trim() || undefined,
       });
 
-      // 7. Save to LocalStorage
+      // Save to LocalStorage persistence
       try {
         const existing = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
         const localList: GameDocument[] = existing ? JSON.parse(existing) : [];
@@ -181,11 +151,17 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
       onSuccess();
       onClose();
 
-      // Reset
-      setQrFile(null); setQrPreview(''); setDecodedUrl('');
-      setCoverFile(null); setCoverPreview(''); setCoverUrl('');
-      setPdfUrl(''); setPdfTitle(''); setGameTitle(''); setGameDesc('');
+      // Reset Form
+      setQrUrlInput('');
+      setGameUrlInput('');
+      setCoverUrlInput('');
+      setPdfUrlInput('');
+      setPdfTitleInput('');
+      setGameTitle('');
+      setGameDesc('');
       setTagsInput('cs67');
+      setQrPreview('');
+      setCoverPreview('');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเผยแพร่ผลงาน');
     } finally {
@@ -204,16 +180,22 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
             </div>
             <div>
               <h2 className="font-extrabold text-base text-white">ส่งผลงานเกม CS 67</h2>
-              <p className="text-[11px] text-slate-300">อัพโหลด QR Code + รูปปกเกม และแนบ PDF คู่มือ</p>
+              <p className="text-[11px] text-slate-300">
+                วางลิงก์ Google Drive หรือ URL รูปภาพสำหรับ QR Code, รูปปก และ PDF
+              </p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-5">
+          {/* Error Banner */}
           {error && (
             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" />
@@ -224,163 +206,197 @@ export const SubmitGameModal: React.FC<SubmitGameModalProps> = ({
           {/* Session Banner */}
           {session?.user ? (
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs">
-              {session.user.image ? <img src={session.user.image} alt="" className="w-5 h-5 rounded-full" /> : null}
-              <span className="text-emerald-300 font-semibold">ส่งในนามของ: {session.user.name}</span>
+              {session.user.image ? (
+                <img src={session.user.image} alt="" className="w-5 h-5 rounded-full" />
+              ) : null}
+              <span className="text-emerald-300 font-semibold">
+                ส่งในนามของ: {session.user.name}
+              </span>
               <span className="text-slate-400">({session.user.email})</span>
             </div>
           ) : (
             <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
               <span>💡 เข้าสู่ระบบด้วยอีเมลมหาวิทยาลัย (.ac.th) เพื่อบันทึกสิทธิ์การแก้ไขเกม</span>
-              <button onClick={() => signIn('google')} className="flex items-center gap-1 px-3 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold text-[11px]">
-                <LogIn className="w-3 h-3" />Login
+              <button
+                onClick={() => signIn('google')}
+                className="flex items-center gap-1 px-3 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold text-[11px]"
+              >
+                <LogIn className="w-3 h-3" />
+                Login
               </button>
             </div>
           )}
 
-          {/* STEP 1: QR Code */}
-          <div className="space-y-2">
+          {/* STEP 1: Game URL */}
+          <div className="space-y-1.5">
             <label className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
-              <QrCode className="w-3.5 h-3.5 text-sky-400" />
-              1. อัพโหลดรูป QR Code ของเกม *
+              <LinkIcon className="w-3.5 h-3.5 text-sky-400" />
+              1. URL สำหรับเข้าเล่นเกม (Game URL) *
             </label>
-            <div onClick={() => qrInputRef.current?.click()}
-              className="relative border-2 border-dashed border-sky-500/40 hover:border-sky-400 rounded-xl p-5 text-center cursor-pointer transition-colors bg-[#111a36] hover:bg-[#162248] group">
-              {qrPreview ? (
-                <div className="flex items-center gap-4">
-                  <img src={qrPreview} alt="QR Preview" className="w-24 h-24 object-contain rounded-xl border border-sky-500/30 bg-white p-1" />
-                  <div className="text-left space-y-1">
-                    {qrDecoding && <p className="text-xs text-sky-300 animate-pulse">กำลังอ่าน QR Code...</p>}
-                    {qrError && <p className="text-xs text-amber-300">{qrError}</p>}
-                    {decodedUrl && <p className="text-xs text-emerald-300 font-medium">✅ อ่าน URL ได้: <span className="font-mono text-white truncate block max-w-xs">{decodedUrl}</span></p>}
-                    <p className="text-[10px] text-slate-400">คลิกเพื่อเปลี่ยนรูป QR</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <QrCode className="w-9 h-9 text-sky-400/50 mx-auto group-hover:text-sky-300 transition-colors" />
-                  <p className="text-xs text-slate-300">คลิกหรือลากรูป QR Code มาวาง</p>
-                  <p className="text-[10px] text-slate-400">ระบบจะดึง URL จาก QR อัตโนมัติ</p>
-                </div>
-              )}
-              <input ref={qrInputRef} type="file" accept="image/*" className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleQrFileChange(e.target.files[0])} />
-            </div>
-            <div>
-              <label className="text-[11px] text-slate-400 flex items-center gap-1 mb-1">
-                <LinkIcon className="w-3 h-3" />URL เกม (ถ้า QR อ่านไม่ออก หรือต้องการป้อน URL เอง):
-              </label>
-              <input type="url" placeholder="https://username.itch.io/game-name" value={decodedUrl}
-                onChange={(e) => setDecodedUrl(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 font-mono" />
-            </div>
+            <input
+              type="url"
+              required
+              placeholder="https://username.itch.io/game-name หรือ https://my-game.vercel.app"
+              value={gameUrlInput}
+              onChange={(e) => setGameUrlInput(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 font-mono"
+            />
+            <p className="text-[10px] text-slate-400">
+              ใส่อิสระได้ทั้งลิงก์ itch.io, Vercel, GitHub Pages, หรือเว็บโฮสติ้งอื่นๆ
+            </p>
           </div>
 
-          {/* STEP 2: Cover Image */}
+          {/* STEP 2: Cover Image (Google Drive / Direct URL) */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
-                <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
-                2. รูปปกเกม *
-              </label>
-              <div className="flex rounded-lg overflow-hidden border border-sky-500/30 text-[10px] font-bold">
-                <button onClick={() => setCoverMode('file')}
-                  className={`px-3 py-1 transition-colors ${coverMode === 'file' ? 'bg-sky-500 text-white' : 'bg-[#111a36] text-slate-400 hover:text-white'}`}>
-                  <Upload className="w-3 h-3 inline mr-1" />อัปโหลดไฟล์
-                </button>
-                <button onClick={() => setCoverMode('url')}
-                  className={`px-3 py-1 transition-colors ${coverMode === 'url' ? 'bg-sky-500 text-white' : 'bg-[#111a36] text-slate-400 hover:text-white'}`}>
-                  <LinkIcon className="w-3 h-3 inline mr-1" />ใส่ URL
-                </button>
-              </div>
-            </div>
+            <label className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
+              <ImageIcon className="w-3.5 h-3.5 text-sky-400" />
+              2. ลิงก์รูปปกเกม (Google Drive Link / Image URL) *
+            </label>
+            <input
+              type="url"
+              placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+              value={coverUrlInput}
+              onChange={(e) => handleCoverUrlChange(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 font-mono"
+            />
+            {coverError && <p className="text-[11px] text-red-400">{coverError}</p>}
+            <p className="text-[10px] text-slate-400">
+              💡 วิธีเอาลิงก์: อัปโหลดรูปขึ้น <b>Google Drive</b> → คลิกขวาที่ไฟล์ → แชร์ (Anyone with link) → คัดลอกลิงก์มาวางได้ทันที
+            </p>
 
-            {coverMode === 'file' ? (
-              <div onClick={() => coverInputRef.current?.click()}
-                className="relative border-2 border-dashed border-sky-500/40 hover:border-sky-400 rounded-xl overflow-hidden cursor-pointer transition-colors group">
-                {coverPreview ? (
-                  <div className="relative aspect-[16/9] w-full bg-black">
-                    <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-white text-xs font-semibold">คลิกเพื่อเปลี่ยนรูปปก</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-5 text-center bg-[#111a36] hover:bg-[#162248] transition-colors">
-                    <ImageIcon className="w-9 h-9 text-sky-400/50 mx-auto group-hover:text-sky-300 transition-colors" />
-                    <p className="text-xs text-slate-300 mt-1">คลิกหรือลากรูปปกเกมมาวาง</p>
-                    <p className="text-[10px] text-slate-400">แนะนำอัตราส่วน 16:9 (JPG/PNG ≤ 5MB)</p>
-                  </div>
-                )}
-                <input ref={coverInputRef} type="file" accept="image/*" className="hidden"
-                  onChange={(e) => e.target.files?.[0] && handleCoverFileChange(e.target.files[0])} />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <input type="url" placeholder="https://i.imgur.com/xxx.jpg"
-                  value={coverUrl} onChange={(e) => { setCoverUrl(e.target.value); setCoverPreview(e.target.value); }}
-                  className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 font-mono" />
-                <p className="text-[10px] text-slate-400">
-                  💡 อัปโหลดรูปที่ <a href="https://imgur.com/upload" target="_blank" rel="noreferrer" className="text-sky-400 underline">imgur.com</a> → คลิกขวา → Copy Image Address
-                </p>
-                {coverPreview && (
-                  <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden border border-sky-500/30 bg-black">
-                    <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover"
-                      onError={() => { setCoverPreview(''); }} />
-                  </div>
-                )}
+            {/* Cover Preview */}
+            {coverPreview && (
+              <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden border border-sky-500/30 bg-black">
+                <img
+                  src={coverPreview}
+                  alt="Cover Preview"
+                  className="w-full h-full object-cover"
+                  onError={() => {
+                    setCoverError('ไม่สามารถโหลดรูปจากลิงก์นี้ได้ กรุณาตรวจสอบว่าตั้งค่าแชร์ Google Drive เป็น "Anyone with link" แล้ว');
+                    setCoverPreview('');
+                  }}
+                />
               </div>
             )}
           </div>
 
-          {/* STEP 3: PDF */}
+          {/* STEP 3: QR Code Image (Google Drive / Direct URL) — Optional */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
+              <QrCode className="w-3.5 h-3.5 text-sky-400" />
+              3. ลิงก์รูป QR Code (Google Drive Link / Image URL) — ไม่บังคับ
+            </label>
+            <input
+              type="url"
+              placeholder="https://drive.google.com/file/d/.../view?usp=sharing (ถ้าไม่ใส่ ระบบจะสร้างให้อัตโนมัติ)"
+              value={qrUrlInput}
+              onChange={(e) => handleQrUrlChange(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 font-mono"
+            />
+            {qrError && <p className="text-[11px] text-red-400">{qrError}</p>}
+            <p className="text-[10px] text-slate-400">
+              💡 หากไม่ใส่ลิงก์รูป QR ระบบจะสร้างรูป QR Code จาก URL เกมให้อัตโนมัติ
+            </p>
+
+            {/* QR Preview */}
+            {qrPreview && (
+              <div className="flex items-center gap-4 p-3 rounded-xl bg-[#111a36] border border-sky-500/30">
+                <img
+                  src={qrPreview}
+                  alt="QR Preview"
+                  className="w-20 h-20 object-contain rounded-lg bg-white p-1"
+                  onError={() => {
+                    setQrError('ไม่สามารถโหลดรูป QR จากลิงก์นี้ได้');
+                    setQrPreview('');
+                  }}
+                />
+                <div className="text-xs text-slate-300">
+                  <p className="font-semibold text-emerald-300">✅ แสดงตัวอย่างรูป QR Code</p>
+                  <p className="text-[11px] text-slate-400 mt-1">รูป QR จะถูกนำไปแสดงในหน้าผลงานเกม</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* STEP 4: PDF Manual (Google Drive Link) */}
           <div className="space-y-2">
             <label className="flex items-center gap-1.5 text-xs font-bold text-slate-200">
               <FileText className="w-3.5 h-3.5 text-sky-400" />
-              3. PDF คู่มือเกม (Google Drive Link) — ไม่บังคับ
+              4. PDF คู่มือเกม (Google Drive Link) — ไม่บังคับ
             </label>
-            <input type="url" placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
-              value={pdfUrl} onChange={(e) => setPdfUrl(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 font-mono" />
-            <input type="text" placeholder="ชื่อ PDF เช่น 'คู่มือการเล่น Game Title v1.0'"
-              value={pdfTitle} onChange={(e) => setPdfTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" />
-            <p className="text-[10px] text-slate-400">💡 อัพ PDF บน Google Drive → Share (anyone with link) → Copy link</p>
+            <input
+              type="url"
+              placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+              value={pdfUrlInput}
+              onChange={(e) => setPdfUrlInput(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 font-mono"
+            />
+            <input
+              type="text"
+              placeholder="ชื่อ PDF เช่น 'คู่มือการเล่น Game Title v1.0'"
+              value={pdfTitleInput}
+              onChange={(e) => setPdfTitleInput(e.target.value)}
+              className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400"
+            />
           </div>
 
-          {/* STEP 4: Game Info */}
+          {/* STEP 5: Game Info */}
           <div className="space-y-3 pt-3 border-t border-white/10">
-            <label className="text-xs font-bold text-slate-200">4. ข้อมูลเกม</label>
-            <input type="text" required placeholder="ชื่อเกม / ชื่อผลงาน *" value={gameTitle}
+            <label className="text-xs font-bold text-slate-200">5. ข้อมูลผลงานเกม</label>
+
+            <input
+              type="text"
+              required
+              placeholder="ชื่อเกม / ชื่อผลงาน *"
+              value={gameTitle}
               onChange={(e) => setGameTitle(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400" />
-            <textarea rows={3} placeholder="คำอธิบายเกม / เนื้อหาผลงาน..." value={gameDesc}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400"
+            />
+
+            <textarea
+              rows={3}
+              placeholder="คำอธิบายเกม / เนื้อหาผลงาน..."
+              value={gameDesc}
               onChange={(e) => setGameDesc(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400 resize-none" />
+              className="w-full px-3 py-2.5 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-sky-400 resize-none"
+            />
+
             <div>
               <label className="text-[11px] text-slate-400 flex items-center gap-1 mb-1">
-                <Tag className="w-3 h-3" />Tags (คั่นด้วยจุลภาค):
+                <Tag className="w-3 h-3" />
+                Tags (คั่นด้วยจุลภาค):
               </label>
-              <input type="text" placeholder="cs67, webgl, puzzle, arcade" value={tagsInput}
+              <input
+                type="text"
+                placeholder="cs67, webgl, puzzle, arcade"
+                value={tagsInput}
                 onChange={(e) => setTagsInput(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400" />
+                className="w-full px-3 py-2 rounded-xl bg-[#111a36] border border-sky-500/30 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-400"
+              />
             </div>
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10 bg-[#111a36]">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl bg-[#162248] text-slate-300 font-semibold text-xs border border-white/10 hover:bg-[#1f3066]">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-[#162248] text-slate-300 font-semibold text-xs border border-white/10 hover:bg-[#1f3066]"
+          >
             ยกเลิก
           </button>
-          <button onClick={handleSubmit}
-            disabled={isSubmitting || !gameTitle.trim() || (!decodedUrl && !qrFile)}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:from-blue-500 hover:to-sky-400 disabled:opacity-50 text-white font-bold text-xs shadow-lg shadow-blue-600/30 border border-white/20">
+
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !gameTitle.trim() || !gameUrlInput.trim()}
+            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:from-blue-500 hover:to-sky-400 disabled:opacity-50 text-white font-bold text-xs shadow-lg shadow-blue-600/30 border border-white/20"
+          >
             {isSubmitting ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <CheckCircle2 className="w-4 h-4" />
             )}
-            <span>{isUploading ? 'กำลังอัพโหลดรูปภาพ...' : isSubmitting ? 'กำลังส่งผลงาน...' : 'เผยแพร่ผลงานเกม CS67'}</span>
+            <span>{isSubmitting ? 'กำลังส่งผลงาน...' : 'เผยแพร่ผลงานเกม CS67'}</span>
           </button>
         </div>
       </div>

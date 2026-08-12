@@ -340,13 +340,19 @@ export default function GameDetailPage() {
               {/* LEFT COLUMN: รูปปก -> รายละเอียด -> คู่มือ */}
               <div className="lg:col-span-2 space-y-6">
                 
-                {/* 1. รูปปก (Cover Image) */}
+                {/* 1. รูปปก (Cover Image - Clickable Play Button) */}
                 <div className="space-y-2">
                   <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
                     <Gamepad2 className="w-4 h-4 text-sky-400" />
-                    รูปภาพปกผลงาน (Cover Preview)
+                    รูปภาพปกผลงาน — คลิกที่ภาพเพื่อเปิดเล่นเกม
                   </h2>
-                  <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden border border-sky-500/30 shadow-2xl bg-black group">
+                  <a
+                    href={targetUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden border border-sky-500/30 shadow-2xl bg-black group block cursor-pointer"
+                    title="คลิกเพื่อเข้าเล่นเกมต้นทาง"
+                  >
                     <img
                       src={displayCoverImage}
                       alt={game.title}
@@ -356,8 +362,14 @@ export default function GameDetailPage() {
                           'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80';
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0e152e]/80 via-transparent to-transparent pointer-events-none" />
-                  </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0e152e]/80 via-black/20 to-transparent group-hover:bg-blue-950/40 transition-all flex items-center justify-center">
+                      <div className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 text-white font-extrabold text-sm shadow-2xl shadow-emerald-500/50 border border-white/30 transform group-hover:scale-110 transition-transform">
+                        <Play className="w-5 h-5 fill-current" />
+                        <span>กดเพื่อเปิดเล่นเกมต้นทาง (Play Game)</span>
+                        <ExternalLink className="w-4 h-4 ml-1" />
+                      </div>
+                    </div>
+                  </a>
                 </div>
 
                 {/* 2. รายละเอียดเกม (Game Description & Tags) */}
