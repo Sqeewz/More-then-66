@@ -141,7 +141,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="w-full min-h-screen md:h-screen md:overflow-hidden bg-[#060608] text-white selection:bg-amber-500 selection:text-black">
+    <div className="w-full min-h-screen bg-[#060608] text-white selection:bg-amber-500 selection:text-black">
       {/* Dynamic Style Block for Dedicated Fullscreen Anime Landing */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;900&family=Syncopate:wght@700&display=swap');
@@ -151,25 +151,18 @@ export default function LandingPage() {
           background-image: radial-gradient(circle at center, #07073cff 0%, #060608 100%);
           font-family: 'Noto Sans JP', 'Syncopate', sans-serif;
           width: 100vw;
-          height: 100vh;
+          height: auto;
+          min-height: 100vh;
           display: flex;
           justify-content: center;
           align-items: center;
           position: relative;
-          overflow: hidden;
-        }
-
-        @media (max-width: 768px) {
-          .anime-landing-wrapper {
-            height: auto;
-            min-height: 100vh;
-            overflow-y: auto;
-          }
+          overflow-y: auto;
         }
 
         .canvas-container {
           width: 100vw;
-          height: 100vh;
+          height: auto;
           min-height: 100vh;
           max-width: none;
           max-height: none;
@@ -186,8 +179,20 @@ export default function LandingPage() {
               inset 0 0 140px rgba(0, 0, 0, 0.95);
           border: none;
           border-radius: 0;
-          overflow: hidden;
+          overflow-y: auto;
           transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Lock fullscreen only on large screens (both wide and tall) */
+        @media (min-width: 1025px) and (min-height: 750px) {
+          .anime-landing-wrapper {
+            height: 100vh;
+            overflow: hidden;
+          }
+          .canvas-container {
+            height: 100vh;
+            overflow: hidden;
+          }
         }
 
         .canvas-container::after {
@@ -532,6 +537,9 @@ export default function LandingPage() {
         }
 
         .login-button-container {
+          position: absolute;
+          top: 40px;
+          right: 40px;
           z-index: 50;
         }
 
@@ -700,12 +708,40 @@ export default function LandingPage() {
           .left-footer {
             padding-top: 5px;
           }
+          .login-button-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+          }
         }
       `}</style>
 
       {/* Standalone Fullscreen Anime Canvas Landing */}
       <div className="anime-landing-wrapper">
         <div className="canvas-container" id="main-canvas" ref={mainCanvasRef}>
+          {/* Floating Login Button at Top Right of screen */}
+          <div className="login-button-container">
+            {session?.user ? (
+              <button
+                onClick={() => signOut()}
+                className="pill-box hover:bg-red-500/30 hover:border-red-400 text-red-300 transition-all duration-200 cursor-pointer flex items-center gap-1.5 backdrop-blur-md"
+                title={`Sign Out (${session.user.name || session.user.email})`}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>ออกจากระบบ</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => signIn('google')}
+                className="pill-box hover:bg-amber-500/25 hover:border-amber-400 text-amber-300 font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-lg shadow-amber-500/20 backdrop-blur-md hover:scale-105"
+                title="เข้าสู่ระบบด้วย Google SSO (.ac.th)"
+              >
+                <LogIn className="w-3.5 h-3.5 text-amber-400" />
+                <span>LOGIN (.ac.th)</span>
+              </button>
+            )}
+          </div>
+
           <div className="canvas-dot-overlay"></div>
           <div className="ui-corner-bracket top-left"></div>
           <div className="ui-corner-bracket bottom-right"></div>
@@ -765,27 +801,8 @@ export default function LandingPage() {
 
           {/* Right Panel: LOGIN Button */}
           <aside className="right-panel">
-            <div className="login-button-container">
-              {session?.user ? (
-                <button
-                  onClick={() => signOut()}
-                  className="pill-box hover:bg-red-500/30 hover:border-red-400 text-red-300 transition-all duration-200 cursor-pointer flex items-center gap-1.5 backdrop-blur-md"
-                  title={`Sign Out (${session.user.name || session.user.email})`}
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>ออกจากระบบ</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => signIn('google')}
-                  className="pill-box hover:bg-amber-500/25 hover:border-amber-400 text-amber-300 font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-lg shadow-amber-500/20 backdrop-blur-md hover:scale-105"
-                  title="เข้าสู่ระบบด้วย Google SSO (.ac.th)"
-                >
-                  <LogIn className="w-3.5 h-3.5 text-amber-400" />
-                  <span>LOGIN (.ac.th)</span>
-                </button>
-              )}
-            </div>
+            {/* Spacer for desktop flex layout */}
+            <div className="h-10 hidden md:block"></div>
 
             <div className="vertical-text-wrap">
               <span className="v-kanji-title">RMUTI</span>
