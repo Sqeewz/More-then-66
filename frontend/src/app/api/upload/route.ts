@@ -15,36 +15,40 @@ const IMAGE_SIGNATURES: Record<string, number[][]> = {
   'image/webp': [[0x52, 0x49, 0x46, 0x46]], // RIFF header
 };
 
-function checkMagicBytes(buffer: Uint8Array, mimeType: string): boolean {
-  const sigs = IMAGE_SIGNATURES[mimeType];
-  if (!sigs) return false;
-  return sigs.some((sig) => sig.every((byte, i) => buffer[i] === byte));
+function detectMimeType(buffer: Uint8Array): string | null {
+  for (const [mime, sigs] of Object.entries(IMAGE_SIGNATURES)) {
+    if (sigs.some((sig) => sig.every((byte, i) => buffer[i] === byte))) {
+      return mime;
+    }
+  }
+  return null;
 }
 
 async function validateImageFile(
   file: File,
   maxSizeMB: number,
   fieldName: string
-): Promise<{ valid: boolean; error?: string; buffer?: Uint8Array }> {
-  if (!ALLOWED_MIME_TYPES.has(file.type)) {
-    return { valid: false, error: `${fieldName}: ประเภทไฟล์ไม่อนุญาต (JPG/PNG/GIF/WebP เท่านั้น)` };
-  }
+): Promise<{ valid: boolean; error?: string; buffer?: Uint8Array; detectedType?: string }> {
   if (file.size > maxSizeMB * 1024 * 1024) {
     return { valid: false, error: `${fieldName}: ขนาดไฟล์เกิน ${maxSizeMB}MB` };
   }
   // Check real file signature (magic bytes) — not just MIME type claim
   const arrayBuffer = await file.arrayBuffer();
   const bytes = new Uint8Array(arrayBuffer);
-  if (!checkMagicBytes(bytes, file.type)) {
+  const detectedType = detectMimeType(bytes);
+  if (!detectedType) {
     return { valid: false, error: `${fieldName}: ไฟล์ไม่ใช่รูปภาพจริง (Magic bytes mismatch)` };
   }
-  return { valid: true, buffer: bytes };
+  if (!ALLOWED_MIME_TYPES.has(detectedType)) {
+    return { valid: false, error: `${fieldName}: ประเภทไฟล์ไม่อนุญาต (JPG/PNG/GIF/WebP เท่านั้น)` };
+  }
+  return { valid: true, buffer: bytes, detectedType };
 }
 
-async function fileToDataUrl(file: File): Promise<string> {
+async function fileToDataUrl(file: File, detectedType?: string): Promise<string> {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  return `data:${file.type};base64,${buffer.toString('base64')}`;
+  return `data:${detectedType || file.type};base64,${buffer.toString('base64')}`;
 }
 
 export async function POST(request: NextRequest) {
@@ -68,13 +72,13 @@ export async function POST(request: NextRequest) {
       }
       if (hasBlobToken) {
         try {
-          const blob = await put(`qr/${Date.now()}-${qrFile.name}`, qrFile, { access: 'public', contentType: qrFile.type });
+          const blob = await put(`qr/${Date.now()}-${qrFile.name}`, qrFile, { access: 'public', contentType: check.detectedType });
           result.qr_image_url = blob.url;
         } catch {
-          result.qr_image_url = await fileToDataUrl(qrFile);
+          result.qr_image_url = await fileToDataUrl(qrFile, check.detectedType);
         }
       } else {
-        result.qr_image_url = await fileToDataUrl(qrFile);
+        result.qr_image_url = await fileToDataUrl(qrFile, check.detectedType);
       }
     }
 
@@ -87,13 +91,13 @@ export async function POST(request: NextRequest) {
       }
       if (hasBlobToken) {
         try {
-          const blob = await put(`covers/${Date.now()}-${coverFile.name}`, coverFile, { access: 'public', contentType: coverFile.type });
+          const blob = await put(`covers/${Date.now()}-${coverFile.name}`, coverFile, { access: 'public', contentType: check.detectedType });
           result.cover_image_url = blob.url;
         } catch {
-          result.cover_image_url = await fileToDataUrl(coverFile);
+          result.cover_image_url = await fileToDataUrl(coverFile, check.detectedType);
         }
       } else {
-        result.cover_image_url = await fileToDataUrl(coverFile);
+        result.cover_image_url = await fileToDataUrl(coverFile, check.detectedType);
       }
     }
 

@@ -58,7 +58,9 @@ function compressImage(file: File, maxWidth = 1200, maxHeight = 720, quality = 0
               resolve(file);
               return;
             }
-            const compressedFile = new File([blob], file.name, {
+            const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+            const newName = `${baseName}.jpg`;
+            const compressedFile = new File([blob], newName, {
               type: 'image/jpeg',
               lastModified: Date.now(),
             });
