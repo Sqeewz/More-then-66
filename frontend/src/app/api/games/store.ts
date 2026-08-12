@@ -119,6 +119,7 @@ export async function updateGame(
     title: updates.title ?? game.title,
     description: updates.description ?? game.description,
     original_url: updates.original_url ?? (updates as any).url ?? game.original_url,
+    url: updates.original_url ?? (updates as any).url ?? (game as any).url ?? game.original_url,
     cover_image_url: updates.cover_image_url ?? game.cover_image_url,
     qr_image_url: updates.qr_image_url ?? game.qr_image_url,
     pdf_drive_url: updates.pdf_drive_url ?? game.pdf_drive_url,

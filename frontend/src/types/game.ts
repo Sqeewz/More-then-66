@@ -11,6 +11,7 @@ export interface GameDocument {
   title: string;
   description: string;
   original_url: string;
+  url?: string;
   embed_code?: string;
   thumbnail_url: string;
   creator_id: string;

@@ -212,13 +212,15 @@ export default function GameDetailPage() {
   })();
 
   const handlePlayClick = (e: React.MouseEvent) => {
-    if (!targetUrl || targetUrl === '#') {
-      e.preventDefault();
-      if (game?.pdf_drive_url) {
-        window.open(game.pdf_drive_url, '_blank');
-      } else {
-        alert('ผู้พัฒนาไม่ได้ระบุ URL เกมสำหรับเล่นสด');
-      }
+    e.preventDefault();
+    e.stopPropagation();
+    const playUrl = (game?.original_url || (game as any)?.url || '').trim();
+    if (playUrl && (playUrl.startsWith('http://') || playUrl.startsWith('https://'))) {
+      window.open(playUrl, '_blank', 'noopener,noreferrer');
+    } else if (game?.pdf_drive_url) {
+      window.open(game.pdf_drive_url, '_blank', 'noopener,noreferrer');
+    } else {
+      alert('เกมนี้ยังไม่ได้ระบุ URL สำหรับเข้าเล่นสด กรุณากดปุ่ม "แก้ไข" ด้านบนเพื่อใส่ URL เกม');
     }
   };
 
@@ -355,36 +357,23 @@ export default function GameDetailPage() {
               {/* LEFT COLUMN: รูปปก -> รายละเอียด -> คู่มือ */}
               <div className="lg:col-span-2 space-y-6">
                 
-                {/* 1. รูปปก (Cover Image - Clickable Play Button) */}
+                {/* 1. รูปปก (Cover Image - Clean Preview without play button) */}
                 <div className="space-y-2">
                   <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
                     <Gamepad2 className="w-4 h-4 text-sky-400" />
-                    รูปภาพปกผลงาน — คลิกที่ภาพเพื่อเปิดเล่นเกม
+                    รูปภาพปกผลงาน (Cover Preview)
                   </h2>
-                  <a
-                    href={targetUrl || '#'}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={handlePlayClick}
-                    className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden border border-sky-500/30 shadow-2xl bg-black group block cursor-pointer"
-                    title="คลิกเพื่อเข้าเล่นเกมต้นทาง"
-                  >
+                  <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden border border-sky-500/30 shadow-2xl bg-black">
                     <img
                       src={displayCoverImage}
                       alt={game.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = DEFAULT_COVER_IMAGE;
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0e152e]/80 via-black/20 to-transparent group-hover:bg-blue-950/40 transition-all flex items-center justify-center">
-                      <div className="flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 text-white font-extrabold text-sm shadow-2xl shadow-emerald-500/50 border border-white/30 transform group-hover:scale-110 transition-transform">
-                        <Play className="w-5 h-5 fill-current" />
-                        <span>กดเพื่อเปิดเล่นเกมต้นทาง (Play Game)</span>
-                        <ExternalLink className="w-4 h-4 ml-1" />
-                      </div>
-                    </div>
-                  </a>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0e152e]/80 via-transparent to-transparent pointer-events-none" />
+                  </div>
                 </div>
 
                 {/* 2. รายละเอียดเกม (Game Description & Tags) */}
@@ -489,16 +478,14 @@ export default function GameDetailPage() {
                   </div>
 
                   {/* Sleek Circular Play Symbol Button below QR Code */}
-                  <a
-                    href={targetUrl || '#'}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
                     onClick={handlePlayClick}
                     className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/40 border border-white/30 hover:scale-110 active:scale-95 transition-all duration-300 cursor-pointer my-1"
-                    title="กดเพื่อเล่นเกม (Play Game)"
+                    title="กดเพื่อเปิดเล่นเกมต้นทาง (Play Game)"
                   >
                     <Play className="w-6 h-6 fill-current ml-1 text-white" />
-                  </a>
+                  </button>
 
 
                   <div className="space-y-3 w-full">
@@ -506,16 +493,14 @@ export default function GameDetailPage() {
                       ใช้กล้องโทรศัพท์มือถือ หรือแอป QR Reader สแกนรูปภาพนี้เพื่อเปิดเล่นเกมผ่านสมาร์ทโฟนได้ทันที
                     </p>
 
-                    <a
-                      href={targetUrl || '#'}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      type="button"
                       onClick={handlePlayClick}
-                      className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#162248] hover:bg-[#1f3066] text-sky-300 hover:text-white text-xs font-semibold border border-sky-500/30 transition-all"
+                      className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-600 hover:from-emerald-500 hover:to-sky-500 text-white text-xs font-bold shadow-lg border border-white/20 transition-all cursor-pointer"
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                       <span>เปิดเล่นในแท็บใหม่ (External Tab)</span>
-                    </a>
+                    </button>
                   </div>
 
 

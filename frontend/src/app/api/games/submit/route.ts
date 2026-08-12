@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
       title: customTitle || scraped.title,
       description: customDesc || scraped.description,
       original_url: urlCheck.url!,
+      url: urlCheck.url!,
       embed_code: typeof body.embed_code === 'string' ? body.embed_code.slice(0, 4000) : scraped.embed_code,
       thumbnail_url: sanitizeUrl(body.custom_thumbnail_url) || scraped.thumbnail_url,
       // Bind creator info from verified session, not from client-supplied body
