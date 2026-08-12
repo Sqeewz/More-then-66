@@ -201,13 +201,16 @@ export default function GameDetailPage() {
     if (
       rawQr &&
       (rawQr.startsWith('http://') || rawQr.startsWith('https://')) &&
+      !rawQr.includes('api.qrserver.com') &&
       !rawQr.includes('data=undefined') &&
       !rawQr.includes('data=null') &&
       !rawQr.includes('data=&')
     ) {
       return convertGDriveToDirectImage(rawQr);
     }
-    const dataToEncode = targetUrl || (typeof window !== 'undefined' ? window.location.href : 'https://dek67game.vercel.app');
+    const dataToEncode = (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')))
+      ? targetUrl
+      : (game?.pdf_drive_url || 'https://dek67game.vercel.app');
     return `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(dataToEncode)}`;
   })();
 
@@ -584,12 +587,25 @@ export default function GameDetailPage() {
       />
 
 
-      {game && (
+      {game && isEditModalOpen && (
         <EditGameModal
+          key={`${game.id}-${isEditModalOpen}`}
           game={game}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onSuccess={(updated) => setGame(updated)}
+          onSuccess={(updated) => {
+            setGame(updated);
+            setIsEditModalOpen(false);
+            try {
+              const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
+              const localGames: GameDocument[] = storedLocal ? JSON.parse(storedLocal) : [];
+              const updatedList = localGames.map((g) => (g.id === updated.id ? updated : g));
+              if (!updatedList.some((g) => g.id === updated.id)) {
+                updatedList.unshift(updated);
+              }
+              localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(updatedList));
+            } catch (e) {}
+          }}
         />
       )}
 

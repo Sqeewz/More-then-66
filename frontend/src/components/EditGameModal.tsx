@@ -30,19 +30,22 @@ export const EditGameModal: React.FC<EditGameModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const initialCover = game?.cover_image_url || game?.thumbnail_url || '';
+  const initialQr = game?.qr_image_url && !game.qr_image_url.includes('api.qrserver.com') ? game.qr_image_url : '';
+
   // Inputs prefilled from current game values
-  const [title, setTitle] = useState(game.title || '');
-  const [description, setDescription] = useState(game.description || '');
-  const [gameUrl, setGameUrl] = useState(game.original_url || (game as any)?.url || '');
-  const [coverUrl, setCoverUrl] = useState(game.cover_image_url || game.thumbnail_url || '');
-  const [qrUrl, setQrUrl] = useState(game.qr_image_url || '');
-  const [pdfUrl, setPdfUrl] = useState(game.pdf_drive_url || '');
-  const [pdfTitle, setPdfTitle] = useState(game.pdf_title || '');
-  const [tagsInput, setTagsInput] = useState((game.tags || []).join(', '));
+  const [title, setTitle] = useState(game?.title || '');
+  const [description, setDescription] = useState(game?.description || '');
+  const [gameUrl, setGameUrl] = useState(game?.original_url || (game as any)?.url || '');
+  const [coverUrl, setCoverUrl] = useState(initialCover);
+  const [qrUrl, setQrUrl] = useState(initialQr);
+  const [pdfUrl, setPdfUrl] = useState(game?.pdf_drive_url || '');
+  const [pdfTitle, setPdfTitle] = useState(game?.pdf_title || '');
+  const [tagsInput, setTagsInput] = useState((game?.tags || []).join(', '));
 
   // Preview States
-  const [coverPreview, setCoverPreview] = useState('');
-  const [qrPreview, setQrPreview] = useState('');
+  const [coverPreview, setCoverPreview] = useState(initialCover ? convertGDriveToDirectImage(initialCover) : '');
+  const [qrPreview, setQrPreview] = useState(initialQr ? convertGDriveToDirectImage(initialQr) : '');
   const [coverError, setCoverError] = useState('');
   const [qrError, setQrError] = useState('');
 
@@ -51,17 +54,20 @@ export const EditGameModal: React.FC<EditGameModalProps> = ({
 
   // Sync state whenever game prop changes or modal opens
   useEffect(() => {
-    if (game) {
+    if (game && isOpen) {
       setTitle(game.title || '');
       setDescription(game.description || '');
       const currentUrl = game.original_url || (game as any)?.url || '';
       setGameUrl(currentUrl);
+
       const currentCover = game.cover_image_url || game.thumbnail_url || '';
       setCoverUrl(currentCover);
       setCoverPreview(currentCover ? convertGDriveToDirectImage(currentCover) : '');
-      const currentQr = game.qr_image_url || '';
+
+      const currentQr = game.qr_image_url && !game.qr_image_url.includes('api.qrserver.com') ? game.qr_image_url : '';
       setQrUrl(currentQr);
       setQrPreview(currentQr ? convertGDriveToDirectImage(currentQr) : '');
+
       setPdfUrl(game.pdf_drive_url || '');
       setPdfTitle(game.pdf_title || '');
       setTagsInput((game.tags || []).join(', '));
