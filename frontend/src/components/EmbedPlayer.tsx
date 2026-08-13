@@ -41,7 +41,9 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
 
   const targetUrl = extractEmbedUrl(game);
   const externalLinkUrl = game.original_url || (game as any).url || targetUrl;
+  const isGoogleDrive = targetUrl.includes('drive.google.com');
   const isPopupMode = game.display_mode === 'POPUP' && !forceEmbedded;
+  const showExternalOnly = (isPopupMode || isGoogleDrive) && !forceEmbedded;
 
   // Auto hide loading spinner after 2s timeout
   useEffect(() => {
@@ -81,7 +83,12 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
       {/* Top Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-[#0e152e] border border-sky-500/30 text-xs shadow-lg">
         <div className="flex items-center gap-2">
-          {isPopupMode ? (
+          {isGoogleDrive ? (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
+              <ExternalLink className="w-3.5 h-3.5" />
+              ต้องเปิดเล่นนอกเว็บ (Google Drive Link)
+            </span>
+          ) : isPopupMode ? (
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
               <Lock className="w-3.5 h-3.5" />
               โหมดลิงก์ภายนอก (Pop-out Mode)
@@ -99,7 +106,7 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
         </div>
 
         <div className="flex items-center gap-2">
-          {isPopupMode && (
+          {isPopupMode && !isGoogleDrive && (
             <button
               onClick={() => {
                 setForceEmbedded(true);
@@ -113,7 +120,7 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
             </button>
           )}
 
-          {!isPopupMode && (
+          {!showExternalOnly && (
             <>
               <button
                 onClick={handleReload}
@@ -151,38 +158,49 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
         ref={containerRef}
         className="relative w-full rounded-2xl overflow-hidden bg-black border border-sky-500/30 shadow-2xl glow-box"
       >
-        {isPopupMode ? (
-          /* POPUP MODE UI fallback */
+        {showExternalOnly ? (
+          /* POPUP OR GOOGLE DRIVE MODE UI fallback */
           <div className="aspect-video w-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-[#0a1026] via-[#101b3e] to-[#060a19] text-white">
             <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 mb-4 animate-bounce">
-              <Lock className="w-8 h-8" />
+              {isGoogleDrive ? <ExternalLink className="w-8 h-8" /> : <Lock className="w-8 h-8" />}
             </div>
 
             <h3 className="text-xl font-extrabold tracking-tight">
-              ตรวจพบการตั้งค่าป้องกันการฝังเฟรมจากเว็บต้นทาง
+              {isGoogleDrive ? "ลิงก์ Google Drive ไม่รองรับการเล่นเกมในหน้านี้" : "ตรวจพบการตั้งค่าป้องกันการฝังเฟรมจากเว็บต้นทาง"}
             </h3>
             <p className="text-sm text-slate-300 max-w-lg mt-2 leading-relaxed">
-              คุณสามารถกดเลือก <strong className="text-sky-300">"เล่นในหน้าเว็บนี้"</strong> เพื่อบังคับเปิดเล่นผ่าน Sandboxed Frame หรือเปิดเล่นในแท็บใหม่ได้ตามต้องการ:
+              {isGoogleDrive ? (
+                <span>
+                  เนื่องจาก Google Drive มีนโยบายความปลอดภัยที่ป้องกันไม่ให้อนุญาตให้รันเกมในเว็บอื่นได้ (CORS/CSP Blocks) 
+                  กรุณากดปุ่ม <strong className="text-sky-300">"เปิดเล่นในแท็บใหม่"</strong> เพื่อเล่นเกมนี้โดยตรงครับ
+                </span>
+              ) : (
+                <span>
+                  คุณสามารถกดเลือก <strong className="text-sky-300">"เล่นในหน้าเว็บนี้"</strong> เพื่อบังคับเปิดเล่นผ่าน Sandboxed Frame หรือเปิดเล่นในแท็บใหม่ได้ตามต้องการ:
+                </span>
+              )}
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setForceEmbedded(true);
-                  setIsLoading(true);
-                }}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:from-blue-500 hover:to-sky-400 text-white font-bold text-sm shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-white/20"
-              >
-                <MonitorPlay className="w-5 h-5" />
-                <span>เล่นในหน้าเว็บนี้ (Play In-Website)</span>
-              </button>
+              {!isGoogleDrive && (
+                <button
+                  onClick={() => {
+                    setForceEmbedded(true);
+                    setIsLoading(true);
+                  }}
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:from-blue-500 hover:to-sky-400 text-white font-bold text-sm shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-white/20"
+                >
+                  <MonitorPlay className="w-5 h-5" />
+                  <span>เล่นในหน้าเว็บนี้ (Play In-Website)</span>
+                </button>
+              )}
 
               <button
                 onClick={handleOpenExternal}
-                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#162248] hover:bg-[#1f3066] text-slate-200 hover:text-white font-semibold text-sm border border-white/10"
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-sm shadow-xl shadow-sky-500/30 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer border border-white/20"
               >
                 <Play className="w-4 h-4 fill-current" />
-                <span>เปิดเล่นในแท็บใหม่ (External Tab)</span>
+                <span>เปิดเล่นในแท็บใหม่ (Play in New Tab)</span>
                 <ExternalLink className="w-4 h-4" />
               </button>
             </div>
@@ -212,7 +230,7 @@ export const EmbedPlayer: React.FC<EmbedPlayerProps> = ({ game }) => {
       </div>
 
       {/* Security sandbox declaration notice */}
-      {!isPopupMode && (
+      {!showExternalOnly && (
         <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 px-2">
           <span>
             🛡️ Security Sandbox Policy Active: <code className="text-sky-300">allow-scripts allow-same-origin allow-popups allow-forms allow-pointer-lock</code>
