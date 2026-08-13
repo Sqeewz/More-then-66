@@ -53,7 +53,7 @@ export async function getCloudGames(): Promise<GameDocument[]> {
 
         // Try SDK get() (works for private stores)
         try {
-          const blobRes = await get(latestBlob.url, { token: BLOB_TOKEN });
+          const blobRes = await get(latestBlob.url, { token: BLOB_TOKEN, access: 'private' });
           if (blobRes && blobRes.stream) {
             const text = await new Response(blobRes.stream).text();
             const parsed = JSON.parse(text);

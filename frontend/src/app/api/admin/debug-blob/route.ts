@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
     // 3. Test blob read
     if (writeSuccess) {
       try {
-        const getRes = await get(writeUrl, { token });
+        const getRes = await get(writeUrl, { token, access: 'private' });
         if (getRes && getRes.stream) {
           const text = await new Response(getRes.stream).text();
           result.blob_read = { success: true, content: JSON.parse(text) };
