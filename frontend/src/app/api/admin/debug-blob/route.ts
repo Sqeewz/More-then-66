@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
     try {
       // @ts-ignore
-      const blob = await put('data/cs67_games.json', testData, {
+      const blob = await put('data/debug_test.json', testData, {
         access: 'private',
         addRandomSuffix: false,
         allowOverwrite: true,
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     } catch (e1) {
       try {
         // @ts-ignore
-        const blob = await put('data/cs67_games.json', testData, {
+        const blob = await put('data/debug_test.json', testData, {
           access: 'public',
           addRandomSuffix: false,
           allowOverwrite: true,
