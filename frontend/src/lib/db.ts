@@ -49,9 +49,10 @@ export async function getCloudGames(): Promise<GameDocument[]> {
     try {
       const blobs = await list({ prefix: 'data/cs67_games.json', token: BLOB_TOKEN });
       if (blobs.blobs.length > 0) {
-        // Fetch the newest blob
+        // Bust CDN cache by appending timestamp — prevents serving stale data
         const latestBlob = blobs.blobs[0];
-        const res = await fetch(latestBlob.url, { cache: 'no-store' });
+        const bustUrl = `${latestBlob.url}?v=${Date.now()}`;
+        const res = await fetch(bustUrl, { cache: 'no-store' });
         if (res.ok) {
           const parsed = await res.json();
           if (Array.isArray(parsed)) {
@@ -75,11 +76,13 @@ export async function saveCloudGames(games: GameDocument[]): Promise<boolean> {
   }
 
   // 2. Fallback to Vercel Blob Storage JSON persistence
+  // allowOverwrite: true — required to replace the same file each time
   if (BLOB_TOKEN) {
     try {
       await put('data/cs67_games.json', JSON.stringify(games), {
         access: 'public',
         addRandomSuffix: false,
+        allowOverwrite: true,
         token: BLOB_TOKEN,
       });
       return true;
