@@ -433,14 +433,42 @@ export default function GameDetailPage() {
                       <p className="text-xs text-slate-300 font-medium">
                         {game.pdf_title || 'เอกสารคู่มือข้อมูลเกม (PDF Reader)'}
                       </p>
-                      <div className="w-full ratio-16-9 rounded-xl overflow-hidden border border-sky-500/30 shadow-inner bg-black min-h-[500px]">
-                        <iframe
-                          src={game.pdf_drive_url}
-                          className="w-full h-full"
-                          title={game.pdf_title || 'Game Document PDF'}
-                          allow="autoplay"
-                        />
-                      </div>
+                      {game.pdf_drive_url.includes('drive.google.com') ? (
+                        /* GOOGLE DRIVE PDF FALLBACK CARD */
+                        <div className="p-8 rounded-xl bg-[#111a36] border border-sky-500/20 text-center space-y-4 shadow-xl">
+                          <div className="w-14 h-14 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 mx-auto animate-pulse">
+                            <FileText className="w-7 h-7" />
+                          </div>
+                          <div>
+                            <h4 className="font-extrabold text-sm text-white">
+                              {game.pdf_title || 'คู่มือการเล่นเกม (PDF Documentation)'}
+                            </h4>
+                            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
+                              ระบบความปลอดภัยของ Google Drive ป้องกันไม่ให้เปิดดูไฟล์ PDF โดยตรงภายในหน้านี้
+                              กรุณากดปุ่มด้านล่างเพื่อเปิดอ่านคู่มือในแท็บใหม่แทนครับ
+                            </p>
+                          </div>
+                          <a
+                            href={game.pdf_drive_url.replace('/preview', '/view')}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-bold shadow-lg shadow-rose-600/25 border border-white/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                          >
+                            <span>เปิดอ่านคู่มือในแท็บใหม่ (Open in New Tab)</span>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      ) : (
+                        /* STANDARD IFRAME FOR OTHER PDF LINKS */
+                        <div className="w-full ratio-16-9 rounded-xl overflow-hidden border border-sky-500/30 shadow-inner bg-black min-h-[500px]">
+                          <iframe
+                            src={game.pdf_drive_url}
+                            className="w-full h-full"
+                            title={game.pdf_title || 'Game Document PDF'}
+                            allow="autoplay"
+                          />
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="p-8 rounded-xl bg-[#111a36] border border-white/5 text-center space-y-2">
