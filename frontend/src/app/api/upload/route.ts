@@ -69,11 +69,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: check.error }, { status: 400 });
       }
       try {
-        const blob = await put(`qr/${Date.now()}-${qrFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`, qrFile, {
-          access: 'public',
-          token: token,
-          contentType: check.detectedType,
-        });
+        let blob;
+        try {
+          blob = await put(`qr/${Date.now()}-${qrFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`, qrFile, {
+            access: 'private',
+            token: token,
+            contentType: check.detectedType,
+          });
+        } catch (e1) {
+          blob = await put(`qr/${Date.now()}-${qrFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`, qrFile, {
+            access: 'public',
+            token: token,
+            contentType: check.detectedType,
+          });
+        }
         result.qr_image_url = blob.url;
       } catch (e) {
         console.error('[Blob Error QR]:', e);
@@ -89,11 +98,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: check.error }, { status: 400 });
       }
       try {
-        const blob = await put(`covers/${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`, coverFile, {
-          access: 'public',
-          token: token,
-          contentType: check.detectedType,
-        });
+        let blob;
+        try {
+          blob = await put(`covers/${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`, coverFile, {
+            access: 'private',
+            token: token,
+            contentType: check.detectedType,
+          });
+        } catch (e1) {
+          blob = await put(`covers/${Date.now()}-${coverFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`, coverFile, {
+            access: 'public',
+            token: token,
+            contentType: check.detectedType,
+          });
+        }
         result.cover_image_url = blob.url;
       } catch (e) {
         console.error('[Blob Error Cover]:', e);

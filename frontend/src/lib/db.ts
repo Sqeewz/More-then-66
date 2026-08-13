@@ -1,5 +1,5 @@
 import { GameDocument } from '@/types/game';
-import { put, list } from '@vercel/blob';
+import { put, list, get } from '@vercel/blob';
 
 const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -44,15 +44,29 @@ export async function getCloudGames(): Promise<GameDocument[]> {
     }
   }
 
-  // 2. Fallback to Vercel Blob Storage JSON persistence
+  // 2. Fallback to Vercel Blob Storage JSON persistence (supports both private and public stores)
   if (BLOB_TOKEN) {
     try {
       const blobs = await list({ prefix: 'data/cs67_games.json', token: BLOB_TOKEN });
       if (blobs.blobs.length > 0) {
-        // Bust CDN cache by appending timestamp — prevents serving stale data
         const latestBlob = blobs.blobs[0];
+
+        // Try SDK get() (works for private stores)
+        try {
+          const blobRes = await get(latestBlob.url, { token: BLOB_TOKEN });
+          if (blobRes && blobRes.stream) {
+            const text = await new Response(blobRes.stream).text();
+            const parsed = JSON.parse(text);
+            if (Array.isArray(parsed)) return parsed;
+          }
+        } catch (e) {}
+
+        // Fallback to fetch with auth header & cache bust (works for public/authenticated access)
         const bustUrl = `${latestBlob.url}?v=${Date.now()}`;
-        const res = await fetch(bustUrl, { cache: 'no-store' });
+        const res = await fetch(bustUrl, {
+          headers: { Authorization: `Bearer ${BLOB_TOKEN}` },
+          cache: 'no-store',
+        });
         if (res.ok) {
           const parsed = await res.json();
           if (Array.isArray(parsed)) {
@@ -76,19 +90,31 @@ export async function saveCloudGames(games: GameDocument[]): Promise<boolean> {
   }
 
   // 2. Fallback to Vercel Blob Storage JSON persistence
-  // allowOverwrite: true — required to replace the same file each time
+  // Tries 'private' access first (matching private store setting), then 'public' access if needed
   if (BLOB_TOKEN) {
+    const payload = JSON.stringify(games);
     try {
-      // @ts-ignore — allowOverwrite exists at runtime (x-allow-overwrite header) but types may lag
-      await put('data/cs67_games.json', JSON.stringify(games), {
-        access: 'public',
+      // @ts-ignore — allowOverwrite exists at runtime
+      await put('data/cs67_games.json', payload, {
+        access: 'private',
         addRandomSuffix: false,
         allowOverwrite: true,
         token: BLOB_TOKEN,
       });
       return true;
-    } catch (e) {
-      console.error('Vercel Blob Storage Save Error:', e);
+    } catch (e1) {
+      try {
+        // @ts-ignore
+        await put('data/cs67_games.json', payload, {
+          access: 'public',
+          addRandomSuffix: false,
+          allowOverwrite: true,
+          token: BLOB_TOKEN,
+        });
+        return true;
+      } catch (e2) {
+        console.error('Vercel Blob Storage Save Error:', e2);
+      }
     }
   }
 
@@ -108,4 +134,3 @@ export async function deleteCloudGame(id: string): Promise<GameDocument[]> {
   await saveCloudGames(updated);
   return updated;
 }
-
