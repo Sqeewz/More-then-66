@@ -83,6 +83,11 @@ export async function getCloudGames(): Promise<GameDocument[]> {
 }
 
 export async function saveCloudGames(games: GameDocument[]): Promise<boolean> {
+  if (!Array.isArray(games)) {
+    console.error('[saveCloudGames] Payload must be an array of GameDocument');
+    return false;
+  }
+
   // 1. Try Upstash / Vercel KV
   if (KV_URL && KV_TOKEN) {
     const res = await kvFetch(['SET', 'cs67_games', JSON.stringify(games)]);
