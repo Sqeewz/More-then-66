@@ -64,10 +64,17 @@ export async function getStore(): Promise<GameDocument[]> {
 
 export async function addGame(game: GameDocument): Promise<GameDocument> {
   game.display_mode = 'EMBEDDED';
-  inMemoryGames.unshift(game);
+  // CRITICAL: Always load existing games from cloud first before adding.
+  // In serverless environments, inMemoryGames resets to [] on every cold start.
+  // Without this, each submission overwrites ALL previous games with just 1 entry.
+  const existing = await getCloudGames();
+  const updated = [game, ...existing.filter((g) => g.id !== game.id)];
+  inMemoryGames = updated;
   try {
-    await saveCloudGames(inMemoryGames);
-  } catch (e) {}
+    await saveCloudGames(updated);
+  } catch (e) {
+    console.error('[addGame] Failed to save to cloud:', e);
+  }
   return game;
 }
 

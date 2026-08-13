@@ -79,6 +79,7 @@ export async function saveCloudGames(games: GameDocument[]): Promise<boolean> {
   // allowOverwrite: true — required to replace the same file each time
   if (BLOB_TOKEN) {
     try {
+      // @ts-ignore — allowOverwrite exists at runtime (x-allow-overwrite header) but types may lag
       await put('data/cs67_games.json', JSON.stringify(games), {
         access: 'public',
         addRandomSuffix: false,
