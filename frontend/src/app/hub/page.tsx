@@ -204,18 +204,33 @@ export default function GameHubPage() {
         </span>
       </div>
 
-      {/* Netflix Hero Billboard Section with Carousel & Randomizer */}
-      {featuredGame && !searchQuery && !activeTag && (
+      {/* Netflix Hero Billboard Section with Cross-fade Slideshow & Randomizer */}
+      {games.length > 0 && !searchQuery && !activeTag && (
         <div className="relative w-full aspect-[21/9] md:aspect-[21/8] max-h-[520px] overflow-hidden bg-black border-b border-sky-500/20 group">
-          <img
-            key={featuredGame.id}
-            src={featuredGame.cover_image_url || featuredGame.thumbnail_url}
-            alt={featuredGame.title}
-            className="w-full h-full object-cover object-center transform scale-105 filter brightness-90 transition-all duration-700 ease-in-out"
-          />
+          {/* Stacked Cross-fading Background Images */}
+          {games.map((g, idx) => {
+            const isActive = idx === (spotlightIndex % games.length);
+            return (
+              <div
+                key={g.id}
+                className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                  isActive
+                    ? 'opacity-100 scale-100 z-0'
+                    : 'opacity-0 scale-105 pointer-events-none -z-10'
+                }`}
+              >
+                <img
+                  src={g.cover_image_url || g.thumbnail_url}
+                  alt={g.title}
+                  className="w-full h-full object-cover object-center filter brightness-90"
+                />
+              </div>
+            );
+          })}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050814] via-[#050814]/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#050814] via-[#050814]/70 to-transparent w-2/3" />
+          {/* Gradients Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050814] via-[#050814]/60 to-transparent pointer-events-none z-1" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050814] via-[#050814]/70 to-transparent w-2/3 pointer-events-none z-1" />
 
           {/* Left Navigation Arrow */}
           {games.length > 1 && (
@@ -239,55 +254,61 @@ export default function GameHubPage() {
             </button>
           )}
 
-          <div className="absolute bottom-6 md:bottom-12 left-4 md:left-12 right-4 max-w-2xl space-y-3 z-10">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-blue-600/90 text-white font-bold text-xs shadow-lg border border-sky-300/40">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
-                FEATURED SPOTLIGHT
-              </span>
-              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/20 text-sky-300 font-bold text-[11px] border border-sky-400/30">
-                <GraduationCap className="w-3 h-3" />
-                By CS 67
-              </span>
-            </div>
+          {/* Stacked Fading Content Details */}
+          {featuredGame && (
+            <div
+              key={featuredGame.id}
+              className="absolute bottom-6 md:bottom-12 left-4 md:left-12 right-4 max-w-2xl space-y-3 z-10 animate-fade-in transition-all duration-700"
+            >
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-blue-600/90 text-white font-bold text-xs shadow-lg border border-sky-300/40">
+                  <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
+                  FEATURED SPOTLIGHT
+                </span>
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/20 text-sky-300 font-bold text-[11px] border border-sky-400/30">
+                  <GraduationCap className="w-3 h-3" />
+                  By CS 67
+                </span>
+              </div>
 
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-lg">
-              {featuredGame.title}
-            </h1>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-lg">
+                {featuredGame.title}
+              </h1>
 
-            <p className="text-xs md:text-sm text-slate-200 line-clamp-2 md:line-clamp-3 leading-relaxed drop-shadow max-w-xl">
-              {featuredGame.description}
-            </p>
+              <p className="text-xs md:text-sm text-slate-200 line-clamp-2 md:line-clamp-3 leading-relaxed drop-shadow max-w-xl">
+                {featuredGame.description}
+              </p>
 
-            <div className="flex items-center gap-2.5 pt-2 flex-wrap">
-              <Link
-                href={`/game/${featuredGame.id}`}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs shadow-lg shadow-sky-500/25 transition-all cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                <span>เล่นเกมเลย</span>
-              </Link>
-
-              <Link
-                href={`/game/${featuredGame.id}`}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white font-semibold text-xs backdrop-blur-md border border-white/15 transition-all"
-              >
-                <Info className="w-3.5 h-3.5 text-slate-300" />
-                <span>ข้อมูลเพิ่มเติม</span>
-              </Link>
-
-              {games.length > 1 && (
-                <button
-                  onClick={handleRandomSpotlight}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/60 text-indigo-200 hover:text-white font-semibold text-xs border border-indigo-400/40 backdrop-blur-md transition-all cursor-pointer shadow-md"
-                  title="สุ่มสลับเกมไฮไลท์"
+              <div className="flex items-center gap-2.5 pt-2 flex-wrap">
+                <Link
+                  href={`/game/${featuredGame.id}`}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs shadow-lg shadow-sky-500/25 transition-all cursor-pointer"
                 >
-                  <Shuffle className="w-3.5 h-3.5 text-indigo-300" />
-                  <span>🔀 สุ่มเกมอื่น</span>
-                </button>
-              )}
+                  <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                  <span>เล่นเกมเลย</span>
+                </Link>
+
+                <Link
+                  href={`/game/${featuredGame.id}`}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white font-semibold text-xs backdrop-blur-md border border-white/15 transition-all"
+                >
+                  <Info className="w-3.5 h-3.5 text-slate-300" />
+                  <span>ข้อมูลเพิ่มเติม</span>
+                </Link>
+
+                {games.length > 1 && (
+                  <button
+                    onClick={handleRandomSpotlight}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/60 text-indigo-200 hover:text-white font-semibold text-xs border border-indigo-400/40 backdrop-blur-md transition-all cursor-pointer shadow-md"
+                    title="สุ่มสลับเกมไฮไลท์"
+                  >
+                    <Shuffle className="w-3.5 h-3.5 text-indigo-300" />
+                    <span>🔀 สุ่มเกมอื่น</span>
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Dots Indicator */}
           {games.length > 1 && (
@@ -296,7 +317,7 @@ export default function GameHubPage() {
                 <button
                   key={g.id}
                   onClick={() => setSpotlightIndex(i)}
-                  className={`transition-all duration-300 rounded-full cursor-pointer ${
+                  className={`transition-all duration-500 rounded-full cursor-pointer ${
                     i === (spotlightIndex % games.length)
                       ? 'w-6 h-2 bg-sky-400 shadow-glow'
                       : 'w-2 h-2 bg-white/40 hover:bg-white/80'
