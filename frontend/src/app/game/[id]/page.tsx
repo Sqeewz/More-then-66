@@ -15,6 +15,8 @@ import { GameDocument } from '@/types/game';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { LOCAL_STORAGE_GAMES_KEY, ADMIN_SESSION_KEY } from '@/lib/constants';
 import { convertGDriveToEmbed, convertGDriveToDirectImage } from '@/lib/qr-reader';
+import { getSupabaseClient } from '@/lib/supabase-client';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   ArrowLeft,
   ThumbsUp,
@@ -116,6 +118,45 @@ export default function GameDetailPage() {
     };
 
     loadGameDetails();
+
+    // ⚡ Real-Time Listener for Detail Page Metrics (Likes & Views update live on screen)
+    const sb = getSupabaseClient();
+    let channel: any = null;
+
+    if (sb && gameId) {
+      channel = sb
+        .channel(`game_detail_${gameId}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
+          (payload) => {
+            const updated = payload.new;
+            if (updated) {
+              setGame((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      title: updated.title || prev.title,
+                      description: updated.description || prev.description,
+                      metrics: {
+                        views: updated.views ?? prev.metrics.views,
+                        likes: updated.likes ?? prev.metrics.likes,
+                        rating: updated.rating ?? prev.metrics.rating,
+                      },
+                    }
+                  : null
+              );
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      if (sb && channel) {
+        sb.removeChannel(channel);
+      }
+    };
   }, [gameId]);
 
   const isOwner =
@@ -246,6 +287,9 @@ export default function GameDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#050814] text-white">
+      {/* CS RMUTI Loading Screen */}
+      <LoadingScreen minDuration={600} />
+
       <Header
         onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
         onOpenAdminModal={() => setIsAdminModalOpen(true)}

@@ -11,6 +11,7 @@ import { GameDocument } from '@/types/game';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useGames } from '@/hooks/useGames';
 import { LOCAL_STORAGE_GAMES_KEY } from '@/lib/constants';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   Gamepad2,
   Flame,
@@ -143,6 +144,9 @@ export default function GameHubPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#050814] text-white selection:bg-sky-500 selection:text-white">
+      {/* CS RMUTI Loading Screen */}
+      <LoadingScreen minDuration={800} />
+
       {/* Navigation Header */}
       <Header
         onOpenSubmitModal={() => setIsSubmitModalOpen(true)}

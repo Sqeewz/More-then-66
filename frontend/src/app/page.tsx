@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { LogIn, LogOut, ArrowRight, Sparkles } from 'lucide-react';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function LandingPage() {
   const { data: session } = useSession();
@@ -722,6 +723,9 @@ export default function LandingPage() {
           }
         }
       `}</style>
+
+      {/* CS RMUTI Dynamic Loading Screen */}
+      <LoadingScreen minDuration={1000} />
 
       {/* Standalone Fullscreen Anime Canvas Landing */}
       <div className="anime-landing-wrapper">

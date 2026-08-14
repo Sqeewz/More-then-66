@@ -1,15 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import { GameDocument } from '@/types/game';
 
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
 function getSupabase() {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  if (!url || !key) {
     console.error('[db] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     return null;
   }
-  return createClient(SUPABASE_URL, SUPABASE_KEY, {
+  return createClient(url, key, {
     auth: { persistSession: false },
   });
 }
