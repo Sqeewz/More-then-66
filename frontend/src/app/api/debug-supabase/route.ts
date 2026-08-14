@@ -1,59 +1,38 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getCloudGames } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+function getSupabase() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const envCheck = {
-    SUPABASE_URL: !!process.env.SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    SUPABASE_ANON_KEY: !!process.env.SUPABASE_ANON_KEY,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  };
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
+}
 
-  let serviceQuery: any = null;
-  let anonQuery: any = null;
-  let cloudGames: any = null;
-  let dbError: any = null;
-
-  try {
-    cloudGames = await getCloudGames();
-  } catch (e: any) {
-    dbError = e?.message || String(e);
+export async function GET() {
+  const sb = getSupabase();
+  if (!sb) {
+    return NextResponse.json({ ok: false, error: 'getSupabase returned null' });
   }
 
-  if (url && serviceKey) {
-    try {
-      const sb = createClient(url, serviceKey, { auth: { persistSession: false } });
-      const { data, error } = await sb.from('games').select('*');
-      serviceQuery = { count: data?.length ?? 0, error: error?.message || null, data };
-    } catch (e: any) {
-      serviceQuery = { error: e?.message };
-    }
-  }
+  // Query 1: plain select
+  const q1 = await sb.from('games').select('*');
 
-  if (url && anonKey) {
-    try {
-      const sb = createClient(url, anonKey, { auth: { persistSession: false } });
-      const { data, error } = await sb.from('games').select('*');
-      anonQuery = { count: data?.length ?? 0, error: error?.message || null, data };
-    } catch (e: any) {
-      anonQuery = { error: e?.message };
-    }
-  }
+  // Query 2: ordered select
+  const q2 = await sb.from('games').select('*').order('created_at', { ascending: false });
 
   return NextResponse.json({
-    envCheck,
-    cloudGamesCount: cloudGames?.length ?? 0,
-    cloudGames,
-    dbError,
-    serviceQuery,
-    anonQuery,
+    ok: true,
+    q1_count: q1.data?.length ?? 0,
+    q1_error: q1.error?.message || null,
+    q2_count: q2.data?.length ?? 0,
+    q2_error: q2.error?.message || null,
+    data: q1.data,
   });
 }
