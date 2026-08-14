@@ -226,51 +226,51 @@ export default function GameHubPage() {
                   className="w-full h-full object-cover object-center filter brightness-90 transform scale-105"
                 />
 
-                {/* Text & Action Details Card (Glassmorphic Dark Box) */}
-                <div className="absolute bottom-6 md:bottom-10 left-4 md:left-12 right-4 max-w-2xl p-5 md:p-6 rounded-2xl bg-black/65 backdrop-blur-md border border-white/10 shadow-2xl space-y-3 z-20">
-                  <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-blue-600/90 text-white font-bold text-xs shadow-lg border border-sky-300/40">
-                      <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
-                      FEATURED SPOTLIGHT
+                {/* Text & Action Details Card (Compact Glassmorphic Dark Box) */}
+                <div className="absolute bottom-4 md:bottom-8 left-4 md:left-10 right-4 max-w-xl p-3.5 md:p-4 rounded-xl bg-black/55 backdrop-blur-md border border-white/10 shadow-xl space-y-2 z-20">
+                  <div className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-600/90 text-white font-bold text-[10px] sm:text-xs shadow-md border border-sky-300/30">
+                      <Sparkles className="w-3 h-3 text-yellow-300 animate-pulse" />
+                      SPOTLIGHT
                     </span>
-                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/20 text-sky-300 font-bold text-[11px] border border-sky-400/30">
+                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/20 text-sky-300 font-semibold text-[10px] sm:text-[11px] border border-sky-400/20">
                       <GraduationCap className="w-3 h-3" />
-                      By CS 67
+                      CS 67
                     </span>
                   </div>
 
-                  <h1 className="text-2xl md:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-md">
+                  <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight leading-tight text-white drop-shadow-sm">
                     {g.title}
                   </h1>
 
-                  <p className="text-xs md:text-sm text-slate-200 line-clamp-2 md:line-clamp-3 leading-relaxed drop-shadow max-w-xl font-normal">
+                  <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed drop-shadow-sm max-w-lg font-normal">
                     {g.description}
                   </p>
 
-                  <div className="flex items-center gap-2.5 pt-2 flex-wrap">
+                  <div className="flex items-center gap-2 pt-1 flex-wrap">
                     <Link
                       href={`/game/${g.id}`}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs shadow-lg shadow-sky-500/25 transition-all cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-bold text-[11px] sm:text-xs shadow-md shadow-sky-500/20 transition-all cursor-pointer"
                     >
-                      <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                      <Play className="w-3 h-3 fill-current ml-0.5" />
                       <span>เล่นเกมเลย</span>
                     </Link>
 
                     <Link
                       href={`/game/${g.id}`}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white font-semibold text-xs backdrop-blur-md border border-white/15 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white font-medium text-[11px] sm:text-xs backdrop-blur-sm border border-white/15 transition-all"
                     >
-                      <Info className="w-3.5 h-3.5 text-slate-300" />
-                      <span>ข้อมูลเพิ่มเติม</span>
+                      <Info className="w-3 h-3 text-slate-300" />
+                      <span>รายละเอียด</span>
                     </Link>
 
                     {games.length > 1 && (
                       <button
                         onClick={handleRandomSpotlight}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600/40 hover:bg-indigo-600/70 text-indigo-200 hover:text-white font-semibold text-xs border border-indigo-400/40 backdrop-blur-md transition-all cursor-pointer shadow-md"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/40 hover:bg-indigo-600/70 text-indigo-200 hover:text-white font-medium text-[11px] sm:text-xs border border-indigo-400/30 backdrop-blur-sm transition-all cursor-pointer shadow-sm"
                         title="สุ่มสลับเกมไฮไลท์"
                       >
-                        <Shuffle className="w-3.5 h-3.5 text-indigo-300" />
+                        <Shuffle className="w-3 h-3 text-indigo-300" />
                         <span>🔀 สุ่มเกมอื่น</span>
                       </button>
                     )}
