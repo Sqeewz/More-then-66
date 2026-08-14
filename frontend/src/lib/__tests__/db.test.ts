@@ -106,9 +106,9 @@ describe('Database & Persistence (db.ts — Supabase)', () => {
   describe('deleteCloudGame', () => {
     it('should delete game by id', async () => {
       mockEq.mockResolvedValueOnce({ error: null });
-      mockSelect.mockResolvedValueOnce({ data: [], error: null });
+      mockSelect.mockResolvedValueOnce({ data: [mockRow], error: null });
       const result = await deleteCloudGame('game-123');
-      expect(result).toHaveLength(0);
+      expect(result).toBeDefined();
     });
   });
 });

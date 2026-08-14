@@ -21,8 +21,49 @@ function getSupabase() {
   });
 }
 
-// Default Seed Games (empty — Supabase is the source of truth)
-export const SEED_GAMES: GameDocument[] = [];
+// Default Seed Games (Production games — self-seeding fallback if DB is empty)
+export const SEED_GAMES: GameDocument[] = [
+  {
+    id: 'user-1786710181397',
+    title: 'HCI: Code Escape Runner',
+    description: 'เกมแนว Action Logic Puzzle & Code-Based Runner ที่ผู้เล่นต้องวางแผนเชิงตรรกะด้วย "การ์ดคำสั่ง" (Action Cards) จัดเรียงลงใน Timeline เพื่อให้ตัวละครวิ่งหลบสิ่งกีดขวางโดยอัตโนมัติ',
+    original_url: 'https://sqeewz.itch.io/hci',
+    url: 'https://sqeewz.itch.io/hci',
+    embed_code: undefined,
+    thumbnail_url: 'https://lh3.googleusercontent.com/d/1X4BILUHkX611eXml7aUTegZBi7qFzfDV',
+    creator_id: 'kanakrit.pr@rmuti.ac.th',
+    creator_email: 'kanakrit.pr@rmuti.ac.th',
+    creator_name: 'Kanakrit Promwises',
+    display_mode: 'EMBEDDED',
+    metrics: { views: 60000, likes: 59999, rating: 5.0 },
+    tags: ['cs67', 'hci', 'puzzle', 'runner', 'godot', 'logic', 'action', 'card-game'],
+    qr_image_url: 'https://lh3.googleusercontent.com/d/11vSxT-JQZ9O2opQSo04t_T9404eqZQpQ',
+    cover_image_url: 'https://lh3.googleusercontent.com/d/1X4BILUHkX611eXml7aUTegZBi7qFzfDV',
+    pdf_drive_url: 'https://drive.google.com/file/d/1443_pbCkenVe3aTHQoL1rzH0BgkgawDZ/preview',
+    pdf_title: 'คู่มือการเล่นเกม How Can I',
+    created_at: '2026-08-14T12:23:01.397Z',
+  },
+  {
+    id: 'user-1786714035465',
+    title: 'Eco Ranger: Trash Tamer',
+    description: 'Eco Ranger: Trash Tamer is an educational top-down 2D shooter designed to teach proper waste separation in a fun and interactive way.\n\nPlayers switch between four bullet colors to match and eliminate different types of trash monsters, representing four waste categories:\n\n🔴 Hazardous Waste\n🟡 Recyclable Waste\n🔵 General Waste\n🟢 Organic Waste\nThe game encourages players to recognize waste categories, improve reaction skills, and learn environmental responsibility through gameplay.',
+    original_url: 'https://jujubeano.itch.io/eco-ranger-trash-tamer',
+    url: 'https://jujubeano.itch.io/eco-ranger-trash-tamer',
+    embed_code: undefined,
+    thumbnail_url: 'https://lh3.googleusercontent.com/d/1ZSakTlp9EOZmI9ub80xx9DQf5JKtG5aE',
+    creator_id: 'chotika.ja@rmuti.ac.th',
+    creator_email: 'chotika.ja@rmuti.ac.th',
+    creator_name: 'Chotika Jakchai',
+    display_mode: 'EMBEDDED',
+    metrics: { views: 1, likes: 1, rating: 5.0 },
+    tags: ['cs67', '2d', 'shooter', 'pixel-art', 'itch.io'],
+    qr_image_url: 'https://lh3.googleusercontent.com/d/1QJ97pyipV7dymc5GmVXPxLQcZjQoMybP',
+    cover_image_url: 'https://lh3.googleusercontent.com/d/1ZSakTlp9EOZmI9ub80xx9DQf5JKtG5aE',
+    pdf_drive_url: 'https://drive.google.com/file/d/1nMf0EpKvlzLN92JNvc2wY6oaQHAXibfj/preview',
+    pdf_title: 'คู่มือเกมส์ Eco-Ranger Trash Tamer.pdf',
+    created_at: '2026-08-14T13:27:15.465Z',
+  },
+];
 
 // แปลง Supabase row → GameDocument
 function rowToGame(row: Record<string, unknown>): GameDocument {
@@ -86,10 +127,19 @@ export async function getCloudGames(): Promise<GameDocument[]> {
 
   if (error) {
     console.error('[db] getCloudGames error:', error.message);
-    return SEED_GAMES;
+    return [];
   }
 
-  const games = (data || []).map(rowToGame);
+  if (!data || data.length === 0) {
+    if (SEED_GAMES.length > 0) {
+      console.log('[db] Supabase empty — seeding default production games...');
+      saveCloudGames(SEED_GAMES).catch(() => null);
+      return SEED_GAMES;
+    }
+    return [];
+  }
+
+  const games = data.map(rowToGame);
   return games.sort((a, b) => {
     const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
     const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
