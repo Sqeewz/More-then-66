@@ -204,39 +204,91 @@ export default function GameHubPage() {
         </span>
       </div>
 
-      {/* Netflix Hero Billboard Section with Cross-fade Slideshow & Randomizer */}
+      {/* Netflix Hero Billboard Section with True Hardware-Accelerated Cross-fade Slideshow */}
       {games.length > 0 && !searchQuery && !activeTag && (
         <div className="relative w-full aspect-[21/9] md:aspect-[21/8] max-h-[520px] overflow-hidden bg-black border-b border-sky-500/20 group">
-          {/* Stacked Cross-fading Background Images */}
+          {/* Stacked Cross-fading Slides (Background Image + Details) */}
           {games.map((g, idx) => {
             const isActive = idx === (spotlightIndex % games.length);
             return (
               <div
                 key={g.id}
-                className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
                   isActive
-                    ? 'opacity-100 scale-100 z-0'
-                    : 'opacity-0 scale-105 pointer-events-none -z-10'
+                    ? 'opacity-100 pointer-events-auto z-10'
+                    : 'opacity-0 pointer-events-none z-0'
                 }`}
               >
+                {/* Background Image */}
                 <img
                   src={g.cover_image_url || g.thumbnail_url}
                   alt={g.title}
-                  className="w-full h-full object-cover object-center filter brightness-90"
+                  className="w-full h-full object-cover object-center filter brightness-90 transform scale-105"
                 />
+
+                {/* Text & Action Details */}
+                <div className="absolute bottom-6 md:bottom-12 left-4 md:left-12 right-4 max-w-2xl space-y-3 z-20">
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-blue-600/90 text-white font-bold text-xs shadow-lg border border-sky-300/40">
+                      <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
+                      FEATURED SPOTLIGHT
+                    </span>
+                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/20 text-sky-300 font-bold text-[11px] border border-sky-400/30">
+                      <GraduationCap className="w-3 h-3" />
+                      By CS 67
+                    </span>
+                  </div>
+
+                  <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-lg">
+                    {g.title}
+                  </h1>
+
+                  <p className="text-xs md:text-sm text-slate-200 line-clamp-2 md:line-clamp-3 leading-relaxed drop-shadow max-w-xl">
+                    {g.description}
+                  </p>
+
+                  <div className="flex items-center gap-2.5 pt-2 flex-wrap">
+                    <Link
+                      href={`/game/${g.id}`}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs shadow-lg shadow-sky-500/25 transition-all cursor-pointer"
+                    >
+                      <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                      <span>เล่นเกมเลย</span>
+                    </Link>
+
+                    <Link
+                      href={`/game/${g.id}`}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white font-semibold text-xs backdrop-blur-md border border-white/15 transition-all"
+                    >
+                      <Info className="w-3.5 h-3.5 text-slate-300" />
+                      <span>ข้อมูลเพิ่มเติม</span>
+                    </Link>
+
+                    {games.length > 1 && (
+                      <button
+                        onClick={handleRandomSpotlight}
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/60 text-indigo-200 hover:text-white font-semibold text-xs border border-indigo-400/40 backdrop-blur-md transition-all cursor-pointer shadow-md"
+                        title="สุ่มสลับเกมไฮไลท์"
+                      >
+                        <Shuffle className="w-3.5 h-3.5 text-indigo-300" />
+                        <span>🔀 สุ่มเกมอื่น</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             );
           })}
 
           {/* Gradients Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050814] via-[#050814]/60 to-transparent pointer-events-none z-1" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#050814] via-[#050814]/70 to-transparent w-2/3 pointer-events-none z-1" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050814] via-[#050814]/60 to-transparent pointer-events-none z-15" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050814] via-[#050814]/70 to-transparent w-2/3 pointer-events-none z-15" />
 
           {/* Left Navigation Arrow */}
           {games.length > 1 && (
             <button
               onClick={handlePrevSpotlight}
-              className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-20 p-2.5 md:p-3 rounded-full bg-black/50 hover:bg-sky-500/40 text-white/80 hover:text-sky-300 border border-white/15 hover:border-sky-400/60 backdrop-blur-md transition-all duration-200 cursor-pointer shadow-xl opacity-80 group-hover:opacity-100"
+              className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 p-2.5 md:p-3 rounded-full bg-black/50 hover:bg-sky-500/40 text-white/80 hover:text-sky-300 border border-white/15 hover:border-sky-400/60 backdrop-blur-md transition-all duration-200 cursor-pointer shadow-xl opacity-80 group-hover:opacity-100"
               title="เกมก่อนหน้า (Previous Spotlight)"
             >
               <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
@@ -247,72 +299,16 @@ export default function GameHubPage() {
           {games.length > 1 && (
             <button
               onClick={handleNextSpotlight}
-              className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-20 p-2.5 md:p-3 rounded-full bg-black/50 hover:bg-sky-500/40 text-white/80 hover:text-sky-300 border border-white/15 hover:border-sky-400/60 backdrop-blur-md transition-all duration-200 cursor-pointer shadow-xl opacity-80 group-hover:opacity-100"
+              className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-30 p-2.5 md:p-3 rounded-full bg-black/50 hover:bg-sky-500/40 text-white/80 hover:text-sky-300 border border-white/15 hover:border-sky-400/60 backdrop-blur-md transition-all duration-200 cursor-pointer shadow-xl opacity-80 group-hover:opacity-100"
               title="เกมถัดไป (Next Spotlight)"
             >
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
             </button>
           )}
 
-          {/* Stacked Fading Content Details */}
-          {featuredGame && (
-            <div
-              key={featuredGame.id}
-              className="absolute bottom-6 md:bottom-12 left-4 md:left-12 right-4 max-w-2xl space-y-3 z-10 animate-fade-in transition-all duration-700"
-            >
-              <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-blue-600/90 text-white font-bold text-xs shadow-lg border border-sky-300/40">
-                  <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
-                  FEATURED SPOTLIGHT
-                </span>
-                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-500/20 text-sky-300 font-bold text-[11px] border border-sky-400/30">
-                  <GraduationCap className="w-3 h-3" />
-                  By CS 67
-                </span>
-              </div>
-
-              <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-lg">
-                {featuredGame.title}
-              </h1>
-
-              <p className="text-xs md:text-sm text-slate-200 line-clamp-2 md:line-clamp-3 leading-relaxed drop-shadow max-w-xl">
-                {featuredGame.description}
-              </p>
-
-              <div className="flex items-center gap-2.5 pt-2 flex-wrap">
-                <Link
-                  href={`/game/${featuredGame.id}`}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs shadow-lg shadow-sky-500/25 transition-all cursor-pointer"
-                >
-                  <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                  <span>เล่นเกมเลย</span>
-                </Link>
-
-                <Link
-                  href={`/game/${featuredGame.id}`}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white font-semibold text-xs backdrop-blur-md border border-white/15 transition-all"
-                >
-                  <Info className="w-3.5 h-3.5 text-slate-300" />
-                  <span>ข้อมูลเพิ่มเติม</span>
-                </Link>
-
-                {games.length > 1 && (
-                  <button
-                    onClick={handleRandomSpotlight}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/60 text-indigo-200 hover:text-white font-semibold text-xs border border-indigo-400/40 backdrop-blur-md transition-all cursor-pointer shadow-md"
-                    title="สุ่มสลับเกมไฮไลท์"
-                  >
-                    <Shuffle className="w-3.5 h-3.5 text-indigo-300" />
-                    <span>🔀 สุ่มเกมอื่น</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Dots Indicator */}
           {games.length > 1 && (
-            <div className="absolute bottom-4 right-6 md:right-12 z-20 flex items-center gap-1.5 bg-black/50 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
+            <div className="absolute bottom-4 right-6 md:right-12 z-30 flex items-center gap-1.5 bg-black/50 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
               {games.map((g, i) => (
                 <button
                   key={g.id}
