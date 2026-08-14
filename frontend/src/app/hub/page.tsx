@@ -226,8 +226,8 @@ export default function GameHubPage() {
                   className="w-full h-full object-cover object-center filter brightness-90 transform scale-105"
                 />
 
-                {/* Text & Action Details */}
-                <div className="absolute bottom-6 md:bottom-12 left-4 md:left-12 right-4 max-w-2xl space-y-3 z-20">
+                {/* Text & Action Details Card (Glassmorphic Dark Box) */}
+                <div className="absolute bottom-6 md:bottom-10 left-4 md:left-12 right-4 max-w-2xl p-5 md:p-6 rounded-2xl bg-black/65 backdrop-blur-md border border-white/10 shadow-2xl space-y-3 z-20">
                   <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-blue-600/90 text-white font-bold text-xs shadow-lg border border-sky-300/40">
                       <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
@@ -239,11 +239,11 @@ export default function GameHubPage() {
                     </span>
                   </div>
 
-                  <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-lg">
+                  <h1 className="text-2xl md:text-4xl lg:text-5xl font-black tracking-tight leading-tight text-white drop-shadow-md">
                     {g.title}
                   </h1>
 
-                  <p className="text-xs md:text-sm text-slate-200 line-clamp-2 md:line-clamp-3 leading-relaxed drop-shadow max-w-xl">
+                  <p className="text-xs md:text-sm text-slate-200 line-clamp-2 md:line-clamp-3 leading-relaxed drop-shadow max-w-xl font-normal">
                     {g.description}
                   </p>
 
@@ -267,7 +267,7 @@ export default function GameHubPage() {
                     {games.length > 1 && (
                       <button
                         onClick={handleRandomSpotlight}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600/30 hover:bg-indigo-600/60 text-indigo-200 hover:text-white font-semibold text-xs border border-indigo-400/40 backdrop-blur-md transition-all cursor-pointer shadow-md"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600/40 hover:bg-indigo-600/70 text-indigo-200 hover:text-white font-semibold text-xs border border-indigo-400/40 backdrop-blur-md transition-all cursor-pointer shadow-md"
                         title="สุ่มสลับเกมไฮไลท์"
                       >
                         <Shuffle className="w-3.5 h-3.5 text-indigo-300" />
