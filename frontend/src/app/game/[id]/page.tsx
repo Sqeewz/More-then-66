@@ -85,8 +85,24 @@ export default function GameDetailPage() {
 
         setGame(foundGame);
 
-        // Increment view count in background asynchronously
-        incrementGameView(gameId).catch(() => null);
+        // Increment view count in background asynchronously and sync returned server metrics
+        incrementGameView(gameId)
+          .then((res) => {
+            if (res && res.game && res.game.metrics) {
+              setGame((prev) => (prev ? { ...prev, metrics: res.game.metrics } : res.game));
+              try {
+                const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
+                if (storedLocal) {
+                  const localGames: GameDocument[] = JSON.parse(storedLocal);
+                  const updatedLocal = localGames.map((g) =>
+                    g.id === gameId ? { ...g, metrics: res.game.metrics } : g
+                  );
+                  localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(updatedLocal));
+                }
+              } catch (e) {}
+            }
+          })
+          .catch(() => null);
 
         const all = await getGames().catch(() => ({ count: 0, games: [] }));
         if (all && Array.isArray(all.games)) {
@@ -154,19 +170,21 @@ export default function GameDetailPage() {
     );
 
     try {
-      const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
-      if (storedLocal) {
-        const localGames: GameDocument[] = JSON.parse(storedLocal);
-        const updatedLocal = localGames.map((g) =>
-          g.id === game.id
-            ? { ...g, metrics: { ...g.metrics, likes: g.metrics.likes + 1 } }
-            : g
-        );
-        localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(updatedLocal));
+      const res = await incrementGameLike(game.id);
+      if (res && res.game && res.game.metrics) {
+        setGame((prev) => (prev ? { ...prev, metrics: res.game.metrics } : res.game));
+        try {
+          const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
+          if (storedLocal) {
+            const localGames: GameDocument[] = JSON.parse(storedLocal);
+            const updatedLocal = localGames.map((g) =>
+              g.id === game.id ? { ...g, metrics: res.game.metrics } : g
+            );
+            localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(updatedLocal));
+          }
+        } catch (e) {}
       }
     } catch (e) {}
-
-    await incrementGameLike(game.id).catch(() => null);
   };
 
   const handleShare = () => {

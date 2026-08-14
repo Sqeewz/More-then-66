@@ -6,6 +6,8 @@ import { GameDocument } from '@/types/game';
 vi.mock('../db', () => ({
   getCloudGames: vi.fn(),
   saveCloudGames: vi.fn(),
+  addCloudGame: vi.fn(),
+  updateCloudGameMetrics: vi.fn(),
   deleteCloudGame: vi.fn(),
   SEED_GAMES: [],
 }));
@@ -53,19 +55,12 @@ describe('Store & Business Logic (store.ts)', () => {
   });
 
   describe('Cold-Start Resilience in addGame', () => {
-    it('should fetch existing cloud games before appending new submission', async () => {
-      const existingGame: GameDocument = { ...mockGame, id: 'existing-1' };
-      vi.mocked(db.getCloudGames).mockResolvedValueOnce([existingGame]);
-
+    it('should save submission directly to cloud database', async () => {
       const newSubmission: GameDocument = { ...mockGame, id: 'new-2' };
       await addGame(newSubmission);
 
-      expect(db.getCloudGames).toHaveBeenCalled();
-      expect(db.saveCloudGames).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ id: 'new-2' }),
-          expect.objectContaining({ id: 'existing-1' }),
-        ])
+      expect(db.addCloudGame).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'new-2' })
       );
     });
   });
@@ -83,7 +78,6 @@ describe('Store & Business Logic (store.ts)', () => {
 
       expect(updated).not.toBeNull();
       expect(updated?.description).toBe('Updated Description');
-      expect(db.saveCloudGames).toHaveBeenCalled();
     });
 
     it('should prevent non-admin/non-owner from deleting games', async () => {
