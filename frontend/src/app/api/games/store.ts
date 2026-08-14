@@ -1,5 +1,5 @@
 import { GameDocument, DisplayMode, ScrapedMetadata } from '@/types/game';
-import { getCloudGames, deleteCloudGame, saveCloudGames, SEED_GAMES } from '@/lib/db';
+import { getCloudGames, addCloudGame, deleteCloudGame, updateCloudGame, incrementGameMetrics, saveCloudGames } from '@/lib/db';
 import { isAdmin } from '@/lib/auth';
 import crypto from 'crypto';
 
@@ -50,58 +50,39 @@ export function checkUrlSafety(url: string, htmlContent?: string): { safe: boole
   return { safe: true };
 }
 
-let inMemoryGames: GameDocument[] = [];
-
+// inMemoryGames ถูกแทนที่ด้วย Supabase แล้ว — ดึงตรงจาก DB ทุกครั้ง
 export async function getStore(): Promise<GameDocument[]> {
   try {
-    const cloud = await getCloudGames();
-    if (cloud) {
-      inMemoryGames = cloud;
-    }
-  } catch (e) {}
-  return inMemoryGames;
+    return await getCloudGames();
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function addGame(game: GameDocument): Promise<GameDocument> {
   game.display_mode = 'EMBEDDED';
-  // CRITICAL: Always load existing games from cloud first before adding.
-  // In serverless environments, inMemoryGames resets to [] on every cold start.
-  // Without this, each submission overwrites ALL previous games with just 1 entry.
-  const existing = await getCloudGames();
-  const updated = [game, ...existing.filter((g) => g.id !== game.id)];
-  inMemoryGames = updated;
-  try {
-    await saveCloudGames(updated);
-  } catch (e) {
-    console.error('[addGame] Failed to save to cloud:', e);
-  }
+  // บันทึกลง Supabase — ถ้าล้มเหลวให้ throw error เพื่อให้ API รับรู้
+  await addCloudGame(game);
   return game;
 }
 
 export async function deleteGame(id: string, passOrHash: string): Promise<boolean> {
   if (!passOrHash) return false;
-  
+
   const inputHash = hashString(passOrHash);
   const isValidAdmin =
     inputHash === ADMIN_PASSWORD_HASH ||
     passOrHash === '67morethen66' ||
     passOrHash === ADMIN_PASSWORD_HASH;
 
-  if (!isValidAdmin) {
-    return false;
-  }
-
-  const currentStore = await getStore();
-  const initialLen = currentStore.length;
-  const updatedGames = currentStore.filter((g) => g.id !== id);
-  inMemoryGames = updatedGames;
+  if (!isValidAdmin) return false;
 
   try {
     await deleteCloudGame(id);
-    await saveCloudGames(updatedGames);
-  } catch (e) {}
-
-  return updatedGames.length < initialLen || initialLen > 0;
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 export async function updateGame(
@@ -158,14 +139,14 @@ export async function updateGame(
     thumbnail_url: updates.thumbnail_url ?? (updates.cover_image_url ? updates.cover_image_url : game.thumbnail_url),
   };
 
-  games[gameIndex] = { ...game, ...allowedUpdates };
-  inMemoryGames = games;
+  const merged = { ...game, ...allowedUpdates };
 
   try {
-    await saveCloudGames(games);
-  } catch (e) {}
-
-  return games[gameIndex];
+    const updated = await updateCloudGame(id, allowedUpdates);
+    return updated || merged;
+  } catch (e) {
+    return merged;
+  }
 }
 
 export async function deleteGameByEmail(
@@ -182,27 +163,19 @@ export async function deleteGameByEmail(
 
   if (!canDelete) return false;
 
-  const updated = games.filter((g) => g.id !== id);
-  inMemoryGames = updated;
-
   try {
     await deleteCloudGame(id);
-    await saveCloudGames(updated);
   } catch (e) {}
 
   return true;
 }
 
 export async function updateGameMetrics(id: string, viewInc = 0, likeInc = 0): Promise<GameDocument | null> {
-  const games = await getStore();
-  const g = games.find((item) => item.id === id);
-  if (!g) return null;
-  g.metrics.views += viewInc;
-  g.metrics.likes += likeInc;
   try {
-    await saveCloudGames(games);
-  } catch (e) {}
-  return g;
+    return await incrementGameMetrics(id, viewInc, likeInc);
+  } catch (e) {
+    return null;
+  }
 }
 
 export async function scrapeUrl(targetUrl: string): Promise<ScrapedMetadata> {

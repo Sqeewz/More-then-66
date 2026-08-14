@@ -1,141 +1,193 @@
+import { createClient } from '@supabase/supabase-js';
 import { GameDocument } from '@/types/game';
-import { put, list, get } from '@vercel/blob';
 
-const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
+const SUPABASE_URL = process.env.SUPABASE_URL!;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Default Seed Games for CS67 (Empty so only user submitted games appear)
-export const SEED_GAMES: GameDocument[] = [];
-
-// Helper to query Upstash / Vercel KV REST API
-async function kvFetch(command: string[]): Promise<any> {
-  if (!KV_URL || !KV_TOKEN) return null;
-  try {
-    const res = await fetch(`${KV_URL}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${KV_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(command),
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.result;
-  } catch (err) {
-    console.error('KV Storage Error:', err);
+function getSupabase() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error('[db] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     return null;
   }
+  return createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession: false },
+  });
 }
 
+// Default Seed Games (empty — Supabase is the source of truth)
+export const SEED_GAMES: GameDocument[] = [];
+
+// แปลง Supabase row → GameDocument
+function rowToGame(row: Record<string, unknown>): GameDocument {
+  return {
+    id: row.id as string,
+    title: row.title as string,
+    description: (row.description as string) || '',
+    original_url: row.original_url as string,
+    url: (row.url as string) || undefined,
+    embed_code: (row.embed_code as string) || undefined,
+    thumbnail_url: (row.thumbnail_url as string) || '',
+    creator_id: (row.creator_id as string) || '',
+    creator_email: (row.creator_email as string) || undefined,
+    creator_name: (row.creator_name as string) || undefined,
+    display_mode: ((row.display_mode as string) || 'EMBEDDED') as 'EMBEDDED' | 'POPUP',
+    metrics: {
+      views: (row.views as number) || 0,
+      likes: (row.likes as number) || 0,
+      rating: (row.rating as number) || 5.0,
+    },
+    tags: (row.tags as string[]) || [],
+    created_at: row.created_at as string,
+    qr_image_url: (row.qr_image_url as string) || undefined,
+    cover_image_url: (row.cover_image_url as string) || undefined,
+    pdf_drive_url: (row.pdf_drive_url as string) || undefined,
+    pdf_title: (row.pdf_title as string) || undefined,
+  };
+}
+
+// แปลง GameDocument → Supabase row (flat)
+function gameToRow(game: GameDocument) {
+  return {
+    id: game.id,
+    title: game.title,
+    description: game.description || '',
+    original_url: game.original_url,
+    url: game.url || null,
+    embed_code: game.embed_code || null,
+    thumbnail_url: game.thumbnail_url || '',
+    creator_id: game.creator_id || '',
+    creator_email: game.creator_email || null,
+    creator_name: game.creator_name || null,
+    display_mode: game.display_mode || 'EMBEDDED',
+    views: game.metrics?.views ?? 0,
+    likes: game.metrics?.likes ?? 0,
+    rating: game.metrics?.rating ?? 5.0,
+    tags: game.tags || [],
+    qr_image_url: game.qr_image_url || null,
+    cover_image_url: game.cover_image_url || null,
+    pdf_drive_url: game.pdf_drive_url || null,
+    pdf_title: game.pdf_title || null,
+    created_at: game.created_at || new Date().toISOString(),
+  };
+}
+
+// ดึง games ทั้งหมด
 export async function getCloudGames(): Promise<GameDocument[]> {
-  // 1. Try Upstash / Vercel KV
-  if (KV_URL && KV_TOKEN) {
-    const raw = await kvFetch(['GET', 'cs67_games']);
-    if (raw) {
-      try {
-        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-      } catch (e) {}
-    }
+  const sb = getSupabase();
+  if (!sb) return SEED_GAMES;
+
+  const { data, error } = await sb
+    .from('games')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[db] getCloudGames error:', error.message);
+    return SEED_GAMES;
   }
-
-  // 2. Fallback to Vercel Blob Storage JSON persistence (supports both private and public stores)
-  if (BLOB_TOKEN) {
-    try {
-      const blobs = await list({ prefix: 'data/cs67_games.json', token: BLOB_TOKEN });
-      if (blobs.blobs.length > 0) {
-        const latestBlob = blobs.blobs[0];
-
-        // Try SDK get() (works for private stores)
-        try {
-          const blobRes = await get(latestBlob.url, { token: BLOB_TOKEN, access: 'private' });
-          if (blobRes && blobRes.stream) {
-            const text = await new Response(blobRes.stream).text();
-            const parsed = JSON.parse(text);
-            if (Array.isArray(parsed)) return parsed;
-          }
-        } catch (e) {}
-
-        // Fallback to fetch with auth header & cache bust (works for public/authenticated access)
-        const bustUrl = `${latestBlob.url}?v=${Date.now()}`;
-        const res = await fetch(bustUrl, {
-          headers: { Authorization: `Bearer ${BLOB_TOKEN}` },
-          cache: 'no-store',
-        });
-        if (res.ok) {
-          const parsed = await res.json();
-          if (Array.isArray(parsed)) {
-            return parsed;
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Vercel Blob Storage Load Error:', e);
-    }
-  }
-
-  return SEED_GAMES;
+  return (data || []).map(rowToGame);
 }
 
+// เพิ่ม/อัพเดท game รายการเดียว (upsert)
+export async function addCloudGame(game: GameDocument): Promise<GameDocument[]> {
+  const sb = getSupabase();
+  if (!sb) throw new Error('[db] Supabase client unavailable — check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+
+  const row = gameToRow(game);
+  console.log('[db] upserting game:', game.id, game.title);
+  const { error } = await sb.from('games').upsert(row);
+  if (error) {
+    console.error('[db] addCloudGame error:', error.message, error.code, error.details);
+    throw new Error(`Supabase upsert failed: ${error.message} (code: ${error.code})`);
+  }
+  console.log('[db] upsert success:', game.id);
+  return getCloudGames();
+}
+
+// ลบ game รายการเดียว
+export async function deleteCloudGame(id: string): Promise<GameDocument[]> {
+  const sb = getSupabase();
+  if (!sb) return SEED_GAMES;
+
+  const { error } = await sb.from('games').delete().eq('id', id);
+  if (error) console.error('[db] deleteCloudGame error:', error.message);
+
+  return getCloudGames();
+}
+
+// อัพเดท game รายการเดียว (partial update)
+export async function updateCloudGame(
+  id: string,
+  updates: Partial<GameDocument>
+): Promise<GameDocument | null> {
+  const sb = getSupabase();
+  if (!sb) return null;
+
+  // แปลง metrics → flat columns
+  const patch: Record<string, unknown> = { ...updates };
+  if (updates.metrics) {
+    patch.views = updates.metrics.views;
+    patch.likes = updates.metrics.likes;
+    patch.rating = updates.metrics.rating;
+    delete patch.metrics;
+  }
+
+  const { data, error } = await sb
+    .from('games')
+    .update(patch)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[db] updateCloudGame error:', error.message);
+    return null;
+  }
+  return rowToGame(data);
+}
+
+// เพิ่ม views/likes สำหรับ game หนึ่งรายการ
+export async function incrementGameMetrics(
+  id: string,
+  viewInc = 0,
+  likeInc = 0
+): Promise<GameDocument | null> {
+  const sb = getSupabase();
+  if (!sb) return null;
+
+  // ดึงค่าปัจจุบันก่อน แล้วบวกเพิ่ม
+  const { data: current, error: fetchErr } = await sb
+    .from('games')
+    .select('views, likes')
+    .eq('id', id)
+    .single();
+
+  if (fetchErr || !current) return null;
+
+  return updateCloudGame(id, {
+    metrics: {
+      views: (current.views || 0) + viewInc,
+      likes: (current.likes || 0) + likeInc,
+      rating: 5.0,
+    },
+  });
+}
+
+// --- Backward-compat stubs (ใช้กับ store.ts เดิม) ---
+
+// saveCloudGames เดิมบันทึกทั้ง array — ตอนนี้ไม่จำเป็นแล้ว
+// แต่ยังคงไว้เพื่อไม่ให้ code เดิม break
 export async function saveCloudGames(games: GameDocument[]): Promise<boolean> {
-  if (!Array.isArray(games)) {
-    console.error('[saveCloudGames] Payload must be an array of GameDocument');
+  if (!Array.isArray(games)) return false;
+  const sb = getSupabase();
+  if (!sb) return false;
+
+  // upsert ทีละ record
+  const rows = games.map(gameToRow);
+  const { error } = await sb.from('games').upsert(rows);
+  if (error) {
+    console.error('[db] saveCloudGames error:', error.message);
     return false;
   }
-
-  // 1. Try Upstash / Vercel KV
-  if (KV_URL && KV_TOKEN) {
-    const res = await kvFetch(['SET', 'cs67_games', JSON.stringify(games)]);
-    if (res === 'OK') return true;
-  }
-
-  // 2. Fallback to Vercel Blob Storage JSON persistence
-  // Tries 'private' access first (matching private store setting), then 'public' access if needed
-  if (BLOB_TOKEN) {
-    const payload = JSON.stringify(games);
-    try {
-      // @ts-ignore — allowOverwrite exists at runtime
-      await put('data/cs67_games.json', payload, {
-        access: 'private',
-        addRandomSuffix: false,
-        allowOverwrite: true,
-        token: BLOB_TOKEN,
-      });
-      return true;
-    } catch (e1) {
-      try {
-        // @ts-ignore
-        await put('data/cs67_games.json', payload, {
-          access: 'public',
-          addRandomSuffix: false,
-          allowOverwrite: true,
-          token: BLOB_TOKEN,
-        });
-        return true;
-      } catch (e2) {
-        console.error('Vercel Blob Storage Save Error:', e2);
-      }
-    }
-  }
-
-  return false;
-}
-
-export async function addCloudGame(game: GameDocument): Promise<GameDocument[]> {
-  const current = await getCloudGames();
-  const updated = [game, ...current.filter((g) => g.id !== game.id)];
-  await saveCloudGames(updated);
-  return updated;
-}
-
-export async function deleteCloudGame(id: string): Promise<GameDocument[]> {
-  const current = await getCloudGames();
-  const updated = current.filter((g) => g.id !== id);
-  await saveCloudGames(updated);
-  return updated;
+  return true;
 }
