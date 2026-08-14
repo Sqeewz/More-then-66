@@ -66,7 +66,7 @@ describe('Database & Persistence (db.ts — Supabase)', () => {
 
   describe('getCloudGames', () => {
     it('should fetch and return games from Supabase', async () => {
-      mockOrder.mockResolvedValueOnce({ data: [mockRow], error: null });
+      mockSelect.mockResolvedValueOnce({ data: [mockRow], error: null });
       const games = await getCloudGames();
       expect(games).toHaveLength(1);
       expect(games[0].id).toBe('game-123');
@@ -74,7 +74,7 @@ describe('Database & Persistence (db.ts — Supabase)', () => {
     });
 
     it('should return empty array on Supabase error', async () => {
-      mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'DB error' } });
+      mockSelect.mockResolvedValueOnce({ data: null, error: { message: 'DB error' } });
       const games = await getCloudGames();
       expect(games).toEqual([]);
     });
@@ -97,7 +97,7 @@ describe('Database & Persistence (db.ts — Supabase)', () => {
   describe('addCloudGame', () => {
     it('should upsert single game and return updated list', async () => {
       mockUpsert.mockResolvedValueOnce({ error: null });
-      mockOrder.mockResolvedValueOnce({ data: [mockRow], error: null });
+      mockSelect.mockResolvedValueOnce({ data: [mockRow], error: null });
       const result = await addCloudGame(mockGame);
       expect(result).toHaveLength(1);
     });
@@ -106,7 +106,7 @@ describe('Database & Persistence (db.ts — Supabase)', () => {
   describe('deleteCloudGame', () => {
     it('should delete game by id', async () => {
       mockEq.mockResolvedValueOnce({ error: null });
-      mockOrder.mockResolvedValueOnce({ data: [], error: null });
+      mockSelect.mockResolvedValueOnce({ data: [], error: null });
       const result = await deleteCloudGame('game-123');
       expect(result).toHaveLength(0);
     });

@@ -78,21 +78,23 @@ function gameToRow(game: GameDocument) {
   };
 }
 
-// ดึง games ทั้งหมด
 export async function getCloudGames(): Promise<GameDocument[]> {
   const sb = getSupabase();
   if (!sb) return SEED_GAMES;
 
-  const { data, error } = await sb
-    .from('games')
-    .select('*')
-    .order('created_at', { ascending: false });
+  const { data, error } = await sb.from('games').select('*');
 
   if (error) {
     console.error('[db] getCloudGames error:', error.message);
     return SEED_GAMES;
   }
-  return (data || []).map(rowToGame);
+
+  const games = (data || []).map(rowToGame);
+  return games.sort((a, b) => {
+    const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return timeB - timeA;
+  });
 }
 
 // เพิ่ม/อัพเดท game รายการเดียว (upsert)
