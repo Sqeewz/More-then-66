@@ -139,12 +139,12 @@ export default function GameHubPage() {
 
   const [spotlightIndex, setSpotlightIndex] = useState(0);
 
-  // Auto-slide carousel timer for Featured Spotlight Banner (every 6 seconds)
+  // Auto-slide carousel timer for Featured Spotlight Banner (every 7 seconds)
   React.useEffect(() => {
     if (games.length <= 1) return;
     const timer = setInterval(() => {
       setSpotlightIndex((prev) => (prev + 1) % games.length);
-    }, 6000);
+    }, 7000);
     return () => clearInterval(timer);
   }, [games.length]);
 
