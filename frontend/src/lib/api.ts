@@ -57,15 +57,12 @@ export async function getGameById(id: string): Promise<{ game: GameDocument }> {
   );
 }
 
-export async function deleteGameApi(id: string, adminPass: string): Promise<{ message: string }> {
+export async function deleteGameApi(id: string): Promise<{ message: string }> {
   return fetchWithFallback<{ message: string }>(
     `/games/${id}`,
     `/api/games/${id}`,
     {
       method: 'DELETE',
-      headers: {
-        'x-admin-pass': adminPass,
-      },
     }
   );
 }
@@ -82,8 +79,6 @@ export async function scrapeUrlPreview(url: string): Promise<ScrapedMetadata> {
 }
 
 export async function submitGame(payload: SubmitGamePayload): Promise<{ message: string; game: GameDocument }> {
-  // ── Client-side guard: strip Base64/blob URLs before sending ──────────────
-  // This prevents 413 errors if old JS is still running or Blob upload failed
   const safeUrl = (val: string | undefined): string | undefined => {
     if (!val) return undefined;
     if (val.startsWith('data:') || val.startsWith('blob:')) return undefined;
@@ -105,7 +100,6 @@ export async function submitGame(payload: SubmitGamePayload): Promise<{ message:
     }
   );
 }
-
 
 export async function editGame(
   id: string,
@@ -136,4 +130,3 @@ export async function incrementGameLike(id: string): Promise<{ game: GameDocumen
     { method: 'POST' }
   );
 }
-

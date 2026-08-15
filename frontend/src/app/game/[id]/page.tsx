@@ -9,11 +9,9 @@ import { GameCard } from '@/components/GameCard';
 import { EmbedPlayer } from '@/components/EmbedPlayer';
 import { SubmitGameModal } from '@/components/SubmitGameModal';
 import { EditGameModal } from '@/components/EditGameModal';
-import { AdminLoginModal } from '@/components/AdminLoginModal';
 import { deleteGameApi, getGameById, getGames, incrementGameLike, incrementGameView } from '@/lib/api';
 import { GameDocument } from '@/types/game';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { LOCAL_STORAGE_GAMES_KEY, ADMIN_SESSION_KEY } from '@/lib/constants';
+import { LOCAL_STORAGE_GAMES_KEY } from '@/lib/constants';
 import { convertGDriveToEmbed, convertGDriveToDirectImage } from '@/lib/qr-reader';
 import { getSupabaseClient } from '@/lib/supabase-client';
 import { LoadingScreen } from '@/components/LoadingScreen';
@@ -49,12 +47,8 @@ export default function GameDetailPage() {
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPlayModalOpen, setIsPlayModalOpen] = useState(false);
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTag, setActiveTag] = useState('');
-
-  // ── Admin Auth (Single Responsibility — handled by useAdminAuth hook) ─────
-  const { isAdmin, adminPass, handleAdminSuccess, handleAdminLogout } = useAdminAuth();
 
   useEffect(() => {
     if (!gameId) return;
@@ -164,8 +158,7 @@ export default function GameDetailPage() {
     !!game?.creator_email &&
     session.user.email.toLowerCase() === game.creator_email.toLowerCase();
 
-  const isUserAdmin = isAdmin || session?.user?.isAdmin;
-  const canEditOrDelete = isOwner || isUserAdmin;
+  const canEditOrDelete = isOwner;
 
   const handleDeleteGame = async (id: string, title: string) => {
     const confirmDelete = confirm(`คุณต้องการลบผลงานเกม "${title}" ออกจากระบบ One 4 All หรือไม่?`);
@@ -173,8 +166,7 @@ export default function GameDetailPage() {
     if (!confirmDelete) return;
 
     try {
-      const passToSend = adminPass || sessionStorage.getItem(ADMIN_SESSION_KEY) || '';
-      await deleteGameApi(id, passToSend).catch(() => null);
+      await deleteGameApi(id).catch(() => null);
 
       try {
         const storedLocal = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
@@ -292,9 +284,6 @@ export default function GameDetailPage() {
 
       <Header
         onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
-        onOpenAdminModal={() => setIsAdminModalOpen(true)}
-        isAdmin={isAdmin}
-        onAdminLogout={handleAdminLogout}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         activeTag={activeTag}
@@ -629,8 +618,6 @@ export default function GameDetailPage() {
                     <GameCard
                       key={rg.id}
                       game={rg}
-                      isAdmin={isAdmin}
-                      onDeleteGame={handleDeleteGame}
                     />
                   ))}
                 </div>
@@ -697,11 +684,6 @@ export default function GameDetailPage() {
         />
       )}
 
-      <AdminLoginModal
-        isOpen={isAdminModalOpen}
-        onClose={() => setIsAdminModalOpen(false)}
-        onSuccess={handleAdminSuccess}
-      />
     </div>
   );
 }

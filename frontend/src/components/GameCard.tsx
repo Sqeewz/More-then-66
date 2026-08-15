@@ -3,33 +3,22 @@
 import React from 'react';
 import Link from 'next/link';
 import { GameDocument } from '@/types/game';
-import { Play, Eye, ThumbsUp, Star, ExternalLink, ShieldCheck, User, Trash2 } from 'lucide-react';
-
+import { Play, Eye, ThumbsUp, Star, ExternalLink, ShieldCheck, User } from 'lucide-react';
 import { convertGDriveToDirectImage } from '@/lib/qr-reader';
 
 interface GameCardProps {
   game: GameDocument;
-  isAdmin?: boolean;
-  onDeleteGame?: (id: string, title: string) => void;
 }
 
 const DEFAULT_CARD_COVER = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80';
 
-export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame }) => {
+export const GameCard: React.FC<GameCardProps> = ({ game }) => {
   const isPopup = game.display_mode === 'POPUP';
   const displayImage = (() => {
     const url = game.cover_image_url || game.thumbnail_url;
     if (!url || url.startsWith('data:') || url.startsWith('blob:')) return DEFAULT_CARD_COVER;
     return convertGDriveToDirectImage(url);
   })();
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onDeleteGame) {
-      onDeleteGame(game.id, game.title);
-    }
-  };
 
   return (
     <Link
@@ -46,38 +35,24 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
             (e.target as HTMLImageElement).src = DEFAULT_CARD_COVER;
           }}
         />
-        
+
         {/* Dark Navy Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0e152e] via-black/20 to-transparent opacity-85 group-hover:opacity-60 transition-opacity" />
 
-        {/* Display Mode Badge & Admin Delete Button */}
-        <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-1 z-10">
-          <div className="flex items-center gap-1">
-            {isPopup ? (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-[10px] text-slate-300 border border-white/10">
-                <ExternalLink className="w-2.5 h-2.5" />
-                External Tab
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-[10px] text-slate-300 border border-white/10">
-                <ShieldCheck className="w-2.5 h-2.5 text-sky-400" />
-                Sandbox
-              </span>
-            )}
-          </div>
-
-          {isAdmin && (
-            <button
-              onClick={handleDelete}
-              className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/60 hover:bg-red-500/30 text-red-400 font-medium text-[10px] border border-red-500/30 transition-all"
-              title="ลบผลงานเกมนี้ออกจากระบบ"
-            >
-              <Trash2 className="w-2.5 h-2.5" />
-              <span>ลบ</span>
-            </button>
+        {/* Display Mode Badge */}
+        <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
+          {isPopup ? (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-[10px] text-slate-300 border border-white/10">
+              <ExternalLink className="w-2.5 h-2.5" />
+              External Tab
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-[10px] text-slate-300 border border-white/10">
+              <ShieldCheck className="w-2.5 h-2.5 text-sky-400" />
+              Sandbox
+            </span>
           )}
         </div>
-
 
         {/* Play Icon Overlay */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-blue-950/50 backdrop-blur-[2px]">
@@ -98,7 +73,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
         <h3 className="font-bold text-base text-white group-hover:text-sky-300 line-clamp-1 transition-colors">
           {game.title}
         </h3>
-        
+
         <p className="text-xs text-slate-300 line-clamp-2 mt-1 flex-1 leading-relaxed">
           {game.description}
         </p>
@@ -106,7 +81,6 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
         {/* Tags & Feature Badges */}
         <div className="flex flex-wrap items-center gap-1.5 mt-3">
           {(game.tags || []).slice(0, 3).map((tag, idx) => (
-
             <span
               key={idx}
               className="px-2 py-0.5 rounded-md bg-[#162248] text-[10px] font-semibold text-sky-200 border border-sky-500/20"
@@ -149,4 +123,3 @@ export const GameCard: React.FC<GameCardProps> = ({ game, isAdmin, onDeleteGame 
     </Link>
   );
 };
-

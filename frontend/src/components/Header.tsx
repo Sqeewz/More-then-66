@@ -3,13 +3,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { PlusCircle, Search, Sparkles, ShieldCheck, LogOut, Lock, LogIn } from 'lucide-react';
+import { PlusCircle, Search, Sparkles, LogOut, LogIn } from 'lucide-react';
 
 interface HeaderProps {
   onOpenSubmitModal: () => void;
-  onOpenAdminModal: () => void;
-  isAdmin: boolean;
-  onAdminLogout: () => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   activeTag: string;
@@ -18,9 +15,6 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenSubmitModal,
-  onOpenAdminModal,
-  isAdmin,
-  onAdminLogout,
   searchQuery,
   setSearchQuery,
   activeTag,
@@ -43,7 +37,6 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#050814]/95 backdrop-blur-md px-4 md:px-8 py-3.5 shadow-xl">
       <div className="w-full flex items-center gap-5 md:gap-6">
-        
         {/* Full-Height Large Prominent Logo (Far Left) */}
         <Link href="/hub" className="flex-shrink-0 group flex items-center">
           <img
@@ -55,10 +48,8 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Content Column */}
         <div className="flex-1 flex flex-col justify-center min-w-0 space-y-2">
-          
           {/* Top Row: Title, Search, Actions */}
           <div className="flex items-center justify-between gap-4 w-full">
-            
             {/* Large Title & CS67 Badge */}
             <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
               <span className="font-black text-3xl md:text-4xl lg:text-5xl tracking-tight text-white group-hover:text-sky-300 transition-colors drop-shadow-md">
@@ -83,29 +74,6 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Scaled Action Buttons */}
             <div className="flex items-center gap-2.5">
-              {isAdmin ? (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-emerald-400 text-xs md:text-sm font-semibold border border-emerald-500/30 bg-transparent">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span className="hidden md:inline">Admin</span>
-                  <button
-                    onClick={onAdminLogout}
-                    className="ml-1 p-0.5 hover:text-red-400 transition-colors"
-                    title="ออกจากระบบแอดมิน"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={onOpenAdminModal}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-transparent text-slate-300 hover:text-white text-xs md:text-sm font-medium transition-colors"
-                  title="เข้าสู่ระบบแอดมิน"
-                >
-                  <Lock className="w-4 h-4 text-sky-400" />
-                  <span className="hidden md:inline">แอดมิน</span>
-                </button>
-              )}
-
               {isLoggedIn ? (
                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-transparent text-xs md:text-sm text-slate-300">
                   {session.user?.image ? (
@@ -136,7 +104,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               )}
 
-              {(isLoggedIn || isAdmin) && (
+              {isLoggedIn && (
                 <button
                   onClick={onOpenSubmitModal}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-transparent hover:bg-sky-500/15 text-sky-300 hover:text-white font-bold text-xs md:text-sm border border-sky-400/40 transition-all cursor-pointer whitespace-nowrap shadow-sm"
@@ -146,9 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
                 </button>
               )}
-
             </div>
-
           </div>
 
           {/* Bottom Row: Scaled Category Pills Bar */}
@@ -167,9 +133,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             ))}
           </div>
-
         </div>
-
       </div>
     </header>
   );

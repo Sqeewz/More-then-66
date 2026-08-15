@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getStore, deleteGame, deleteGameByEmail } from '../store';
+import { getStore, deleteGameByEmail } from '../store';
 import { auth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -15,18 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json({ game });
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  // Method 1: Admin password (backward compat)
-  const adminPassHeader = request.headers.get('x-admin-pass');
-  if (adminPassHeader) {
-    const deleted = await deleteGame(params.id, adminPassHeader);
-    if (deleted) {
-      return NextResponse.json({ message: 'ลบเกมเรียบร้อยแล้ว' });
-    }
-    return NextResponse.json({ error: 'ไม่มีสิทธิ์ลบเกมนี้' }, { status: 403 });
-  }
-
-  // Method 2: Google OAuth session
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
   const session = await auth();
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'กรุณาเข้าสู่ระบบก่อน' }, { status: 401 });

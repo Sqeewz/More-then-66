@@ -1,18 +1,5 @@
 import { GameDocument, DisplayMode, ScrapedMetadata } from '@/types/game';
-import { getCloudGames, addCloudGame, deleteCloudGame, updateCloudGame, incrementGameMetrics, saveCloudGames } from '@/lib/db';
-import { isAdmin } from '@/lib/auth';
-import crypto from 'crypto';
-
-// SHA-256 Hash of "67morethen66"
-export const ADMIN_PASSWORD_HASH = 'b9982e40e58fffb52a1df3c6da5dc2f5c7c260c3881bd68f667a8e301c92a821';
-
-export function hashString(input: string): string {
-  if (!input) return '';
-  if (input.length === 64 && /^[a-f0-9]+$/i.test(input)) {
-    return input.toLowerCase(); // Already SHA-256 hash
-  }
-  return crypto.createHash('sha256').update(input).digest('hex').toLowerCase();
-}
+import { getCloudGames, addCloudGame, deleteCloudGame, updateCloudGame, incrementGameMetrics } from '@/lib/db';
 
 const BLOCKED_KEYWORDS = [
   // Gambling / Casino keywords
@@ -50,7 +37,6 @@ export function checkUrlSafety(url: string, htmlContent?: string): { safe: boole
   return { safe: true };
 }
 
-// inMemoryGames ถูกแทนที่ด้วย Supabase แล้ว — ดึงตรงจาก DB ทุกครั้ง
 export async function getStore(): Promise<GameDocument[]> {
   try {
     return await getCloudGames();
@@ -61,35 +47,18 @@ export async function getStore(): Promise<GameDocument[]> {
 
 export async function addGame(game: GameDocument): Promise<GameDocument> {
   game.display_mode = 'EMBEDDED';
-  // บันทึกลง Supabase — ถ้าล้มเหลวให้ throw error เพื่อให้ API รับรู้
-  await addCloudGame(game);
-  return game;
-}
-
-export async function deleteGame(id: string, passOrHash: string): Promise<boolean> {
-  if (!passOrHash) return false;
-
-  const inputHash = hashString(passOrHash);
-  const isValidAdmin =
-    inputHash === ADMIN_PASSWORD_HASH ||
-    passOrHash === '67morethen66' ||
-    passOrHash === ADMIN_PASSWORD_HASH;
-
-  if (!isValidAdmin) return false;
-
   try {
-    await deleteCloudGame(id);
-    return true;
+    await addCloudGame(game);
   } catch (e) {
-    return false;
+    console.error('[addGame] Failed to save to Supabase:', e);
   }
+  return game;
 }
 
 export async function updateGame(
   id: string,
   updates: Partial<GameDocument>,
-  requesterEmail?: string,
-  adminPassHeader?: string | null
+  requesterEmail?: string
 ): Promise<GameDocument | null> {
   if (!id || id === 'undefined') return null;
 
@@ -116,13 +85,9 @@ export async function updateGame(
 
   const game = games[gameIndex];
 
-  // Permission check: owner email, admin email, valid admin pass header, or logged-in session
+  // Permission check: owner email or logged-in user
   const isOwner = !!(requesterEmail && game.creator_email && game.creator_email.toLowerCase() === requesterEmail.toLowerCase());
-  const isAdminEmail = !!(requesterEmail && isAdmin(requesterEmail));
-  const isValidAdminPass = adminPassHeader === '67morethen66' || adminPassHeader === ADMIN_PASSWORD_HASH || hashString(adminPassHeader || '') === ADMIN_PASSWORD_HASH;
-
-  // Allow edit if owner, admin, or valid admin pass header/session
-  const canEdit = isOwner || isAdminEmail || isValidAdminPass || !!requesterEmail;
+  const canEdit = isOwner || !!requesterEmail;
 
   if (!canEdit) return null;
 
@@ -158,8 +123,7 @@ export async function deleteGameByEmail(
   if (!game) return false;
 
   const canDelete =
-    (game.creator_email && game.creator_email.toLowerCase() === requesterEmail.toLowerCase()) ||
-    isAdmin(requesterEmail);
+    game.creator_email && game.creator_email.toLowerCase() === requesterEmail.toLowerCase();
 
   if (!canDelete) return false;
 
@@ -244,4 +208,3 @@ export async function scrapeUrl(targetUrl: string): Promise<ScrapedMetadata> {
     };
   }
 }
-

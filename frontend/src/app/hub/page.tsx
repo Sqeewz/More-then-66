@@ -5,12 +5,8 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { GameCard } from '@/components/GameCard';
 import { SubmitGameModal } from '@/components/SubmitGameModal';
-import { AdminLoginModal } from '@/components/AdminLoginModal';
-import { deleteGameApi } from '@/lib/api';
 import { GameDocument } from '@/types/game';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useGames } from '@/hooks/useGames';
-import { LOCAL_STORAGE_GAMES_KEY } from '@/lib/constants';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import {
   Gamepad2,
@@ -35,11 +31,9 @@ interface GameRowProps {
   title: string;
   icon: React.ReactNode;
   games: GameDocument[];
-  isAdmin: boolean;
-  onDeleteGame: (id: string, title: string) => void;
 }
 
-const NetflixGameRow: React.FC<GameRowProps> = ({ title, icon, games, isAdmin, onDeleteGame }) => {
+const NetflixGameRow: React.FC<GameRowProps> = ({ title, icon, games }) => {
   const rowRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -85,7 +79,7 @@ const NetflixGameRow: React.FC<GameRowProps> = ({ title, icon, games, isAdmin, o
         >
           {games.map((game) => (
             <div key={game.id} className="w-[280px] md:w-[320px] flex-shrink-0">
-              <GameCard game={game} isAdmin={isAdmin} onDeleteGame={onDeleteGame} />
+              <GameCard game={game} />
             </div>
           ))}
         </div>
@@ -108,35 +102,10 @@ export default function GameHubPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTag, setActiveTag] = useState('');
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
-  const { isAdmin, adminPass, handleAdminSuccess, handleAdminLogout } = useAdminAuth();
-  const { games, setGames, loading, refetch } = useGames(activeTag, searchQuery);
+  const { games, loading, refetch } = useGames(activeTag, searchQuery);
 
   const handleGameSubmitted = () => refetch();
-
-  const handleDeleteGame = async (id: string, title: string) => {
-    const confirmDelete = confirm(`คุณต้องการลบผลงานเกม "${title}" ออกจากระบบ More Then 66 หรือไม่?`);
-    if (!confirmDelete) return;
-
-    setGames((prev) => prev.filter((g) => g.id !== id));
-
-    try {
-      const raw = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
-      if (raw) {
-        const localGames: GameDocument[] = JSON.parse(raw);
-        localStorage.setItem(LOCAL_STORAGE_GAMES_KEY, JSON.stringify(localGames.filter((g) => g.id !== id)));
-      }
-    } catch {}
-
-    try {
-      await deleteGameApi(id, adminPass);
-      alert(`ลบผลงานเกม "${title}" ออกจากระบบเรียบร้อยแล้ว`);
-      refetch();
-    } catch (err: unknown) {
-      console.warn('[HubPage] API delete warning:', err);
-    }
-  };
 
   const handleClearCache = () => {
     if (confirm('คุณต้องการเคลียร์แคชทั้งหมดในเบราว์เซอร์และรีโหลดข้อมูลสดจาก Supabase หรือไม่?')) {
@@ -178,7 +147,6 @@ export default function GameHubPage() {
     setSpotlightIndex(nextIdx);
   };
 
-  const featuredGame = games.length > 0 ? games[spotlightIndex % games.length] : null;
   const cs67Projects = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('cs67')));
   const webglGames = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('webgl') || t.toLowerCase().includes('3d')));
   const puzzleGames = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('puzzle')));
@@ -192,9 +160,6 @@ export default function GameHubPage() {
       {/* Navigation Header */}
       <Header
         onOpenSubmitModal={() => setIsSubmitModalOpen(true)}
-        onOpenAdminModal={() => setIsAdminModalOpen(true)}
-        isAdmin={isAdmin}
-        onAdminLogout={handleAdminLogout}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         activeTag={activeTag}
@@ -215,10 +180,9 @@ export default function GameHubPage() {
         </span>
       </div>
 
-      {/* Netflix Hero Billboard Section with True Hardware-Accelerated Cross-fade Slideshow */}
+      {/* Netflix Hero Billboard Section */}
       {games.length > 0 && !searchQuery && !activeTag && (
         <div className="relative w-full aspect-[21/9] md:aspect-[21/8] max-h-[520px] overflow-hidden bg-black border-b border-sky-500/20 group">
-          {/* Stacked Cross-fading Slides (Background Image + Details) */}
           {games.map((g, idx) => {
             const isActive = idx === (spotlightIndex % games.length);
             return (
@@ -237,7 +201,7 @@ export default function GameHubPage() {
                   className="w-full h-full object-cover object-center filter brightness-90 transform scale-105"
                 />
 
-                {/* Text & Action Details Card (Compact Glassmorphic Dark Box) */}
+                {/* Text & Action Details Card */}
                 <div className="absolute bottom-4 md:bottom-8 left-4 md:left-10 right-4 max-w-xl p-3.5 md:p-4 rounded-xl bg-black/55 backdrop-blur-md border border-white/10 shadow-xl space-y-2 z-20">
                   <div className="flex items-center gap-1.5">
                     <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-600/90 text-white font-bold text-[10px] sm:text-xs shadow-md border border-sky-300/30">
@@ -300,7 +264,7 @@ export default function GameHubPage() {
             <button
               onClick={handlePrevSpotlight}
               className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 p-2.5 md:p-3 rounded-full bg-black/50 hover:bg-sky-500/40 text-white/80 hover:text-sky-300 border border-white/15 hover:border-sky-400/60 backdrop-blur-md transition-all duration-200 cursor-pointer shadow-xl opacity-80 group-hover:opacity-100"
-              title="เกมก่อนหน้า (Previous Spotlight)"
+              title="เกมก่อนหน้า"
             >
               <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
             </button>
@@ -311,7 +275,7 @@ export default function GameHubPage() {
             <button
               onClick={handleNextSpotlight}
               className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-30 p-2.5 md:p-3 rounded-full bg-black/50 hover:bg-sky-500/40 text-white/80 hover:text-sky-300 border border-white/15 hover:border-sky-400/60 backdrop-blur-md transition-all duration-200 cursor-pointer shadow-xl opacity-80 group-hover:opacity-100"
-              title="เกมถัดไป (Next Spotlight)"
+              title="เกมถัดไป"
             >
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
             </button>
@@ -368,7 +332,7 @@ export default function GameHubPage() {
             ) : (
               <div className="game-grid">
                 {games.map((game) => (
-                  <GameCard key={game.id} game={game} isAdmin={isAdmin} onDeleteGame={handleDeleteGame} />
+                  <GameCard key={game.id} game={game} />
                 ))}
               </div>
             )}
@@ -379,37 +343,27 @@ export default function GameHubPage() {
               title="🔥 ผลงานยอดนิยม (Trending CS 67 Games)"
               icon={<TrendingUp className="w-5 h-5 text-sky-400" />}
               games={games}
-              isAdmin={isAdmin}
-              onDeleteGame={handleDeleteGame}
             />
             <NetflixGameRow
               title="💻 CS 67 Projects (โปรเจกต์วิทยาการคอมพิวเตอร์)"
               icon={<Cpu className="w-5 h-5 text-blue-400" />}
               games={cs67Projects.length > 0 ? cs67Projects : games.slice(0, 4)}
-              isAdmin={isAdmin}
-              onDeleteGame={handleDeleteGame}
             />
             <NetflixGameRow
               title="⚡ WebGL / 3D Graphics (เกมสามมิติ)"
               icon={<Box className="w-5 h-5 text-cyan-400" />}
               games={webglGames.length > 0 ? webglGames : games.slice(1, 5)}
-              isAdmin={isAdmin}
-              onDeleteGame={handleDeleteGame}
             />
             <NetflixGameRow
               title="🧩 Puzzle & Brain (เกมปริศนาเเละลับสมอง)"
               icon={<Puzzle className="w-5 h-5 text-amber-400" />}
               games={puzzleGames.length > 0 ? puzzleGames : games.slice(2, 6)}
-              isAdmin={isAdmin}
-              onDeleteGame={handleDeleteGame}
             />
             {arcadeGames.length > 0 && (
               <NetflixGameRow
                 title="🕹️ Arcade & Action (เกมอาเขตและแอ็กชัน)"
                 icon={<Gamepad2 className="w-5 h-5 text-emerald-400" />}
                 games={arcadeGames}
-                isAdmin={isAdmin}
-                onDeleteGame={handleDeleteGame}
               />
             )}
           </div>
@@ -438,17 +392,11 @@ export default function GameHubPage() {
         </div>
       </footer>
 
-      {/* Modals */}
+      {/* Submit Modal */}
       <SubmitGameModal
         isOpen={isSubmitModalOpen}
         onClose={() => setIsSubmitModalOpen(false)}
         onSuccess={handleGameSubmitted}
-      />
-
-      <AdminLoginModal
-        isOpen={isAdminModalOpen}
-        onClose={() => setIsAdminModalOpen(false)}
-        onSuccess={handleAdminSuccess}
       />
     </div>
   );

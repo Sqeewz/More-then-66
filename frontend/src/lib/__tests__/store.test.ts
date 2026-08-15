@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { checkUrlSafety, hashString, ADMIN_PASSWORD_HASH, addGame, updateGame, deleteGame } from '../../app/api/games/store';
+import { checkUrlSafety, addGame, updateGame } from '../../app/api/games/store';
 import * as db from '../db';
 import { GameDocument } from '@/types/game';
 
@@ -13,7 +13,7 @@ vi.mock('../db', () => ({
 }));
 
 vi.mock('@/lib/auth', () => ({
-  isAdmin: vi.fn((email: string) => email === 'kanakrit.pr@rmuti.ac.th'),
+  isAdmin: vi.fn(() => false),
 }));
 
 const mockGame: GameDocument = {
@@ -47,11 +47,6 @@ describe('Store & Business Logic (store.ts)', () => {
       const result = checkUrlSafety('https://drive.google.com/file/d/12345/view');
       expect(result.safe).toBe(true);
     });
-
-    it('should correctly verify admin password hash', () => {
-      const hash = hashString('67morethen66');
-      expect(hash).toBe(ADMIN_PASSWORD_HASH);
-    });
   });
 
   describe('Cold-Start Resilience in addGame', () => {
@@ -66,25 +61,17 @@ describe('Store & Business Logic (store.ts)', () => {
   });
 
   describe('CRUD Operations Protection', () => {
-    it('should update game details when owner or valid admin password is provided', async () => {
+    it('should update game details when owner is provided', async () => {
       vi.mocked(db.getCloudGames).mockResolvedValueOnce([mockGame]);
 
       const updated = await updateGame(
         'user-1786620592935',
         { description: 'Updated Description' },
-        'kanakrit.pr@rmuti.ac.th',
-        '67morethen66'
+        'kanakrit.pr@rmuti.ac.th'
       );
 
       expect(updated).not.toBeNull();
       expect(updated?.description).toBe('Updated Description');
-    });
-
-    it('should prevent non-admin/non-owner from deleting games', async () => {
-      vi.mocked(db.getCloudGames).mockResolvedValueOnce([mockGame]);
-
-      const deleted = await deleteGame('user-1786620592935', 'wrong-pass');
-      expect(deleted).toBe(false);
     });
   });
 });
