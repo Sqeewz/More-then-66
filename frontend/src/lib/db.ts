@@ -121,7 +121,10 @@ function gameToRow(game: GameDocument) {
 
 export async function getCloudGames(): Promise<GameDocument[]> {
   const sb = getSupabase();
-  if (!sb) return SEED_GAMES;
+  if (!sb) {
+    console.error('[db] Supabase client unavailable — check SUPABASE_URL and SUPABASE_KEY');
+    return [];
+  }
 
   const { data, error } = await sb.from('games').select('*');
 
@@ -131,11 +134,6 @@ export async function getCloudGames(): Promise<GameDocument[]> {
   }
 
   if (!data || data.length === 0) {
-    if (SEED_GAMES.length > 0) {
-      console.log('[db] Supabase empty — seeding default production games...');
-      saveCloudGames(SEED_GAMES).catch(() => null);
-      return SEED_GAMES;
-    }
     return [];
   }
 
@@ -153,7 +151,7 @@ export async function addCloudGame(game: GameDocument): Promise<GameDocument[]> 
   if (!sb) throw new Error('[db] Supabase client unavailable — check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
 
   const row = gameToRow(game);
-  console.log('[db] upserting game:', game.id, game.title);
+  console.log('[db] upserting game permanently to Supabase:', game.id, game.title);
   const { error } = await sb.from('games').upsert(row);
   if (error) {
     console.error('[db] addCloudGame error:', error.message, error.code, error.details);
@@ -166,7 +164,7 @@ export async function addCloudGame(game: GameDocument): Promise<GameDocument[]> 
 // ลบ game รายการเดียว
 export async function deleteCloudGame(id: string): Promise<GameDocument[]> {
   const sb = getSupabase();
-  if (!sb) return SEED_GAMES;
+  if (!sb) return [];
 
   const { error } = await sb.from('games').delete().eq('id', id);
   if (error) console.error('[db] deleteCloudGame error:', error.message);

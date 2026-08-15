@@ -42,21 +42,6 @@ function parseSupabaseRow(row: any): GameDocument {
   };
 }
 
-function mergeWithLocalStorage(apiGames: GameDocument[]): GameDocument[] {
-  const merged = [...apiGames];
-  try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
-    if (raw) {
-      const localGames: GameDocument[] = JSON.parse(raw);
-      for (const lg of localGames) {
-        if (!merged.some((g) => g.id === lg.id)) {
-          merged.unshift(lg);
-        }
-      }
-    }
-  } catch {}
-  return merged;
-}
 
 function applyFilters(games: GameDocument[], tag: string, query: string): GameDocument[] {
   let result = games;
@@ -80,33 +65,17 @@ function applyFilters(games: GameDocument[], tag: string, query: string): GameDo
 }
 
 export function useGames(activeTag: string, searchQuery: string): UseGamesResult {
-  const [games, setGames] = useState<GameDocument[]>(() => {
-    // Zero-lag instant load from LocalStorage cache before network responds
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem(LOCAL_STORAGE_GAMES_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return applyFilters(parsed, activeTag, searchQuery);
-          }
-        }
-      } catch {}
-    }
-    return [];
-  });
-
-  const [loading, setLoading] = useState(games.length === 0);
+  const [games, setGames] = useState<GameDocument[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchGames = useCallback(async (isSilent = false) => {
     try {
       if (!isSilent && games.length === 0) setLoading(true);
       const res = await getGames(activeTag, searchQuery);
-      const merged = mergeWithLocalStorage(res.games);
-      const filtered = applyFilters(merged, activeTag, searchQuery);
+      const filtered = applyFilters(res.games || [], activeTag, searchQuery);
       setGames(filtered);
     } catch (err) {
-      console.error('[useGames] Failed to load games:', err);
+      console.error('[useGames] Failed to load games from API/Supabase:', err);
     } finally {
       setLoading(false);
     }
