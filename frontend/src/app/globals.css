@@ -4,22 +4,65 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&family=Press+Start+2P&display=swap');
 
-:root {
+/* ==========================================================================
+   Multi-Theme System (Cyber Grid / Blueprint / Graph Paper)
+   ========================================================================== */
+
+/* 1. Cyber Grid: ตัวอักษรสีขาว (Default Sci-Fi Dark Theme) */
+:root, [data-theme="cyber-grid"] {
   --bg-dark: #050814;
   --bg-card: #0e152e;
   --bg-card-hover: #162248;
-  --bg-header: rgba(10, 16, 38, 0.9);
-  --accent-primary: #2563eb;
-  --accent-primary-hover: #1d4ed8;
-  --accent-cyan: #38bdf8;
-  --accent-success: #10b981;
-  --accent-warning: #f59e0b;
+  --bg-header: rgba(5, 8, 20, 0.95);
+  --bg-modal: #0e152e;
   --text-main: #ffffff;
+  --text-title: #ffffff;
   --text-muted: #94a3b8;
-  --border-color: rgba(255, 255, 255, 0.12);
+  --border-color: rgba(56, 189, 248, 0.2);
+  --border-card: rgba(56, 189, 248, 0.25);
+  --accent-cyan: #38bdf8;
+  --accent-orange: #FF7E14;
+  --grid-line-color: rgba(56, 189, 248, 0.12);
   --glass-bg: rgba(14, 21, 46, 0.85);
   --glass-border: rgba(56, 189, 248, 0.25);
-  --glow-shadow: 0 0 30px rgba(37, 99, 235, 0.3);
+}
+
+/* 2. Blueprint: ตัวอักษรสีส้ม (Technical Navy Blueprint Theme) */
+[data-theme="blueprint"] {
+  --bg-dark: #07152d;
+  --bg-card: #0c2145;
+  --bg-card-hover: #143061;
+  --bg-header: rgba(7, 21, 45, 0.95);
+  --bg-modal: #0c2145;
+  --text-main: #FF7E14;
+  --text-title: #FF7E14;
+  --text-muted: #ffa048;
+  --border-color: rgba(255, 126, 20, 0.35);
+  --border-card: rgba(255, 126, 20, 0.4);
+  --accent-cyan: #38bdf8;
+  --accent-orange: #FF7E14;
+  --grid-line-color: rgba(255, 255, 255, 0.18);
+  --glass-bg: rgba(12, 33, 69, 0.88);
+  --glass-border: rgba(255, 126, 20, 0.35);
+}
+
+/* 3. Graph Paper: ตัวอักษรสีดำ (Clean Notebook Light Theme) */
+[data-theme="graph-paper"] {
+  --bg-dark: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-header: rgba(248, 250, 252, 0.95);
+  --bg-modal: #ffffff;
+  --text-main: #0f172a;
+  --text-title: #0f172a;
+  --text-muted: #334155;
+  --border-color: rgba(148, 163, 184, 0.4);
+  --border-card: rgba(203, 213, 225, 0.9);
+  --accent-cyan: #0284c7;
+  --accent-orange: #e06700;
+  --grid-line-color: rgba(51, 65, 85, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(203, 213, 225, 0.9);
 }
 
 html {
@@ -33,13 +76,98 @@ html {
   padding: 0;
 }
 
-
 body {
   background-color: var(--bg-dark);
+  background-image: 
+    linear-gradient(var(--grid-line-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line-color) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-attachment: fixed;
   color: var(--text-main);
   font-family: 'Sarabun', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Graph Paper Theme Specific Overrides for Light Mode readability */
+[data-theme="graph-paper"] h1:not(.text-white),
+[data-theme="graph-paper"] h2:not(.text-white),
+[data-theme="graph-paper"] h3:not(.text-white),
+[data-theme="graph-paper"] h4:not(.text-white) {
+  color: #0f172a !important;
+}
+
+[data-theme="graph-paper"] .game-grid .group {
+  background-color: #ffffff !important;
+  border-color: rgba(203, 213, 225, 0.9) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="graph-paper"] .game-grid .group h3 {
+  color: #0f172a !important;
+}
+
+[data-theme="graph-paper"] .game-grid .group p {
+  color: #475569 !important;
+}
+
+[data-theme="graph-paper"] .bg-\[\#0e152e\],
+[data-theme="graph-paper"] .bg-\[\#111a36\],
+[data-theme="graph-paper"] .bg-\[\#070b1a\] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: rgba(203, 213, 225, 0.9) !important;
+}
+
+[data-theme="graph-paper"] .text-slate-200,
+[data-theme="graph-paper"] .text-slate-300 {
+  color: #334155 !important;
+}
+
+[data-theme="graph-paper"] .text-slate-400 {
+  color: #475569 !important;
+}
+
+[data-theme="graph-paper"] input,
+[data-theme="graph-paper"] textarea,
+[data-theme="graph-paper"] select {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="graph-paper"] input::placeholder,
+[data-theme="graph-paper"] textarea::placeholder {
+  color: #64748b !important;
+}
+
+[data-theme="graph-paper"] .gradient-text-blue {
+  background: linear-gradient(135deg, #0f172a 0%, #0284c7 60%, #1e40af 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Blueprint Theme Overrides */
+[data-theme="blueprint"] h1:not(.text-white),
+[data-theme="blueprint"] h2:not(.text-white),
+[data-theme="blueprint"] h3:not(.text-white),
+[data-theme="blueprint"] h4:not(.text-white) {
+  color: #FF7E14 !important;
+}
+
+[data-theme="blueprint"] .text-slate-200,
+[data-theme="blueprint"] .text-slate-300,
+[data-theme="blueprint"] .text-slate-400 {
+  color: #ffa048 !important;
+}
+
+[data-theme="blueprint"] .gradient-text-blue {
+  background: linear-gradient(135deg, #FF7E14 0%, #FFA048 60%, #ffffff 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
 /* Custom Scrollbar */
@@ -72,6 +200,13 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+[data-theme="graph-paper"] .gradient-text {
+  background: linear-gradient(135deg, #0f172a 0%, #0284c7 50%, #2563eb 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .gradient-text-blue {
   background: linear-gradient(135deg, #60a5fa 0%, #38bdf8 60%, #ffffff 100%);
   -webkit-background-clip: text;
@@ -80,13 +215,26 @@ body {
 }
 
 .gradient-text-one4all {
-  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+  background: linear-gradient(135deg, #FFFFFF 40%, #38BDF8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
+[data-theme="graph-paper"] .gradient-text-one4all {
+  background: linear-gradient(135deg, #0f172a 40%, #0284c7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
+.gradient-text-orange {
+  background: linear-gradient(135deg, #FF7E14 0%, #FFA048 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px rgba(255, 126, 20, 0.45));
+}
 
 .arcade-font {
   font-family: 'Press Start 2P', monospace;

@@ -23,7 +23,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
   return (
     <Link
       href={`/game/${game.id}`}
-      className="group relative flex flex-col rounded-2xl bg-[#0e152e] border border-sky-500/20 overflow-hidden hover:border-sky-400/60 hover:shadow-2xl hover:shadow-sky-500/20 hover:-translate-y-1.5 transition-all duration-300"
+      className="group relative flex flex-col rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-main)] overflow-hidden hover:border-sky-400/60 hover:shadow-2xl hover:shadow-sky-500/20 hover:-translate-y-1.5 transition-all duration-300"
     >
       {/* Thumbnail Container */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-black/50">
@@ -70,11 +70,11 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
 
       {/* Content Info */}
       <div className="flex flex-col flex-1 p-4">
-        <h3 className="font-bold text-base text-white group-hover:text-sky-300 line-clamp-1 transition-colors">
+        <h3 className="font-bold text-base text-[var(--text-title)] group-hover:text-[#FF7E14] line-clamp-1 transition-colors">
           {game.title}
         </h3>
 
-        <p className="text-xs text-slate-300 line-clamp-2 mt-1 flex-1 leading-relaxed">
+        <p className="text-xs text-[var(--text-muted)] line-clamp-2 mt-1 flex-1 leading-relaxed">
           {game.description}
         </p>
 
@@ -83,38 +83,38 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
           {(game.tags || []).slice(0, 3).map((tag, idx) => (
             <span
               key={idx}
-              className="px-2 py-0.5 rounded-md bg-[#162248] text-[10px] font-semibold text-sky-200 border border-sky-500/20"
+              className="px-2 py-0.5 rounded-md bg-sky-500/15 text-[10px] font-semibold text-sky-400 border border-sky-500/25"
             >
               #{tag}
             </span>
           ))}
           {(game.qr_image_url || game.original_url) && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/20 text-[10px] font-bold text-sky-300 border border-sky-500/30">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-500/20 text-[10px] font-bold text-sky-400 border border-sky-500/30">
               📱 QR
             </span>
           )}
 
           {game.pdf_drive_url && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/20 text-[10px] font-bold text-rose-300 border border-rose-500/30">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/20 text-[10px] font-bold text-rose-400 border border-rose-500/30">
               📄 PDF
             </span>
           )}
         </div>
 
         {/* Footer Metrics */}
-        <div className="flex items-center justify-between pt-3 mt-3 border-t border-white/10 text-[11px] font-medium text-slate-300">
+        <div className="flex items-center justify-between pt-3 mt-3 border-t border-[var(--border-card)] text-[11px] font-medium text-[var(--text-muted)]">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 hover:text-white transition-colors">
+            <span className="flex items-center gap-1 hover:text-[var(--text-main)] transition-colors">
               <Eye className="w-3.5 h-3.5 text-sky-400" />
               {game.metrics.views.toLocaleString()}
             </span>
-            <span className="flex items-center gap-1 hover:text-white transition-colors">
+            <span className="flex items-center gap-1 hover:text-[var(--text-main)] transition-colors">
               <ThumbsUp className="w-3.5 h-3.5 text-blue-400" />
               {game.metrics.likes.toLocaleString()}
             </span>
           </div>
 
-          <span className="flex items-center gap-1 text-[10px] text-sky-300 font-semibold tracking-wide truncate max-w-[120px]">
+          <span className="flex items-center gap-1 text-[10px] text-sky-400 font-semibold tracking-wide truncate max-w-[120px]">
             <User className="w-3 h-3 flex-shrink-0" />
             <span className="truncate">{game.creator_name || game.creator_id}</span>
           </span>

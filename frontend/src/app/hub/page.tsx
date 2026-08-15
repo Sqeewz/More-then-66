@@ -153,7 +153,7 @@ export default function GameHubPage() {
   const arcadeGames = games.filter((g) => (g.tags || []).some((t) => t.toLowerCase().includes('arcade') || t.toLowerCase().includes('action') || t.toLowerCase().includes('html5')));
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#050814] text-white selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-transparent text-[var(--text-main)] selection:bg-sky-500 selection:text-white">
       {/* CS RMUTI Loading Screen */}
       <LoadingScreen minDuration={800} />
 
@@ -167,7 +167,7 @@ export default function GameHubPage() {
       />
 
       {/* Top Banner Navigation back to Landing */}
-      <div className="bg-[#0e152e]/80 border-b border-white/5 px-4 lg:px-8 py-2 flex items-center justify-between text-xs">
+      <div className="bg-[var(--bg-card)]/80 border-b border-white/5 px-4 lg:px-8 py-2 flex items-center justify-between text-xs">
         <Link
           href="/"
           className="inline-flex items-center gap-1.5 text-sky-400 hover:text-white font-medium transition-colors"
@@ -182,7 +182,7 @@ export default function GameHubPage() {
 
       {/* Netflix Hero Billboard Section */}
       {games.length > 0 && !searchQuery && !activeTag && (
-        <div className="relative w-full aspect-[21/9] md:aspect-[21/8] max-h-[520px] overflow-hidden bg-black border-b border-sky-500/20 group">
+        <div className="relative w-full max-w-5xl mx-auto my-6 aspect-[21/9] md:aspect-[21/8] max-h-[460px] overflow-hidden bg-black border border-white/15 rounded-3xl shadow-2xl group">
           {games.map((g, idx) => {
             const isActive = idx === (spotlightIndex % games.length);
             return (
@@ -194,76 +194,43 @@ export default function GameHubPage() {
                     : 'opacity-0 pointer-events-none z-0'
                 }`}
               >
-                {/* Background Image */}
-                <img
-                  src={g.cover_image_url || g.thumbnail_url}
-                  alt={g.title}
-                  className="w-full h-full object-cover object-center filter brightness-90 transform scale-105"
-                />
+                {/* Clicking image/banner navigates directly to game page */}
+                <Link href={`/game/${g.id}`} className="absolute inset-0 block group/banner cursor-pointer">
+                  {/* Background Image inside Box 1 */}
+                  <img
+                    src={g.cover_image_url || g.thumbnail_url}
+                    alt={g.title}
+                    className="w-full h-full object-cover object-center filter brightness-90 group-hover/banner:scale-105 transition-transform duration-700 ease-out"
+                  />
 
-                {/* Text & Action Details Card */}
-                <div className="absolute bottom-4 md:bottom-8 left-4 md:left-10 right-4 max-w-xl p-3.5 md:p-4 rounded-xl bg-black/55 backdrop-blur-md border border-white/10 shadow-xl space-y-2 z-20">
-                  <div className="flex items-center gap-1.5">
-                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-600/90 text-white font-bold text-[10px] sm:text-xs shadow-md border border-sky-300/30">
-                      <Sparkles className="w-3 h-3 text-yellow-300 animate-pulse" />
+                  {/* Top-Left SPOTLIGHT Badge */}
+                  <div className="absolute top-4 left-4 md:top-6 md:left-6 z-20">
+                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#FF7E14] to-[#EB6D12] text-white font-extrabold text-[10px] sm:text-xs shadow-lg shadow-orange-500/30 border border-orange-400/40 backdrop-blur-md">
+                      <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
                       SPOTLIGHT
                     </span>
-                    <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/20 text-sky-300 font-semibold text-[10px] sm:text-[11px] border border-sky-400/20">
-                      <GraduationCap className="w-3 h-3" />
-                      CS 67
-                    </span>
                   </div>
 
-                  <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight leading-tight text-white drop-shadow-sm">
-                    {g.title}
-                  </h1>
+                  {/* Text Details Box spanning across the bottom */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/95 via-slate-950/80 to-transparent p-6 md:p-8 flex flex-col items-center justify-center text-center space-y-2 z-20">
+                    <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold tracking-tight leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                      {g.title}
+                    </h1>
 
-                  <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed drop-shadow-sm max-w-lg font-normal">
-                    {g.description}
-                  </p>
-
-                  <div className="flex items-center gap-2 pt-1 flex-wrap">
-                    <Link
-                      href={`/game/${g.id}`}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-bold text-[11px] sm:text-xs shadow-md shadow-sky-500/20 transition-all cursor-pointer"
-                    >
-                      <Play className="w-3 h-3 fill-current ml-0.5" />
-                      <span>เล่นเกมเลย</span>
-                    </Link>
-
-                    <Link
-                      href={`/game/${g.id}`}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white font-medium text-[11px] sm:text-xs backdrop-blur-sm border border-white/15 transition-all"
-                    >
-                      <Info className="w-3 h-3 text-slate-300" />
-                      <span>รายละเอียด</span>
-                    </Link>
-
-                    {games.length > 1 && (
-                      <button
-                        onClick={handleRandomSpotlight}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/40 hover:bg-indigo-600/70 text-indigo-200 hover:text-white font-medium text-[11px] sm:text-xs border border-indigo-400/30 backdrop-blur-sm transition-all cursor-pointer shadow-sm"
-                        title="สุ่มสลับเกมไฮไลท์"
-                      >
-                        <Shuffle className="w-3 h-3 text-indigo-300" />
-                        <span>🔀 สุ่มเกมอื่น</span>
-                      </button>
-                    )}
+                    <p className="text-xs md:text-sm text-slate-200 line-clamp-2 leading-relaxed drop-shadow max-w-2xl font-medium text-center">
+                      {g.description}
+                    </p>
                   </div>
-                </div>
+                </Link>
               </div>
             );
           })}
-
-          {/* Gradients Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050814] via-[#050814]/60 to-transparent pointer-events-none z-15" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#050814] via-[#050814]/70 to-transparent w-2/3 pointer-events-none z-15" />
 
           {/* Left Navigation Arrow */}
           {games.length > 1 && (
             <button
               onClick={handlePrevSpotlight}
-              className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-30 p-2.5 md:p-3 rounded-full bg-black/50 hover:bg-sky-500/40 text-white/80 hover:text-sky-300 border border-white/15 hover:border-sky-400/60 backdrop-blur-md transition-all duration-200 cursor-pointer shadow-xl opacity-80 group-hover:opacity-100"
+              className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 z-30 p-2.5 md:p-3 rounded-full bg-black/60 hover:bg-sky-500/50 text-white/90 hover:text-white border border-white/20 backdrop-blur-md transition-all duration-200 cursor-pointer shadow-xl opacity-80 group-hover:opacity-100"
               title="เกมก่อนหน้า"
             >
               <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
@@ -274,7 +241,7 @@ export default function GameHubPage() {
           {games.length > 1 && (
             <button
               onClick={handleNextSpotlight}
-              className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-30 p-2.5 md:p-3 rounded-full bg-black/50 hover:bg-sky-500/40 text-white/80 hover:text-sky-300 border border-white/15 hover:border-sky-400/60 backdrop-blur-md transition-all duration-200 cursor-pointer shadow-xl opacity-80 group-hover:opacity-100"
+              className="absolute right-3 md:right-5 top-1/2 -translate-y-1/2 z-30 p-2.5 md:p-3 rounded-full bg-black/60 hover:bg-sky-500/50 text-white/90 hover:text-white border border-white/20 backdrop-blur-md transition-all duration-200 cursor-pointer shadow-xl opacity-80 group-hover:opacity-100"
               title="เกมถัดไป"
             >
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
@@ -283,14 +250,14 @@ export default function GameHubPage() {
 
           {/* Dots Indicator */}
           {games.length > 1 && (
-            <div className="absolute bottom-4 right-6 md:right-12 z-30 flex items-center gap-1.5 bg-black/50 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
+            <div className="absolute bottom-4 right-5 md:right-8 z-30 flex items-center gap-1.5 bg-black/60 px-3 py-1.5 rounded-full border border-white/15 backdrop-blur-md">
               {games.map((g, i) => (
                 <button
                   key={g.id}
                   onClick={() => setSpotlightIndex(i)}
                   className={`transition-all duration-500 rounded-full cursor-pointer ${
                     i === (spotlightIndex % games.length)
-                      ? 'w-6 h-2 bg-sky-400 shadow-glow'
+                      ? 'w-6 h-2 bg-[#FF7E14] shadow-glow'
                       : 'w-2 h-2 bg-white/40 hover:bg-white/80'
                   }`}
                   title={g.title}
@@ -301,77 +268,51 @@ export default function GameHubPage() {
         </div>
       )}
 
-      {/* Main Content Area */}
+      {/* Main Content Area: Direct Clean Grid View for All Games */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-8">
-        {(activeTag || searchQuery) ? (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="font-extrabold text-xl text-white tracking-tight flex items-center gap-2">
-                <Flame className="w-5 h-5 text-sky-400 fill-sky-400" />
-                <span>{activeTag ? `หมวดหมู่: ${activeTag.toUpperCase()}` : `ผลการค้นหา: "${searchQuery}"`}</span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#0e152e] text-sky-300 font-semibold border border-sky-500/30">
-                  {games.length} เกม
-                </span>
-              </h2>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h2 className="font-extrabold text-xl text-[var(--text-main)] tracking-tight flex items-center gap-2">
+              <Flame className="w-5.5 h-5.5 text-[#FF7E14] fill-[#FF7E14]" />
+              <span>
+                {activeTag
+                  ? `หมวดหมู่: ${activeTag.toUpperCase()}`
+                  : searchQuery
+                  ? `ผลการค้นหา: "${searchQuery}"`
+                  : '🔥 คลังผลงานเกมทั้งหมด (All CS 67 Games)'}
+              </span>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-[var(--bg-card)] text-sky-400 font-bold border border-[var(--border-card)] shadow-sm">
+                {games.length} เกม
+              </span>
+            </h2>
 
-              <button
-                onClick={refetch}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0e152e] hover:bg-[#162248] text-xs font-semibold text-slate-300 border border-white/10"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                <span>รีเฟรช</span>
-              </button>
+            <button
+              onClick={refetch}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[var(--bg-card)] hover:bg-sky-500/10 text-xs font-bold text-[var(--text-main)] border border-[var(--border-card)] transition-all cursor-pointer shadow-sm"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>รีเฟรช</span>
+            </button>
+          </div>
+
+          {games.length === 0 ? (
+            <div className="p-12 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-card)] text-center space-y-4 shadow-xl">
+              <Gamepad2 className="w-12 h-12 text-slate-400 mx-auto" />
+              <h3 className="font-bold text-lg text-[var(--text-main)]">ไม่พบผลงานเกมที่ค้นหา</h3>
+              <p className="text-xs text-[var(--text-muted)]">ลองค้นหาด้วยคำอื่น หรือเลือกหมวดหมู่อื่นดูครับ</p>
             </div>
-
-            {games.length === 0 ? (
-              <div className="p-12 rounded-2xl bg-[#0e152e] border border-sky-500/20 text-center space-y-4 shadow-xl">
-                <Gamepad2 className="w-12 h-12 text-slate-500 mx-auto" />
-                <h3 className="font-bold text-lg text-white">ไม่พบผลงานเกมที่ค้นหา</h3>
-                <p className="text-xs text-slate-400">ลองค้นหาด้วยคำอื่น หรือเลือกหมวดหมู่อื่นดูครับ</p>
-              </div>
-            ) : (
-              <div className="game-grid">
-                {games.map((game) => (
-                  <GameCard key={game.id} game={game} />
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-8">
-            <NetflixGameRow
-              title="🔥 ผลงานยอดนิยม (Trending CS 67 Games)"
-              icon={<TrendingUp className="w-5 h-5 text-sky-400" />}
-              games={games}
-            />
-            <NetflixGameRow
-              title="💻 CS 67 Projects (โปรเจกต์วิทยาการคอมพิวเตอร์)"
-              icon={<Cpu className="w-5 h-5 text-blue-400" />}
-              games={cs67Projects.length > 0 ? cs67Projects : games.slice(0, 4)}
-            />
-            <NetflixGameRow
-              title="⚡ WebGL / 3D Graphics (เกมสามมิติ)"
-              icon={<Box className="w-5 h-5 text-cyan-400" />}
-              games={webglGames.length > 0 ? webglGames : games.slice(1, 5)}
-            />
-            <NetflixGameRow
-              title="🧩 Puzzle & Brain (เกมปริศนาเเละลับสมอง)"
-              icon={<Puzzle className="w-5 h-5 text-amber-400" />}
-              games={puzzleGames.length > 0 ? puzzleGames : games.slice(2, 6)}
-            />
-            {arcadeGames.length > 0 && (
-              <NetflixGameRow
-                title="🕹️ Arcade & Action (เกมอาเขตและแอ็กชัน)"
-                icon={<Gamepad2 className="w-5 h-5 text-emerald-400" />}
-                games={arcadeGames}
-              />
-            )}
-          </div>
-        )}
+          ) : (
+            <div className="game-grid">
+              {games.map((game) => (
+                <GameCard key={game.id} game={game} />
+              ))}
+            </div>
+          )}
+        </div>
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-white/10 bg-[#03060f] py-6 px-4 text-xs text-slate-400">
+      <footer className="mt-auto border-t border-white/10 bg-[var(--bg-card)] py-6 px-4 text-xs text-[var(--text-muted)]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 One 4 All - Computer Science CS 67 Game Hub. All Rights Reserved.</p>
           <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 text-slate-300 font-medium">

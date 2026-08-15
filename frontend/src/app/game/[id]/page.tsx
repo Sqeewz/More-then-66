@@ -278,7 +278,7 @@ export default function GameDetailPage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#050814] text-white">
+    <div className="min-h-screen flex flex-col bg-transparent text-[var(--text-main)] transition-colors">
       {/* CS RMUTI Loading Screen */}
       <LoadingScreen minDuration={600} />
 
@@ -327,13 +327,8 @@ export default function GameDetailPage() {
             {/* Header: ชื่อเกมตัวใหญ่ + Stats Bar */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-white/10">
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-sky-300 text-xs font-bold border border-sky-400/30">
-                  <GraduationCap className="w-3.5 h-3.5" />
-                  CS 67 GAME HUB SHOWCASE
-                </div>
-                
-                {/* ชื่อเกมตัวใหญ่ */}
-                <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight gradient-text-blue">
+                {/* ชื่อเกมตัวใหญ่ สีดำใน Graph Paper theme */}
+                <h1 className="text-3xl md:text-5xl font-black tracking-tight leading-tight text-[var(--text-title)]">
                   {game.title}
                 </h1>
 

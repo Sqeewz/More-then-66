@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useTheme } from '@/context/ThemeContext';
 
 interface LoadingScreenProps {
-  minDuration?: number; // ms to keep screen before fade-out
+  minDuration?: number;
   onFinish?: () => void;
 }
 
@@ -11,6 +12,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
   minDuration = 1200,
   onFinish,
 }) => {
+  const { theme } = useTheme();
   const [visible, setVisible] = useState(true);
   const [fadingOut, setFadingOut] = useState(false);
 
@@ -20,7 +22,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
       const hideTimer = setTimeout(() => {
         setVisible(false);
         if (onFinish) onFinish();
-      }, 500); // 500ms fade transition
+      }, 500);
       return () => clearTimeout(hideTimer);
     }, minDuration);
 
@@ -29,199 +31,211 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
 
   if (!visible) return null;
 
+  const isGraphPaper = theme === 'graph-paper';
+  const isBlueprint = theme === 'blueprint';
+
+  // Dynamic Background style based on selected theme
+  const backdropBg = isGraphPaper
+    ? '#f8fafc'
+    : isBlueprint
+    ? 'radial-gradient(circle at center, #0c2145 0%, #07152d 60%, #040c1b 90%)'
+    : 'radial-gradient(circle at center, #071b36 0%, #020b18 50%, #050814 90%)';
+
+  const gridLineColor = isGraphPaper
+    ? 'rgba(51, 65, 85, 0.15)'
+    : isBlueprint
+    ? 'rgba(255, 255, 255, 0.18)'
+    : 'rgba(56, 189, 248, 0.12)';
+
+  const auraBg = isGraphPaper
+    ? 'radial-gradient(circle, rgba(2, 132, 199, 0.18) 0%, rgba(255, 126, 20, 0.15) 70%, transparent 100%)'
+    : isBlueprint
+    ? 'radial-gradient(circle, rgba(255, 126, 20, 0.3) 0%, rgba(12, 33, 69, 0.6) 70%, transparent 100%)'
+    : 'radial-gradient(circle, rgba(7, 27, 54, 0.95) 0%, rgba(2, 11, 24, 0.65) 70%, transparent 100%)';
+
+  const textColor = isGraphPaper ? '#0f172a' : '#FF7E14';
+
   return (
     <div
-      className={`fixed inset-0 z-[99999] w-full h-screen bg-black flex justify-center items-center overflow-hidden transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[99999] w-full h-screen flex justify-center items-center overflow-hidden transition-opacity duration-500 ${
         fadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
       style={{
-        background: 'radial-gradient(circle at center, #071b36 0%, #020b18 35%, #000 75%)',
-        fontFamily: 'Arial, Helvetica, sans-serif',
+        backgroundColor: isGraphPaper ? '#f8fafc' : 'black',
+        backgroundImage: `
+          linear-gradient(${gridLineColor} 1px, transparent 1px),
+          linear-gradient(90deg, ${gridLineColor} 1px, transparent 1px),
+          ${backdropBg}
+        `,
+        backgroundSize: '28px 28px, 28px 28px, 100% 100%',
+        fontFamily: 'Arial, "Noto Sans Thai", sans-serif',
       }}
     >
       <style jsx>{`
-        .loading-bg-glow {
+        .navy-aura-backdrop {
           position: absolute;
-          width: 500px;
-          height: 500px;
+          width: min(88vw, 500px);
+          height: min(88vw, 500px);
           border-radius: 50%;
-          background: #008cff;
-          filter: blur(180px);
-          opacity: 0.12;
-          animation: backgroundGlow 3s ease-in-out infinite;
-        }
-
-        .loader-container {
-          position: relative;
-          width: 350px;
-          transform: translateY(15px);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          z-index: 2;
-        }
-
-        .logo-img {
-          position: relative;
-          width: 260px;
-          height: auto;
-          z-index: 3;
-          object-fit: contain;
-          filter: drop-shadow(0 0 5px rgba(0, 140, 255, 0.5)) drop-shadow(0 0 20px rgba(0, 140, 255, 0.25));
-          animation: logoFloat 3s ease-in-out infinite, logoGlow 2s ease-in-out infinite alternate;
-        }
-
-        .logo-ring-wrapper {
-          position: absolute;
-          width: 310px;
-          height: 310px;
-          top: -25px;
-          border-radius: 50%;
-          border: 2px solid transparent;
-          border-top-color: #00aaff;
-          border-right-color: #0066ff;
-          filter: drop-shadow(0 0 8px #008cff);
-          animation: rotateRing 2s linear infinite;
+          background: ${auraBg};
+          filter: blur(45px);
+          animation: navyPulse 3s ease-in-out infinite alternate;
+          pointer-events: none;
           z-index: 1;
         }
 
-        .logo-ring-wrapper::before {
-          content: '';
-          position: absolute;
-          inset: 12px;
-          border-radius: 50%;
-          border: 1px solid rgba(0, 153, 255, 0.25);
-          animation: rotateRingReverse 3s linear infinite;
-        }
-
-        .loading-text-label {
-          margin-top: 35px;
-          color: white;
-          font-size: 15px;
-          font-weight: 600;
-          letter-spacing: 6px;
-          text-align: center;
-          text-shadow: 0 0 8px rgba(0, 153, 255, 0.8);
-        }
-
-        .dots-anim {
-          display: inline-block;
-          width: 30px;
-          overflow: hidden;
-          vertical-align: bottom;
-          animation: dots 1.5s steps(4, end) infinite;
-        }
-
-        .progress-container {
+        .loader {
           position: relative;
-          width: 280px;
-          height: 3px;
-          margin-top: 18px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
+          z-index: 2;
+          width: min(90vw, 520px);
+          text-align: center;
+          animation: containerIn 1.2s ease-out both;
+        }
+
+        .logo-wrap {
+          position: relative;
+          display: inline-block;
+          width: min(72vw, 390px);
+          animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        .logo-wrap::before {
+          content: "";
+          position: absolute;
+          inset: 10% 12% 15%;
+          border-radius: 50%;
+          background: ${isGraphPaper ? 'rgba(2, 132, 199, 0.15)' : 'rgba(255, 126, 20, 0.25)'};
+          filter: blur(40px);
+          animation: glow 2s ease-in-out infinite alternate;
+          z-index: -1;
+        }
+
+        .logo {
+          width: 100%;
+          height: auto;
+          display: block;
+          filter: ${
+            isGraphPaper
+              ? 'drop-shadow(0 4px 15px rgba(0, 0, 0, 0.15)) drop-shadow(0 0 10px rgba(255, 126, 20, 0.5))'
+              : 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 16px rgba(255, 126, 20, 0.7))'
+          };
+        }
+
+        .progress-area {
+          margin-top: 28px;
+        }
+
+        .progress {
+          width: 100%;
+          height: 5px;
+          background: ${isGraphPaper ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.12)'};
+          border-radius: 99px;
           overflow: hidden;
-          box-shadow: 0 0 10px rgba(0, 140, 255, 0.15);
+          position: relative;
         }
 
-        .progress-bar-fill {
-          width: 0%;
+        .progress::before {
+          content: "";
+          position: absolute;
+          left: -45%;
+          top: 0;
+          width: 45%;
           height: 100%;
-          border-radius: inherit;
-          background: linear-gradient(90deg, #0055ff, #00aaff, #fff);
-          box-shadow: 0 0 10px #008cff, 0 0 20px rgba(0, 140, 255, 0.8);
-          animation: progress 2.5s ease-in-out infinite;
+          background: linear-gradient(90deg, transparent, #FF7E14, #ffd000, #FF7E14, transparent);
+          box-shadow: 0 0 15px #FF7E14;
+          animation: scan 1.6s ease-in-out infinite;
         }
 
-        .loading-status-sub {
-          margin-top: 12px;
-          color: rgba(255, 255, 255, 0.45);
-          font-size: 9px;
-          letter-spacing: 4px;
-          text-transform: uppercase;
+        .dots {
+          margin-top: 16px;
+          display: flex;
+          justify-content: center;
+          gap: 9px;
         }
 
+        .dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #FF7E14;
+          box-shadow: 0 0 10px #FF7E14;
+          animation: dotPulse 1.2s infinite ease-in-out;
+        }
+        .dot:nth-child(1) { animation-delay: 0s; }
+        .dot:nth-child(2) { animation-delay: 0.1s; }
+        .dot:nth-child(3) { animation-delay: 0.2s; }
+        .dot:nth-child(4) { animation-delay: 0.3s; }
+        .dot:nth-child(5) { animation-delay: 0.4s; }
+        .dot:nth-child(6) { animation-delay: 0.5s; }
+        .dot:nth-child(7) { animation-delay: 0.6s; }
+
+        .loading-text {
+          margin-top: 14px;
+          color: ${textColor};
+          font-size: 12px;
+          letter-spacing: 7px;
+          text-indent: 7px;
+          font-weight: 800;
+          animation: textGlow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes navyPulse {
+          from { opacity: 0.45; transform: scale(0.92); }
+          to { opacity: 0.85; transform: scale(1.08); }
+        }
+        @keyframes containerIn {
+          from { opacity: 0; transform: scale(0.92); }
+          to { opacity: 1; transform: scale(1); }
+        }
         @keyframes logoFloat {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-8px); }
         }
-
-        @keyframes logoGlow {
-          0% {
-            filter: drop-shadow(0 0 5px rgba(0, 140, 255, 0.4)) drop-shadow(0 0 15px rgba(0, 140, 255, 0.2));
-          }
-          100% {
-            filter: drop-shadow(0 0 10px rgba(0, 170, 255, 0.9)) drop-shadow(0 0 30px rgba(0, 100, 255, 0.5));
-          }
+        @keyframes glow {
+          from { opacity: 0.4; transform: scale(0.9); }
+          to { opacity: 0.95; transform: scale(1.1); }
+        }
+        @keyframes scan {
+          0% { left: -45%; }
+          100% { left: 100%; }
+        }
+        @keyframes dotPulse {
+          0%, 100% { transform: scale(0.55); opacity: 0.25; }
+          45% { transform: scale(1.25); opacity: 1; }
+        }
+        @keyframes textGlow {
+          from { opacity: 0.45; text-shadow: 0 0 2px ${textColor}; }
+          to { opacity: 1; text-shadow: 0 0 14px ${textColor}, 0 0 25px rgba(255, 126, 20, 0.6); }
         }
 
-        @keyframes rotateRing {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        @keyframes rotateRingReverse {
-          from { transform: rotate(360deg); }
-          to { transform: rotate(0deg); }
-        }
-
-        @keyframes progress {
-          0% { width: 0%; }
-          50% { width: 75%; }
-          80% { width: 90%; }
-          100% { width: 100%; }
-        }
-
-        @keyframes dots {
-          0% { width: 0; }
-          25% { width: 8px; }
-          50% { width: 16px; }
-          75% { width: 24px; }
-          100% { width: 30px; }
-        }
-
-        @keyframes backgroundGlow {
-          0%, 100% {
-            transform: scale(0.8);
-            opacity: 0.08;
-          }
-          50% {
-            transform: scale(1.2);
-            opacity: 0.16;
-          }
-        }
-
-        @media (max-width: 600px) {
-          .loader-container { width: 90%; }
-          .logo-img { width: 210px; }
-          .logo-ring-wrapper { width: 255px; height: 255px; top: -20px; }
-          .progress-container { width: 230px; }
-          .loading-text-label {
-            font-size: 12px;
-            letter-spacing: 4px;
-          }
+        @media (max-height: 650px) {
+          .logo-wrap { width: min(55vw, 280px); }
+          .progress-area { margin-top: 15px; }
         }
       `}</style>
 
-      <div className="loading-bg-glow" />
+      <div className="navy-aura-backdrop" />
 
-      <div className="loader-container">
-        <div className="logo-ring-wrapper" />
-
-        <img
-          className="logo-img"
-          src="/logo.png?v=2"
-          alt="CS RMUTI Logo"
-        />
-
-        <div className="loading-text-label">
-          CS RMUTI LOADING<span className="dots-anim">...</span>
+      <div className="loader">
+        <div className="logo-wrap">
+          <img className="logo" src="/rmuti.png" alt="RMUTI Logo" />
         </div>
 
-        <div className="progress-container">
-          <div className="progress-bar-fill" />
+        <div className="progress-area">
+          <div className="progress" />
         </div>
 
-        <div className="loading-status-sub">INITIALIZING SYSTEM REAL-TIME</div>
+        <div className="dots">
+          <div className="dot" />
+          <div className="dot" />
+          <div className="dot" />
+          <div className="dot" />
+          <div className="dot" />
+          <div className="dot" />
+          <div className="dot" />
+        </div>
+
+        <div className="loading-text">LOADING...</div>
       </div>
     </div>
   );

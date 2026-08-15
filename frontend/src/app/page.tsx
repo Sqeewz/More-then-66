@@ -1,17 +1,58 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { LogIn, LogOut, ArrowRight, Sparkles } from 'lucide-react';
+import { LogIn, LogOut, ArrowRight, Palette, Check } from 'lucide-react';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { useTheme, THEME_OPTIONS } from '@/context/ThemeContext';
 
 export default function LandingPage() {
   const { data: session } = useSession();
+  const { theme, setTheme } = useTheme();
+
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+  const themeMenuRef = useRef<HTMLDivElement>(null);
+
+  const [isRmutiLogo, setIsRmutiLogo] = useState(false);
+  const [isGlitching, setIsGlitching] = useState(false);
 
   const mainCanvasRef = useRef<HTMLDivElement>(null);
   const charLayerRef = useRef<HTMLDivElement>(null);
   const petalsCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  const logoSrc = theme === 'graph-paper' ? '/logo2.png' : '/logo.png?v=2';
+  const activeLogo = isRmutiLogo ? '/rmuti.png' : logoSrc;
+  const currentThemeObj = THEME_OPTIONS.find((t) => t.id === theme) || THEME_OPTIONS[0];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsGlitching(true);
+      const swapTimer = setTimeout(() => {
+        setIsRmutiLogo((prev) => !prev);
+      }, 180);
+      const endGlitchTimer = setTimeout(() => {
+        setIsGlitching(false);
+      }, 450);
+
+      return () => {
+        clearTimeout(swapTimer);
+        clearTimeout(endGlitchTimer);
+      };
+    }, 4500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (themeMenuRef.current && !themeMenuRef.current.contains(e.target as Node)) {
+        setIsThemeMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     let animationFrameId: number;
@@ -46,7 +87,7 @@ export default function LandingPage() {
     }
     updateParallax();
 
-    // Petal Particle System
+    // Petal Particle System (Colors Adapt to Theme)
     const canvas = petalsCanvasRef.current;
     if (!canvas || !mainCanvasRef.current) return;
     const ctx = canvas.getContext('2d');
@@ -85,13 +126,30 @@ export default function LandingPage() {
         this.angle = Math.random() * 360;
         this.spin = Math.random() * 0.8 - 0.4;
 
-        const colors = [
-          'rgba(56, 189, 248, 0.3)',   // ฟ้า
-          'rgba(37, 99, 235, 0.25)',   // น้ำเงิน
-          'rgba(139, 92, 246, 0.25)',  // ม่วง
-          'rgba(255, 255, 255, 0.35)',  // ขาว
-          'rgba(186, 230, 253, 0.3)',   // ฟ้าอ่อนเกือบขาว
-        ];
+        let colors: string[] = [];
+        if (theme === 'blueprint') {
+          colors = [
+            'rgba(255, 126, 20, 0.65)',
+            'rgba(255, 160, 72, 0.55)',
+            'rgba(255, 208, 0, 0.5)',
+            'rgba(56, 189, 248, 0.45)',
+          ];
+        } else if (theme === 'graph-paper') {
+          colors = [
+            'rgba(15, 23, 42, 0.55)',
+            'rgba(2, 132, 199, 0.5)',
+            'rgba(224, 103, 0, 0.55)',
+            'rgba(71, 85, 105, 0.4)',
+          ];
+        } else {
+          colors = [
+            'rgba(56, 189, 248, 0.45)',
+            'rgba(37, 99, 235, 0.35)',
+            'rgba(255, 126, 20, 0.45)',
+            'rgba(255, 255, 255, 0.5)',
+          ];
+        }
+
         this.color = colors[Math.floor(Math.random() * colors.length)];
       }
 
@@ -119,7 +177,7 @@ export default function LandingPage() {
     }
 
     const petalsArray: Petal[] = [];
-    const maxPetals = 30;
+    const maxPetals = 35;
     for (let i = 0; i < maxPetals; i++) {
       petalsArray.push(new Petal());
     }
@@ -141,17 +199,16 @@ export default function LandingPage() {
       cancelAnimationFrame(animationFrameId);
       cancelAnimationFrame(petalsAnimationFrameId);
     };
-  }, []);
+  }, [theme]);
 
   return (
-    <div className="w-full min-h-screen bg-[#060608] text-white selection:bg-amber-500 selection:text-black">
+    <div className="w-full min-h-screen bg-transparent text-[var(--text-main)] selection:bg-[#FF7E14] selection:text-white transition-colors duration-300">
       {/* Dynamic Style Block for Dedicated Fullscreen Anime Landing */}
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;900&family=Syncopate:wght@700&display=swap');
 
         .anime-landing-wrapper {
-          background: #060608;
-          background-image: radial-gradient(circle at center, #07073cff 0%, #060608 100%);
+          background: transparent;
           font-family: 'Noto Sans JP', 'Syncopate', sans-serif;
           width: 100vw;
           height: auto;
@@ -171,15 +228,8 @@ export default function LandingPage() {
           max-height: none;
           display: grid;
           grid-template-columns: 44% 43% 13%;
-          background-image: url('/wallmain.png');
-          background-size: cover;
-          background-position: center;
+          background: transparent;
           position: relative;
-          
-          box-shadow: 
-              0 30px 100px rgba(0, 0, 0, 0.8),
-              inset 0 0 80px rgba(6, 6, 8, 0.9),
-              inset 0 0 140px rgba(0, 0, 0, 0.95);
           border: none;
           border-radius: 0;
           overflow-y: auto;
@@ -198,19 +248,10 @@ export default function LandingPage() {
           }
         }
 
-        .canvas-container::after {
-          content: '';
-          position: absolute;
-          top: 0; left: 0; width: 100%; height: 100%;
-          background: radial-gradient(circle, transparent 40%, rgba(6, 6, 8, 0.85) 100%);
-          z-index: 12;
-          pointer-events: none;
-        }
-
         .canvas-dot-overlay {
           position: absolute;
           top: 0; left: 0; width: 100%; height: 100%;
-          background-image: radial-gradient(rgba(255, 255, 255, 0.04) 15%, transparent 16%);
+          background-image: radial-gradient(rgba(148, 163, 184, 0.08) 15%, transparent 16%);
           background-size: 6px 6px;
           z-index: 2;
           pointer-events: none;
@@ -220,7 +261,7 @@ export default function LandingPage() {
           position: absolute;
           width: 20px;
           height: 20px;
-          border: 2px solid rgba(255, 255, 255, 0.25);
+          border: 2px solid var(--border-color);
           z-index: 13;
           pointer-events: none;
         }
@@ -236,7 +277,7 @@ export default function LandingPage() {
           font-family: 'Syncopate', sans-serif;
           font-size: 14rem;
           font-weight: 700;
-          color: rgba(181, 137, 61, 0.03);
+          color: rgba(255, 126, 20, 0.04);
           letter-spacing: 30px;
           white-space: nowrap;
           z-index: 1;
@@ -263,24 +304,24 @@ export default function LandingPage() {
           justify-content: space-between;
           position: relative;
           z-index: 15;
-          background: linear-gradient(90deg, rgba(6, 6, 8, 0.98) 0%, rgba(12, 3, 70, 0.65) 75%, rgba(0, 0, 0, 0) 100%);
+          background: transparent;
         }
 
         .hero-quote-header {
           font-size: 0.75rem;
           font-weight: 900;
-          color: #cbd5e1;
+          color: var(--text-muted);
           letter-spacing: 2px;
           line-height: 1.5;
           text-transform: uppercase;
-          border-left: 3px solid #3d9db5ff;
+          border-left: 3px solid #FF7E14;
           padding-left: 10px;
           transition: padding-right 0.3s ease;
         }
 
         .quote-jp {
           font-size: 0.65rem;
-          color: #8492a6;
+          color: var(--text-muted);
           display: block;
           margin-top: 4px;
           letter-spacing: 1px;
@@ -294,87 +335,88 @@ export default function LandingPage() {
         .main-kanji {
           font-size: 9.5rem;
           font-weight: 900;
-          color: #ffffff;
+          color: var(--text-title);
           line-height: 0.85;
           letter-spacing: -6px;
           display: inline-block;
           text-shadow: 
-              1px 1px 0px #1228b8ff,
-              2px 2px 0px #0a1794ff,
-              3px 3px 0px #060853ff,
-              5px 5px 25px rgba(0, 0, 0, 0.95);
+              1px 1px 0px #FF7E14,
+              2px 2px 0px rgba(56, 189, 248, 0.6),
+              0 0 35px rgba(255, 126, 20, 0.55);
+          transition: color 0.3s ease;
         }
 
         .japanese-sub {
           font-size: 0.95rem;
-          color: #f1f5f9;
+          color: var(--text-muted);
           font-weight: 900;
           letter-spacing: 6px;
           margin-bottom: 8px;
           display: block;
-          text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
         }
 
         .numeric-badge {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          background-color: #ffffff;
-          color: #000000;
+          background: linear-gradient(135deg, #FF7E14, #EB6D12);
+          color: #ffffff;
           padding: 8px 22px;
           font-size: 0.85rem;
           font-weight: 800;
           letter-spacing: 2px;
           margin-top: 14px;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
-          border-radius: 4px;
+          box-shadow: 0 0 16px rgba(255, 126, 20, 0.45), 0 6px 20px rgba(255, 126, 20, 0.4);
+          border-radius: 6px;
           text-decoration: none;
           transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         .numeric-badge:hover {
-          background-color: #0c0c76ff;
-          color: #ffffffff;
+          background: linear-gradient(135deg, #ff8c26, #f3771c);
+          color: #ffffff;
           transform: translateY(-2px) scale(1.04);
-          box-shadow: 0 10px 25px rgba(54, 17, 247, 0.4);
+          box-shadow: 0 0 25px rgba(255, 126, 20, 0.65), 0 10px 25px rgba(255, 126, 20, 0.6);
         }
 
         .content-text-box {
-          background: rgba(10, 10, 14, 0.8);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-left: 4px solid #3d5db5ff;
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
+          border-left: 4px solid;
+          border-image: linear-gradient(to bottom, #38bdf8, #ff7e14) 1;
           padding: 20px 20px;
           margin-top: 25px;
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           border-radius: 15px;
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-          color: #cbd5e1;
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+          color: var(--text-main);
           font-size: 20px;
           line-height: 1.6;
           max-height: 260px;
           overflow-y: auto;
+          transition: background 0.3s ease, color 0.3s ease;
         }
 
         .left-footer {
           display: flex;
           justify-content: space-between;
           align-items: flex-end;
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          border-top: 1px solid var(--border-color);
           padding-top: 15px;
         }
 
         .game-meta {
           font-size: 0.65rem;
-          color: #475569;
+          color: var(--text-muted);
           font-weight: bold;
           letter-spacing: 2px;
         }
 
         .tag-pill {
           background-color: transparent;
-          border: 1px solid rgba(255, 255, 255, 0.4);
-          color: #ffffff;
+          border: 1px solid var(--border-color);
+          color: var(--text-main);
           padding: 4px 14px;
           font-size: 0.6rem;
           font-weight: bold;
@@ -398,11 +440,11 @@ export default function LandingPage() {
           position: relative;
           overflow: hidden;
           border-radius: 10px;
-          background: linear-gradient(135deg, rgba(20, 30, 30, 0.08) 0%, rgba(10, 15, 15, 0.35) 100%);
-          backdrop-filter: blur(4px);
-          -webkit-backdrop-filter: blur(4px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+          background: var(--glass-bg);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid var(--glass-border);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
         }
 
         .art-window::after {
@@ -410,14 +452,14 @@ export default function LandingPage() {
           position: absolute;
           width: 100%;
           height: 2px;
-          background: linear-gradient(90deg, transparent, rgba(59, 61, 180, 0.3), rgba(168, 168, 178, 0.4), rgba(58, 59, 177, 0.3), transparent);
+          background: linear-gradient(90deg, transparent, rgba(255, 126, 20, 0.5), rgba(56, 189, 248, 0.6), transparent);
           top: 0; z-index: 2;
           animation: laser-scan 4s linear infinite;
         }
 
         .large-bg-kanji {
           font-size: 10rem;
-          color: rgba(255, 255, 255, 0.02);
+          color: rgba(148, 163, 184, 0.08);
           position: absolute;
           top: -20px; left: -20px;
           font-weight: 900;
@@ -432,7 +474,7 @@ export default function LandingPage() {
           flex-direction: column;
           align-items: flex-end;
           gap: 8px;
-          color: rgba(255, 255, 255, 0.3);
+          color: var(--text-muted);
           font-size: 0.55rem;
           font-family: monospace;
           z-index: 3;
@@ -441,11 +483,10 @@ export default function LandingPage() {
         .live-pulse-bar {
           width: 40px;
           height: 2px;
-          background-color: #287ea4ff;
+          background-color: #FF7E14;
           animation: bar-stretch 1.2s infinite ease-in-out;
         }
 
-        /* Scaled down logo container */
         .character-root {
           position: absolute;
           width: 100%;
@@ -461,13 +502,12 @@ export default function LandingPage() {
           will-change: transform;
         }
 
-        /* Logo fits inside the blurred art window card */
         .character-img {
           max-height: 46vh;
           max-width: 68%;
           width: auto;
           object-fit: contain;
-          filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 45px rgba(56, 189, 248, 0.35)); 
+          filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.4)); 
           animation: float-character 6s ease-in-out infinite;
         }
 
@@ -478,22 +518,21 @@ export default function LandingPage() {
           flex-direction: column;
           justify-content: space-between;
           align-items: center;
-          color: #ffffff;
+          color: var(--text-main);
           position: relative;
           z-index: 15;
-          background: linear-gradient(-90deg, rgba(6, 6, 8, 0.4) 0%, transparent 100%);
         }
 
         .pill-box {
-          border: 1px solid rgba(255, 255, 255, 0.25);
+          border: 1px solid var(--border-color);
           border-radius: 20px;
-          padding: 6px 20px;
+          padding: 6px 18px;
           font-size: 0.7rem;
           letter-spacing: 2px;
           font-weight: bold;
-          background: rgba(255, 255, 255, 0.05);
+          background: var(--glass-bg);
           text-decoration: none;
-          color: #ffffff;
+          color: var(--text-main);
           transition: all 0.2s ease;
         }
 
@@ -509,19 +548,19 @@ export default function LandingPage() {
           font-size: 2.2rem;
           font-weight: 900;
           letter-spacing: 10px;
-          color: #ffffff;
-          text-shadow: 0 4px 10px rgba(0,0,0,0.6);
+          color: var(--text-title);
+          text-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
         .v-latin-sub {
           writing-mode: vertical-rl;
           font-size: 0.7rem;
           letter-spacing: 6px;
-          color: rgba(255, 255, 255, 0.5);
+          color: var(--text-muted);
         }
 
         .diamond {
-          color: #3d52b5ff;
+          color: #FF7E14;
           font-size: 1.4rem;
           animation: pulse-glow 2s infinite ease-in-out;
         }
@@ -533,17 +572,57 @@ export default function LandingPage() {
         .micro-japanese {
           font-size: 0.45rem;
           letter-spacing: 3px;
-          color: rgba(255, 255, 255, 0.3);
+          color: var(--text-muted);
           writing-mode: vertical-rl;
           transform: rotate(180deg);
           margin-top: 8px;
         }
 
-        .login-button-container {
+        .action-button-group {
           position: absolute;
           top: 40px;
           right: 40px;
           z-index: 50;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        @keyframes cyberGlitch {
+          0% {
+            transform: translate(0, 0) skew(0deg) scale(1);
+            filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.8));
+            clip-path: inset(0 0 0 0);
+          }
+          15% {
+            transform: translate(-10px, 5px) skew(-14deg) scale(1.05);
+            filter: drop-shadow(-12px 0 #FF7E14) drop-shadow(12px 0 #38bdf8);
+            clip-path: inset(18% 0 32% 0);
+          }
+          35% {
+            transform: translate(10px, -6px) skew(12deg) scale(0.96);
+            filter: drop-shadow(10px 0 #00ffff) drop-shadow(-10px 0 #ff0055);
+            clip-path: inset(55% 0 12% 0);
+          }
+          60% {
+            transform: translate(-8px, 4px) skew(-8deg) scale(1.03);
+            filter: drop-shadow(-8px 0 #FF7E14) drop-shadow(8px 0 #00e5ff);
+            clip-path: inset(8% 0 68% 0);
+          }
+          80% {
+            transform: translate(5px, -3px) skew(5deg) scale(1.01);
+            filter: drop-shadow(8px 0 #ff007f);
+            clip-path: inset(40% 0 25% 0);
+          }
+          100% {
+            transform: translate(0, 0) skew(0deg) scale(1);
+            filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.4));
+            clip-path: inset(0 0 0 0);
+          }
+        }
+
+        .glitch-anim {
+          animation: cyberGlitch 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
 
         @keyframes move-nihility {
@@ -568,7 +647,7 @@ export default function LandingPage() {
         }
 
         @keyframes pulse-glow {
-          0%, 100% { opacity: 0.3; transform: scale(0.9); }
+          0%, 100% { opacity: 0.4; transform: scale(0.9); }
           50% { opacity: 1; transform: scale(1.1); }
         }
 
@@ -586,10 +665,9 @@ export default function LandingPage() {
           }
           .left-panel {
             padding: 35px 24px;
-            background: linear-gradient(180deg, rgba(6, 6, 8, 0.95) 0%, rgba(12, 3, 70, 0.9) 100%);
           }
           .hero-quote-header {
-            padding-right: 125px; /* Leave space for the floating Login button */
+            padding-right: 180px;
             font-size: 0.7rem;
           }
           .main-kanji {
@@ -611,7 +689,7 @@ export default function LandingPage() {
           .character-img {
             max-height: 32vh;
           }
-          .login-button-container {
+          .action-button-group {
             position: absolute;
             top: 25px;
             right: 25px;
@@ -624,7 +702,6 @@ export default function LandingPage() {
           .right-panel {
             flex-direction: column;
             padding: 30px 20px;
-            background: linear-gradient(180deg, rgba(12, 3, 70, 0.9) 0%, rgba(6, 6, 8, 0.98) 100%);
             gap: 20px;
           }
           .vertical-text-wrap {
@@ -654,74 +731,6 @@ export default function LandingPage() {
             transform: none;
           }
         }
-
-        /* Landscape Mobile Devices (height constrained) */
-        @media (max-height: 550px) {
-          .left-panel {
-            padding: 15px 25px;
-          }
-          .hero-quote-header {
-            font-size: 0.65rem;
-            line-height: 1.3;
-          }
-          .quote-jp {
-            font-size: 0.55rem;
-            margin-top: 2px;
-          }
-          .main-title-group {
-            margin-top: 5px;
-          }
-          .main-kanji {
-            font-size: 4.5rem;
-            letter-spacing: -2px;
-          }
-          .japanese-sub {
-            font-size: 0.75rem;
-            margin-bottom: 2px;
-            letter-spacing: 3px;
-          }
-          .numeric-badge {
-            padding: 5px 15px;
-            font-size: 0.75rem;
-            margin-top: 5px;
-          }
-          .content-text-box {
-            font-size: 14px;
-            line-height: 1.4;
-            padding: 12px;
-            margin-top: 10px;
-            max-height: 95px;
-          }
-          .art-window {
-            height: 80%;
-            width: 90%;
-          }
-          .character-img {
-            max-height: 60vh;
-          }
-          .right-panel {
-            padding: 15px 10px;
-          }
-          .vertical-text-wrap {
-            gap: 8px;
-          }
-          .v-kanji-title {
-            font-size: 1.4rem;
-            letter-spacing: 4px;
-          }
-          .v-latin-sub {
-            font-size: 0.55rem;
-            letter-spacing: 3px;
-          }
-          .left-footer {
-            padding-top: 5px;
-          }
-          .login-button-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-          }
-        }
       `}</style>
 
       {/* CS RMUTI Dynamic Loading Screen */}
@@ -730,12 +739,57 @@ export default function LandingPage() {
       {/* Standalone Fullscreen Anime Canvas Landing */}
       <div className="anime-landing-wrapper">
         <div className="canvas-container" id="main-canvas" ref={mainCanvasRef}>
-          {/* Floating Login Button at Top Right of screen */}
-          <div className="login-button-container">
+          {/* Action Buttons (Theme Selector + Login) */}
+          <div className="action-button-group">
+            {/* Theme Selector Dropdown */}
+            <div className="relative" ref={themeMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsThemeMenuOpen((prev) => !prev)}
+                className="pill-box hover:border-[#FF7E14] text-[var(--text-main)] font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 backdrop-blur-md shadow-lg"
+                title="เปลี่ยนธีมพื้นหลัง (Theme Selector)"
+              >
+                <Palette className="w-3.5 h-3.5 text-[#FF7E14]" />
+                <span className="hidden sm:inline">{currentThemeObj.label}</span>
+              </button>
+
+              {isThemeMenuOpen && (
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0e152e] border border-sky-500/30 shadow-2xl p-2 z-50 animate-fade-in backdrop-blur-xl text-white">
+                  <div className="px-3 py-1.5 border-b border-white/10 mb-1 text-[11px] font-bold text-sky-300 uppercase tracking-wider">
+                    🎨 เลือกลายกระดาษกราฟ & ธีม
+                  </div>
+                  {THEME_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => {
+                        setTheme(opt.id);
+                        setIsThemeMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition-all text-xs ${
+                        theme === opt.id
+                          ? 'bg-sky-500/20 text-white font-bold border border-sky-400/30'
+                          : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{opt.icon}</span>
+                        <div>
+                          <div className="font-bold">{opt.label}</div>
+                          <div className="text-[10px] text-slate-400 font-normal">{opt.desc}</div>
+                        </div>
+                      </div>
+                      {theme === opt.id && <Check className="w-4 h-4 text-[#FF7E14]" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Login / Logout Button */}
             {session?.user ? (
               <button
                 onClick={() => signOut()}
-                className="pill-box hover:bg-red-500/30 hover:border-red-400 text-red-300 transition-all duration-200 cursor-pointer flex items-center gap-1.5 backdrop-blur-md"
+                className="pill-box hover:bg-red-500/30 hover:border-red-400 text-red-400 transition-all duration-200 cursor-pointer flex items-center gap-1.5 backdrop-blur-md"
                 title={`Sign Out (${session.user.name || session.user.email})`}
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -744,10 +798,10 @@ export default function LandingPage() {
             ) : (
               <button
                 onClick={() => signIn('google')}
-                className="pill-box hover:bg-amber-500/25 hover:border-amber-400 text-amber-300 font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-lg shadow-amber-500/20 backdrop-blur-md hover:scale-105"
+                className="pill-box hover:bg-amber-500/25 hover:border-amber-400 text-[#FF7E14] font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 shadow-lg shadow-amber-500/20 backdrop-blur-md hover:scale-105"
                 title="เข้าสู่ระบบด้วย Google SSO (.ac.th)"
               >
-                <LogIn className="w-3.5 h-3.5 text-amber-400" />
+                <LogIn className="w-3.5 h-3.5 text-[#FF7E14]" />
                 <span>LOGIN <span className="hidden md:inline">(.ac.th)</span></span>
               </button>
             )}
@@ -756,8 +810,6 @@ export default function LandingPage() {
           <div className="canvas-dot-overlay"></div>
           <div className="ui-corner-bracket top-left"></div>
           <div className="ui-corner-bracket bottom-right"></div>
-
-          <div className="nihility-bg-text">COMSCI COMSCI COMSCI COMSCI COMSCI COMSCI</div>
 
           {/* Canvas for floating petals */}
           <canvas id="petals-canvas" ref={petalsCanvasRef}></canvas>
@@ -777,7 +829,7 @@ export default function LandingPage() {
               {/* Enter Main Showcase Button */}
               <Link href="/hub" className="numeric-badge group">
                 <span>เข้าสู่หน้าเว็บหลัก</span>
-                <ArrowRight className="w-4 h-4 text-black group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1 transition-transform" />
               </Link>
 
               <div className="content-text-box">
@@ -791,26 +843,31 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* Center Panel: Slightly reduced logo size */}
+          {/* Center Panel: Logo adapts to theme (logo.png / logo2.png) */}
           <section className="center-panel">
             <div className="art-window">
-              <span className="large-bg-kanji">RMUTI</span>
               <div className="tech-overlay">
-                <span>STATUS: ACTIVE</span>
-                <span>GLASS: GOD</span>
                 <div className="live-pulse-bar"></div>
               </div>
             </div>
             <div className="character-root" id="character-layer" ref={charLayerRef}>
               <img
-                src="/logo.png?v=2"
+                src={activeLogo}
                 alt="One 4 All CS67 Logo"
-                className="character-img p-2"
+                className={`character-img p-2 cursor-pointer ${isGlitching ? 'glitch-anim' : ''}`}
+                onClick={() => {
+                  if (!isGlitching) {
+                    setIsGlitching(true);
+                    setTimeout(() => setIsRmutiLogo((prev) => !prev), 180);
+                    setTimeout(() => setIsGlitching(false), 450);
+                  }
+                }}
+                title="คลิกเพื่อ Glitch สลับโลโก้"
               />
             </div>
           </section>
 
-          {/* Right Panel: LOGIN Button */}
+          {/* Right Panel */}
           <aside className="right-panel">
             {/* Spacer for desktop flex layout */}
             <div className="h-10 hidden md:block"></div>
@@ -829,7 +886,7 @@ export default function LandingPage() {
               <span className="v-latin-sub">WEB</span>
             </div>
             <div className="panel-footer-stamp">
-              <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '10px' }}>—</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>—</div>
               <p className="micro-japanese">システム起動完了</p>
             </div>
           </aside>

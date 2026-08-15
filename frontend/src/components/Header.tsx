@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { PlusCircle, Search, Sparkles, LogOut, LogIn } from 'lucide-react';
+import { PlusCircle, Search, Sparkles, LogOut, LogIn, Palette, Check } from 'lucide-react';
+import { useTheme, THEME_OPTIONS, ThemeMode } from '@/context/ThemeContext';
 
 interface HeaderProps {
   onOpenSubmitModal: () => void;
@@ -23,6 +24,20 @@ export const Header: React.FC<HeaderProps> = ({
   const { data: session } = useSession();
   const isLoggedIn = !!session?.user?.email;
 
+  const { theme, setTheme } = useTheme();
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+  const themeMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (themeMenuRef.current && !themeMenuRef.current.contains(e.target as Node)) {
+        setIsThemeMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const categories = [
     { id: '', label: '🔥 ทั้งหมด' },
     { id: 'cs67', label: '💻 CS 67' },
@@ -34,13 +49,24 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'html5', label: '🌐 HTML5' },
   ];
 
+  const currentThemeObj = THEME_OPTIONS.find((t) => t.id === theme) || THEME_OPTIONS[0];
+
+  const logoSrc = theme === 'graph-paper' ? '/logo2.png' : '/logo.png?v=2';
+
+  const cs67BadgeStyle =
+    theme === 'graph-paper'
+      ? 'bg-slate-900 text-slate-100 border-slate-700 shadow-md'
+      : theme === 'blueprint'
+      ? 'bg-orange-500/20 text-[#FF7E14] border-orange-400/40 shadow-sm'
+      : 'bg-sky-500/20 text-sky-300 border-sky-400/40 shadow-sm';
+
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#050814]/95 backdrop-blur-md px-4 md:px-8 py-3.5 shadow-xl">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-[var(--bg-header)] text-[var(--text-main)] backdrop-blur-md px-4 md:px-8 py-3.5 shadow-xl transition-colors duration-300">
       <div className="w-full flex items-center gap-5 md:gap-6">
         {/* Full-Height Large Prominent Logo (Far Left) */}
         <Link href="/hub" className="flex-shrink-0 group flex items-center">
           <img
-            src="/logo.png?v=2"
+            src={logoSrc}
             alt="One 4 All Logo"
             className="h-20 md:h-24 lg:h-28 w-auto object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-2xl"
           />
@@ -52,10 +78,10 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center justify-between gap-4 w-full">
             {/* Large Title & CS67 Badge */}
             <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
-              <span className="font-black text-3xl md:text-4xl lg:text-5xl tracking-tight text-white group-hover:text-sky-300 transition-colors drop-shadow-md">
-                One <span className="gradient-text-one4all">4 All</span>
+              <span className="font-black text-3xl md:text-4xl lg:text-5xl tracking-tight text-[var(--text-title)] transition-colors drop-shadow-md">
+                One <span className="gradient-text-orange font-black drop-shadow-[0_0_12px_rgba(255,126,20,0.6)]">4</span> All
               </span>
-              <span className="text-xs md:text-sm px-3 py-1 rounded-full bg-gradient-to-r from-sky-500/25 via-indigo-500/25 to-purple-500/25 text-sky-300 font-extrabold border border-sky-400/40 uppercase tracking-wider shadow-sm">
+              <span className={`text-xs md:text-sm px-3 py-1 rounded-full font-extrabold border uppercase tracking-wider transition-all duration-300 ${cs67BadgeStyle}`}>
                 CS 67
               </span>
             </Link>
@@ -68,12 +94,56 @@ export const Header: React.FC<HeaderProps> = ({
                 placeholder="ค้นหาผลงานเกม CS67, โปรเจกต์..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-xl bg-transparent border border-white/15 text-xs md:text-sm text-white placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400 transition-all"
+                className="w-full pl-10 pr-4 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-card)] text-xs md:text-sm text-[var(--text-main)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[#FF7E14] focus:ring-1 focus:ring-[#FF7E14] transition-all"
               />
             </div>
 
             {/* Scaled Action Buttons */}
             <div className="flex items-center gap-2.5">
+              {/* Multi-Theme Selector Dropdown */}
+              <div className="relative" ref={themeMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsThemeMenuOpen((prev) => !prev)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--bg-card)] hover:bg-white/10 text-[var(--text-main)] text-xs md:text-sm font-semibold border border-[var(--border-card)] transition-all cursor-pointer"
+                  title="เปลี่ยนธีมพื้นหลัง (Theme Selector)"
+                >
+                  <Palette className="w-4 h-4 text-[#FF7E14]" />
+                  <span className="hidden lg:inline">{currentThemeObj.label}</span>
+                </button>
+
+                {isThemeMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0e152e] border border-sky-500/30 shadow-2xl p-2 z-50 animate-fade-in backdrop-blur-xl">
+                    <div className="px-3 py-1.5 border-b border-white/10 mb-1 text-[11px] font-bold text-sky-300 uppercase tracking-wider">
+                      🎨 เลือกลายกระดาษกราฟ & ธีม
+                    </div>
+                    {THEME_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => {
+                          setTheme(opt.id);
+                          setIsThemeMenuOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition-all text-xs ${
+                          theme === opt.id
+                            ? 'bg-sky-500/20 text-white font-bold border border-sky-400/30'
+                            : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">{opt.icon}</span>
+                          <div>
+                            <div className="font-bold">{opt.label}</div>
+                            <div className="text-[10px] text-slate-400 font-normal">{opt.desc}</div>
+                          </div>
+                        </div>
+                        {theme === opt.id && <Check className="w-4 h-4 text-[#FF7E14]" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {isLoggedIn ? (
                 <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-transparent text-xs md:text-sm text-slate-300">
                   {session.user?.image ? (
@@ -125,8 +195,8 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={() => setActiveTag(cat.id)}
                 className={`px-3 py-1 rounded-lg text-xs md:text-sm font-semibold whitespace-nowrap transition-all ${
                   activeTag === cat.id
-                    ? 'text-sky-300 border-b-2 border-sky-400 font-extrabold bg-transparent'
-                    : 'text-slate-300 hover:text-white bg-transparent'
+                    ? 'text-[#FF7E14] border-b-2 border-[#FF7E14] font-extrabold bg-transparent drop-shadow-[0_0_8px_rgba(255,126,20,0.5)]'
+                    : 'text-[var(--text-main)] opacity-75 hover:opacity-100 hover:text-[#FF7E14] bg-transparent'
                 }`}
               >
                 {cat.label}

@@ -26,7 +26,7 @@ export default function RootLayout({
     <html lang="th">
       <body>
         <Providers>
-          <div className="min-h-screen flex flex-col bg-[#050814]">
+          <div className="min-h-screen flex flex-col bg-transparent">
             {children}
           </div>
         </Providers>
