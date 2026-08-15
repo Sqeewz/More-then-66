@@ -28,6 +28,7 @@ import {
   Cpu,
   ArrowLeft,
   Shuffle,
+  RotateCcw,
 } from 'lucide-react';
 
 interface GameRowProps {
@@ -134,6 +135,16 @@ export default function GameHubPage() {
       refetch();
     } catch (err: unknown) {
       console.warn('[HubPage] API delete warning:', err);
+    }
+  };
+
+  const handleClearCache = () => {
+    if (confirm('คุณต้องการเคลียร์แคชทั้งหมดในเบราว์เซอร์และรีโหลดข้อมูลสดจาก Supabase หรือไม่?')) {
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {}
+      window.location.reload();
     }
   };
 
@@ -406,15 +417,23 @@ export default function GameHubPage() {
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-white/10 bg-[#03060f] py-6 px-4 text-center text-xs text-slate-400">
+      <footer className="mt-auto border-t border-white/10 bg-[#03060f] py-6 px-4 text-xs text-slate-400">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 One 4 All - Computer Science CS 67 Game Hub. All Rights Reserved.</p>
-          <div className="flex items-center gap-4 text-slate-300 font-medium">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 text-slate-300 font-medium">
             <span>สาขาวิทยาการคอมพิวเตอร์ รุ่น 67</span>
             <span>•</span>
             <span>NextAuth .ac.th SSO</span>
             <span>•</span>
             <span>Sandboxed Runtime</span>
+            <button
+              onClick={handleClearCache}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 hover:text-red-300 border border-red-500/30 font-semibold text-xs transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95 ml-2"
+              title="ลบแคชทั้งหมดในเครื่อง และโหลดข้อมูลสดใหม่จาก Supabase"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>เคลียร์แคช</span>
+            </button>
           </div>
         </div>
       </footer>
