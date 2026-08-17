@@ -355,49 +355,30 @@ export default function LandingPage() {
           display: block;
         }
 
-        .center-panel {
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          z-index: 20;
-        }
-
-        .cta-button-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          width: 100%;
-          margin-top: 25px;
-          position: relative;
-          z-index: 30;
-        }
-
         .numeric-badge {
           display: inline-flex;
           align-items: center;
-          justify-content: center;
-          gap: 12px;
+          gap: 10px;
           background: linear-gradient(135deg, #FF7E14, #EB6D12);
           color: #ffffff;
-          padding: 14px 38px;
-          font-size: 1.15rem;
+          padding: 12px 32px;
+          font-size: 1.05rem;
           font-weight: 800;
           letter-spacing: 2px;
-          box-shadow: 0 0 25px rgba(255, 126, 20, 0.55), 0 8px 30px rgba(255, 126, 20, 0.45);
-          border-radius: 18px;
-          border: 1px solid rgba(255, 255, 255, 0.3);
+          margin-top: 16px;
+          margin-bottom: 8px;
+          box-shadow: 0 0 20px rgba(255, 126, 20, 0.5), 0 6px 22px rgba(255, 126, 20, 0.4);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.25);
           text-decoration: none;
           transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-          cursor: pointer;
         }
 
         .numeric-badge:hover {
           background: linear-gradient(135deg, #ff8c26, #f3771c);
           color: #ffffff;
           transform: translateY(-3px) scale(1.05);
-          box-shadow: 0 0 38px rgba(255, 126, 20, 0.8), 0 12px 35px rgba(255, 126, 20, 0.65);
+          box-shadow: 0 0 32px rgba(255, 126, 20, 0.75), 0 10px 28px rgba(255, 126, 20, 0.6);
         }
 
         .content-text-box {
@@ -702,17 +683,6 @@ export default function LandingPage() {
             margin-top: 15px;
             max-height: 200px;
           }
-          .cta-button-container {
-            margin-top: 24px;
-            margin-bottom: 20px;
-          }
-          .numeric-badge {
-            width: 100%;
-            max-width: 320px;
-            padding: 14px 24px;
-            font-size: 1.05rem;
-            border-radius: 14px;
-          }
           .art-window {
             width: 90%;
             height: 300px;
@@ -797,11 +767,10 @@ export default function LandingPage() {
                         setTheme(opt.id);
                         setIsThemeMenuOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition-all text-xs ${
-                        theme === opt.id
+                      className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition-all text-xs ${theme === opt.id
                           ? 'bg-sky-500/20 text-white font-bold border border-sky-400/30'
                           : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-base">{opt.icon}</span>
@@ -856,9 +825,16 @@ export default function LandingPage() {
             <div className="main-title-group">
               <span className="japanese-sub">Computer・Science</span>
               <h1 className="main-kanji">67</h1>
+              <br />
+
+              {/* Enter Main Showcase Button */}
+              <Link href="/hub" className="numeric-badge group">
+                <span>เข้าสู่หน้าเว็บหลัก</span>
+                <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1.5 transition-transform" />
+              </Link>
 
               <div className="content-text-box">
-               แหล่งรวบรวมนวัตกรรมผลงานของนักศึกษา สาขาวิชาวิทยาการคอมพิวเตอร์ ( CS 67241) ซึ่งเป็นส่วนหนึ่งของรายวิชาปัญญาประดิษฐ์
+                แหล่งรวบรวมนวัตกรรมผลงานของนักศึกษา สาขาวิชาวิทยาการคอมพิวเตอร์ ( CS 67241) ซึ่งเป็นส่วนหนึ่งของรายวิชาปัญญาประดิษฐ์
               </div>
             </div>
 
@@ -889,14 +865,6 @@ export default function LandingPage() {
                 }}
                 title="คลิกเพื่อ Glitch สลับโลโก้"
               />
-            </div>
-
-            {/* Enter Main Showcase Button (Centered directly below Logo Card) */}
-            <div className="cta-button-container">
-              <Link href="/hub" className="numeric-badge group">
-                <span>เข้าสู่หน้าเว็บหลัก</span>
-                <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1.5 transition-transform ml-1" />
-              </Link>
             </div>
           </section>
 
