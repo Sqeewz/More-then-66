@@ -259,7 +259,7 @@ export default function GameDetailPage() {
     }
     const dataToEncode = (targetUrl && (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')))
       ? targetUrl
-      : (game?.pdf_drive_url || 'https://dek67game.vercel.app');
+      : (game?.pdf_drive_url || (typeof window !== 'undefined' ? window.location.origin : ''));
     return `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(dataToEncode)}`;
   })();
 
@@ -546,7 +546,7 @@ export default function GameDetailPage() {
                       alt="Scan to Play QR Code"
                       className="w-60 h-60 object-contain"
                       onError={(e) => {
-                        const dataToEncode = targetUrl || (typeof window !== 'undefined' ? window.location.href : 'https://dek67game.vercel.app');
+                        const dataToEncode = targetUrl || (typeof window !== 'undefined' ? window.location.href : (typeof window !== 'undefined' ? window.location.origin : ''));
                         (e.target as HTMLImageElement).src = `https://quickchart.io/qr?text=${encodeURIComponent(dataToEncode)}&size=350`;
                       }}
                     />

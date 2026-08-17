@@ -355,28 +355,40 @@ export default function LandingPage() {
           display: block;
         }
 
+        .cta-button-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
+          margin-top: 28px;
+          margin-bottom: 16px;
+          z-index: 25;
+        }
+
         .numeric-badge {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          justify-content: center;
+          gap: 12px;
           background: linear-gradient(135deg, #FF7E14, #EB6D12);
           color: #ffffff;
-          padding: 8px 22px;
-          font-size: 0.85rem;
+          padding: 14px 38px;
+          font-size: 1.15rem;
           font-weight: 800;
           letter-spacing: 2px;
-          margin-top: 14px;
-          box-shadow: 0 0 16px rgba(255, 126, 20, 0.45), 0 6px 20px rgba(255, 126, 20, 0.4);
-          border-radius: 6px;
+          box-shadow: 0 0 25px rgba(255, 126, 20, 0.55), 0 8px 30px rgba(255, 126, 20, 0.45);
+          border-radius: 18px;
+          border: 1px solid rgba(255, 255, 255, 0.3);
           text-decoration: none;
-          transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+          transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+          cursor: pointer;
         }
 
         .numeric-badge:hover {
           background: linear-gradient(135deg, #ff8c26, #f3771c);
           color: #ffffff;
-          transform: translateY(-2px) scale(1.04);
-          box-shadow: 0 0 25px rgba(255, 126, 20, 0.65), 0 10px 25px rgba(255, 126, 20, 0.6);
+          transform: translateY(-3px) scale(1.05);
+          box-shadow: 0 0 38px rgba(255, 126, 20, 0.8), 0 12px 35px rgba(255, 126, 20, 0.65);
         }
 
         .content-text-box {
@@ -681,6 +693,17 @@ export default function LandingPage() {
             margin-top: 15px;
             max-height: 200px;
           }
+          .cta-button-container {
+            margin-top: 24px;
+            margin-bottom: 20px;
+          }
+          .numeric-badge {
+            width: 100%;
+            max-width: 320px;
+            padding: 14px 24px;
+            font-size: 1.05rem;
+            border-radius: 14px;
+          }
           .art-window {
             width: 90%;
             height: 300px;
@@ -817,24 +840,25 @@ export default function LandingPage() {
           {/* Left Panel */}
           <section className="left-panel">
             <div className="hero-quote-header">
-              Warning: The following content was created by a Computer Science student 67
-              <span className="quote-jp">Please offer feedback politely.</span>
+              Artificial Intelligence
+              <span className="quote-jp">02-406-032-415</span>
             </div>
 
             <div className="main-title-group">
               <span className="japanese-sub">Computer・Science</span>
               <h1 className="main-kanji">67</h1>
-              <br />
-
-              {/* Enter Main Showcase Button */}
-              <Link href="/hub" className="numeric-badge group">
-                <span>เข้าสู่หน้าเว็บหลัก</span>
-                <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1 transition-transform" />
-              </Link>
 
               <div className="content-text-box">
-                แหล่งรวบรวมและจัดแสดงผลงานสร้างสรรค์ด้านการพัฒนาเว็บเกม (Web Games) และสื่อมัลติมีเดียแบบปฏิสัมพันธ์ (Interactive Multimedia) ซึ่งรังสรรค์โดยนิสิตสาขาวิชาวิทยาการคอมพิวเตอร์ รุ่น 67 พื้นที่นี้เป็นศูนย์กลางในการสะท้อนศักยภาพ การประยุกต์ใช้องค์ความรู้ด้านวิทยาการคำนวณ การเขียนโปรแกรม การออกแบบ UI/UX และเทคโนโลยีเว็บสมัยใหม่ มาผสมผสานกับความคิดสร้างสรรค์เพื่อสร้างประสบการณ์ดิจิทัลที่ตอบโจทย์ทั้งความบันเทิงและการใช้งานจริง
+               แหล่งรวบรวมนวัตกรรมผลงานของนักศึกษา สาขาวิชาวิทยาการคอมพิวเตอร์ ( CS 67241) ซึ่งเป็นส่วนหนึ่งของรายวิชาปัญญาประดิษฐ์
               </div>
+            </div>
+
+            {/* Enter Main Showcase Button (Big, Centered, Above Logo on Mobile) */}
+            <div className="cta-button-container">
+              <Link href="/hub" className="numeric-badge group">
+                <span>เข้าสู่หน้าเว็บหลัก</span>
+                <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1.5 transition-transform ml-1" />
+              </Link>
             </div>
 
             <div className="left-footer">
