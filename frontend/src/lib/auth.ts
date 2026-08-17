@@ -7,6 +7,7 @@ const googleClientId = (process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_
 const googleClientSecret = (process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET || '').trim();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || 'mt66-cs67-default-secret-key-fallback-32chars',
   providers: [
     Google({
