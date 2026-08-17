@@ -546,7 +546,7 @@ export default function GameDetailPage() {
                       alt="Scan to Play QR Code"
                       className="w-60 h-60 object-contain"
                       onError={(e) => {
-                        const dataToEncode = targetUrl || (typeof window !== 'undefined' ? window.location.href : (typeof window !== 'undefined' ? window.location.origin : ''));
+                        const dataToEncode = targetUrl || (typeof window !== 'undefined' ? window.location.href : '');
                         (e.target as HTMLImageElement).src = `https://quickchart.io/qr?text=${encodeURIComponent(dataToEncode)}&size=350`;
                       }}
                     />
