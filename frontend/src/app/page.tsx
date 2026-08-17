@@ -355,14 +355,23 @@ export default function LandingPage() {
           display: block;
         }
 
+        .center-panel {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          z-index: 20;
+        }
+
         .cta-button-container {
           display: flex;
           justify-content: center;
           align-items: center;
           width: 100%;
-          margin-top: 28px;
-          margin-bottom: 16px;
-          z-index: 25;
+          margin-top: 25px;
+          position: relative;
+          z-index: 30;
         }
 
         .numeric-badge {
@@ -853,14 +862,6 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Enter Main Showcase Button (Big, Centered, Above Logo on Mobile) */}
-            <div className="cta-button-container">
-              <Link href="/hub" className="numeric-badge group">
-                <span>เข้าสู่หน้าเว็บหลัก</span>
-                <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1.5 transition-transform ml-1" />
-              </Link>
-            </div>
-
             <div className="left-footer">
               <p className="game-meta">THANIN RABIEPPHO // SUPAWADEE PHOPPHIMAI</p>
               <div className="tag-pill">COM SCI DI WA</div>
@@ -888,6 +889,14 @@ export default function LandingPage() {
                 }}
                 title="คลิกเพื่อ Glitch สลับโลโก้"
               />
+            </div>
+
+            {/* Enter Main Showcase Button (Centered directly below Logo Card) */}
+            <div className="cta-button-container">
+              <Link href="/hub" className="numeric-badge group">
+                <span>เข้าสู่หน้าเว็บหลัก</span>
+                <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1.5 transition-transform ml-1" />
+              </Link>
             </div>
           </section>
 
